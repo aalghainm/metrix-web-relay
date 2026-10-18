@@ -1822,7 +1822,38 @@ const htmlContent = `<!DOCTYPE html>
         document.getElementById('dashboardScreen').style.display = 'flex';
         updateConnectionBadge(true);
 
-        globalProjectsData = data.projects || [];
+        const incomingProjects = data.projects || [];
+        if (window._editedProjectSnapshot && (Date.now() - window._editedProjectSnapshot.timestamp < 15000)) {
+          const snap = window._editedProjectSnapshot;
+          window._editedProjectSnapshot = null;
+          const editedProj = incomingProjects.find(p => Number(p.id) === Number(snap.id));
+          if (editedProj) {
+            const incomingItems = editedProj.items || [];
+            const incomingPayments = editedProj.payments || [];
+            if (snap.items.length > 0 && incomingItems.length === 0) {
+              editedProj.items = snap.items;
+              snap.items.forEach(item => {
+                socket.emit('relay_to_phone', {
+                  sessionId: currentSessionId,
+                  action: 'create_item_from_web',
+                  data: Object.assign({}, item, { projectId: editedProj.id })
+                });
+              });
+            }
+            if (snap.payments.length > 0 && incomingPayments.length === 0) {
+              editedProj.payments = snap.payments;
+              snap.payments.forEach(pay => {
+                socket.emit('relay_to_phone', {
+                  sessionId: currentSessionId,
+                  action: 'add_payment_from_web',
+                  data: Object.assign({}, pay, { projectId: editedProj.id })
+                });
+              });
+            }
+          }
+        }
+
+        globalProjectsData = incomingProjects;
         globalPricesData = data.prices || [];
         if (typeof data.hasPasscode === 'boolean') {
           globalHasPasscode = data.hasPasscode;
@@ -2987,18 +3018,25 @@ const htmlContent = `<!DOCTYPE html>
       const name = document.getElementById('editProjName').value.trim();
       if (!id || !name) { alert('يرجى إدخال اسم المشروع'); return; }
 
+      const target = globalProjectsData.find(p => Number(p.id) === Number(id));
       const projData = {
         id: id,
         name: name,
         clientName: document.getElementById('editProjClient').value.trim(),
         mobileNumber: document.getElementById('editProjMobile').value.trim(),
         projectDate: document.getElementById('editProjDate').value,
-        description: document.getElementById('editProjDesc').value.trim()
+        description: document.getElementById('editProjDesc').value.trim(),
+        projectInfo: target ? (target.projectInfo || '') : ''
       };
 
-      // تحديث فوري مباشر في واجهة المتصفح
-      const target = globalProjectsData.find(p => p.id === id);
+      // تحديث فوري مباشر في واجهة المتصفح مع حفظ نسخة احتياطية للبنود والدفعات
       if (target) {
+        window._editedProjectSnapshot = {
+          id: id,
+          items: JSON.parse(JSON.stringify(target.items || [])),
+          payments: JSON.parse(JSON.stringify(target.payments || [])),
+          timestamp: Date.now()
+        };
         target.name = projData.name;
         target.clientName = projData.clientName;
         target.mobileNumber = projData.mobileNumber;

@@ -1395,6 +1395,42 @@ const htmlContent = `<!DOCTYPE html>
   </div>
 
   <script>
+    // توحيد جميع الأرقام في الموقع بالكامل إلى الأرقام الإنجليزية (0-9)
+    function toEnglishDigits(val) {
+      if (val === null || val === undefined) return '';
+      return String(val)
+        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+        .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+    }
+
+    const _origNumToLocale = Number.prototype.toLocaleString;
+    Number.prototype.toLocaleString = function(locales, options) {
+      return toEnglishDigits(_origNumToLocale.call(this, 'en-US', options));
+    };
+
+    function formatDateEn(dateVal) {
+      if (!dateVal) return '-';
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return toEnglishDigits(dateVal);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return yyyy + '-' + mm + '-' + dd;
+    }
+
+    document.addEventListener('input', function(e) {
+      const el = e.target;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+        try {
+          const val = el.value;
+          const converted = toEnglishDigits(val);
+          if (val !== converted) {
+            el.value = converted;
+          }
+        } catch (_) {}
+      }
+    }, true);
+
     let socket;
     let currentSessionId = '';
     let countdownInterval;
@@ -1712,10 +1748,10 @@ const htmlContent = `<!DOCTYPE html>
                 '<h3>' + (p.name || 'مشروع بدون اسم') + '</h3>' +
                 '<div class="proj-client-row">' +
                   '<i class="fa-solid fa-user-circle"></i> ' + (p.clientName || 'عميل عام') +
-                  (p.mobileNumber ? (' <span style="color:#cbd5e1;">|</span> <i class="fa-solid fa-phone"></i> ' + p.mobileNumber) : '') +
+                  (p.mobileNumber ? (' <span style="color:#cbd5e1;">|</span> <i class="fa-solid fa-phone"></i> <span dir="ltr">' + toEnglishDigits(p.mobileNumber) + '</span>') : '') +
                 '</div>' +
               '</div>' +
-              '<span class="proj-date-chip"><i class="fa-regular fa-calendar"></i> ' + (p.projectDate || 'بدون تاريخ') + '</span>' +
+              '<span class="proj-date-chip"><i class="fa-regular fa-calendar"></i> <span dir="ltr">' + toEnglishDigits(p.projectDate || 'بدون تاريخ') + '</span></span>' +
             '</div>' +
             (p.description ? ('<p style="font-size:0.83rem; color:#64748b; margin-top:0.6rem; line-height:1.5;">' + p.description + '</p>') : '') +
             '<div class="proj-financial-bar" style="margin-top:0.85rem;">' +
@@ -1810,7 +1846,7 @@ const htmlContent = `<!DOCTYPE html>
             '<td style="font-weight:800; color:var(--secondary);">' + (p.name || '-') + '</td>' +
             '<td style="font-weight:700;">' + (it.title || it.itemName || '-') + '</td>' +
             '<td><span class="job-badge ' + badgeCls + '">' + displayJobName + '</span></td>' +
-            '<td style="font-family:monospace; color:#64748b;">' + dim + '</td>' +
+            '<td style="font-family:monospace; color:#64748b;" dir="ltr">' + dim + '</td>' +
             '<td style="color:var(--rose); font-weight:700;">' + (voidTotal > 0 ? ('-' + voidTotal + ' م2') : '-') + '</td>' +
             '<td style="font-weight:900; color:var(--primary); font-family:monospace; font-size:1rem;">' + meters.toLocaleString() + '</td>' +
             '<td style="color:#64748b;">' + (price > 0 ? (price.toLocaleString() + ' ر.س') : '-') + '</td>' +
@@ -1855,9 +1891,9 @@ const htmlContent = `<!DOCTYPE html>
           tr.innerHTML =
             '<td style="font-weight:800; color:var(--secondary);">' + (p.name || '-') + '</td>' +
             '<td style="font-weight:900; color:var(--emerald); font-size:1.05rem; font-family:monospace;">' + amt.toLocaleString() + ' ر.س</td>' +
-            '<td><span class="job-badge job-tile">' + (pm.jobType || 'عام') + '</span></td>' +
+            '<td><span class="job-badge job-tile">' + (pm.jobType ? getJobLabel(pm.jobType) : 'عام') + '</span></td>' +
             '<td>' + (pm.note || 'سند استلام نقدي / حوالة') + '</td>' +
-            '<td style="color:#64748b; font-size:0.85rem;"><i class="fa-regular fa-calendar-check"></i> ' + (pm.dateAdded ? new Date(pm.dateAdded).toLocaleDateString('ar-SA') : '-') + '</td>' +
+            '<td style="color:#64748b; font-size:0.85rem; font-family:monospace;"><i class="fa-regular fa-calendar-check"></i> <span dir="ltr">' + formatDateEn(pm.dateAdded) + '</span></td>' +
             '<td style="text-align:center; white-space:nowrap;">' +
               '<button onclick="openEditPaymentModal(' + pm.id + ')" class="icon-action-btn btn-action-edit" title="تعديل الدفعة"><i class="fa-solid fa-pen"></i></button>' +
               '<button onclick="requestDeletePayment(' + pm.id + ')" class="icon-action-btn btn-action-delete" title="حذف السند"><i class="fa-solid fa-trash-can"></i></button>' +
@@ -2100,7 +2136,7 @@ const htmlContent = `<!DOCTYPE html>
               '<h3>بيانات مقدم العرض (المقاول)</h3>' +
               '<div class="app-quo-info-row"><b>مؤسسة / مقاول معتمد</b></div>' +
               '<div class="app-quo-info-row">العنوان: <b>المملكة العربية السعودية</b></div>' +
-              '<div class="app-quo-info-row">رقم الجوال: <b>' + (proj.mobileNumber || '—') + '</b></div>' +
+              '<div class="app-quo-info-row">رقم الجوال: <b dir="ltr">' + toEnglishDigits(proj.mobileNumber || '—') + '</b></div>' +
             '</div>' +
             '<div class="app-quo-info-card">' +
               '<h3>بيانات العميل</h3>' +
@@ -2814,9 +2850,9 @@ const htmlContent = `<!DOCTYPE html>
             p.name || '',
             p.clientName || '',
             pm.amount || 0,
-            pm.jobType || '',
+            pm.jobType ? getJobLabel(pm.jobType) : '',
             pm.note || '',
-            pm.dateAdded ? new Date(pm.dateAdded).toLocaleDateString('ar-SA') : ''
+            pm.dateAdded ? formatDateEn(pm.dateAdded) : ''
           ]);
         });
       });

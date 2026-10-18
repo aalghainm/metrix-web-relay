@@ -1130,14 +1130,13 @@ const htmlContent = `<!DOCTYPE html>
           <div class="form-field">
             <label><i class="fa-solid fa-hammer"></i> نوع العمل</label>
             <select id="newItemJobType" onchange="onJobTypeChanged('newItemJobType', 'newItemPrice', calculateLiveItem)">
-              <option value="لياسة">لياسة (تلييس)</option>
-              <option value="دهان">دهان</option>
-              <option value="بناء طوب">بناء طوب</option>
-              <option value="بلاط وسيراميك">بلاط وسيراميك</option>
-              <option value="جبس بورد">جبس بورد</option>
-              <option value="صب خرسانة">صب خرسانة</option>
-              <option value="عزل مائي">عزل مائي</option>
-              <option value="عزل حراري">عزل حراري</option>
+              <option value="PLASTER_IN">تلييس داخلي</option>
+              <option value="PLASTER_OUT">تلييس خارجي</option>
+              <option value="PAINT_IN">دهانات داخلية</option>
+              <option value="PAINT_OUT">دهانات خارجية</option>
+              <option value="TILES">بلاط</option>
+              <option value="DOORS">أبواب</option>
+              <option value="WINDOWS">نوافذ</option>
               <option value="أخرى">أخرى</option>
             </select>
           </div>
@@ -1145,9 +1144,8 @@ const htmlContent = `<!DOCTYPE html>
             <label><i class="fa-solid fa-compass"></i> طريقة الحساب</label>
             <select id="newItemCalcMode" onchange="calculateLiveItem()">
               <option value="WALLS">جدران / حوائط (محيط × ارتفاع)</option>
-              <option value="AREA">مسطح / مساحة (طول × عرض)</option>
-              <option value="VOLUME">حجم / مكعب (طول × عرض × ارتفاع)</option>
-              <option value="LENGTH">طولي (طول فقط)</option>
+              <option value="SURFACE">سقف / أرضيات / مسطح (طول × عرض)</option>
+              <option value="BOTH">جدران + سقف / أرضيات معاً</option>
             </select>
           </div>
         </div>
@@ -1169,8 +1167,8 @@ const htmlContent = `<!DOCTYPE html>
 
         <div class="grid-3col">
           <div class="form-field">
-            <label>عدد الجدران / التكرار</label>
-            <input type="number" step="1" id="newItemWallCount" value="1" oninput="calculateLiveItem()" />
+            <label id="newItemWallCountLabel">عدد الجدران (1-4) / التكرار</label>
+            <input type="number" step="1" id="newItemWallCount" value="4" oninput="calculateLiveItem()" />
           </div>
           <div class="form-field">
             <label>خصم الأبواب (م2)</label>
@@ -1228,14 +1226,13 @@ const htmlContent = `<!DOCTYPE html>
           <div class="form-field">
             <label><i class="fa-solid fa-hammer"></i> نوع العمل</label>
             <select id="editItemJobType" onchange="calculateLiveEditItem()">
-              <option value="لياسة">لياسة (تلييس)</option>
-              <option value="دهان">دهان</option>
-              <option value="بناء طوب">بناء طوب</option>
-              <option value="بلاط وسيراميك">بلاط وسيراميك</option>
-              <option value="جبس بورد">جبس بورد</option>
-              <option value="صب خرسانة">صب خرسانة</option>
-              <option value="عزل مائي">عزل مائي</option>
-              <option value="عزل حراري">عزل حراري</option>
+              <option value="PLASTER_IN">تلييس داخلي</option>
+              <option value="PLASTER_OUT">تلييس خارجي</option>
+              <option value="PAINT_IN">دهانات داخلية</option>
+              <option value="PAINT_OUT">دهانات خارجية</option>
+              <option value="TILES">بلاط</option>
+              <option value="DOORS">أبواب</option>
+              <option value="WINDOWS">نوافذ</option>
               <option value="أخرى">أخرى</option>
             </select>
           </div>
@@ -1243,9 +1240,8 @@ const htmlContent = `<!DOCTYPE html>
             <label><i class="fa-solid fa-compass"></i> طريقة الحساب</label>
             <select id="editItemCalcMode" onchange="calculateLiveEditItem()">
               <option value="WALLS">جدران / حوائط (محيط × ارتفاع)</option>
-              <option value="AREA">مسطح / مساحة (طول × عرض)</option>
-              <option value="VOLUME">حجم / مكعب (طول × عرض × ارتفاع)</option>
-              <option value="LENGTH">طولي (طول فقط)</option>
+              <option value="SURFACE">سقف / أرضيات / مسطح (طول × عرض)</option>
+              <option value="BOTH">جدران + سقف / أرضيات معاً</option>
             </select>
           </div>
         </div>
@@ -1621,22 +1617,40 @@ const htmlContent = `<!DOCTYPE html>
         jobSet.forEach(job => {
           const opt = document.createElement('option');
           opt.value = job;
-          opt.textContent = job;
+          opt.textContent = getJobLabel(job);
           jobFilter.appendChild(opt);
         });
         if (curJob) jobFilter.value = curJob;
       }
     }
 
+    function getJobLabel(jobType) {
+      if (!jobType) return 'أخرى';
+      const t = String(jobType).trim();
+      if (t === 'PLASTER_IN' || t === 'تلييس داخلي') return 'تلييس داخلي';
+      if (t === 'PLASTER_OUT' || t === 'تلييس خارجي') return 'تلييس خارجي';
+      if (t === 'PAINT_IN' || t === 'دهانات داخلية') return 'دهانات داخلية';
+      if (t === 'PAINT_OUT' || t === 'دهانات خارجية') return 'دهانات خارجية';
+      if (t === 'TILES' || t === 'بلاط') return 'بلاط';
+      if (t === 'DOORS' || t === 'أبواب') return 'أبواب';
+      if (t === 'WINDOWS' || t === 'نوافذ') return 'نوافذ';
+      if (t.includes('لياسة') || t.includes('تلييس')) return 'تلييس داخلي';
+      if (t.includes('دهان')) return 'دهانات داخلية';
+      return t;
+    }
+
     function getJobBadgeClass(jobType) {
       if (!jobType) return 'job-other';
-      if (jobType.includes('لياسة')) return 'job-plaster';
-      if (jobType.includes('دهان')) return 'job-paint';
-      if (jobType.includes('طوب') || jobType.includes('بلك')) return 'job-block';
-      if (jobType.includes('بلاط') || jobType.includes('سيراميك') || jobType.includes('رخام')) return 'job-tile';
-      if (jobType.includes('جبس')) return 'job-gypsum';
-      if (jobType.includes('خرسانة')) return 'job-concrete';
-      if (jobType.includes('عزل')) return 'job-insulation';
+      const t = String(jobType).toUpperCase();
+      if (t.includes('PLASTER') || t.includes('تلييس') || t.includes('لياسة')) return 'job-plaster';
+      if (t.includes('PAINT') || t.includes('دهان')) return 'job-paint';
+      if (t.includes('TILE') || t.includes('بلاط') || t.includes('سيراميك') || t.includes('رخام')) return 'job-tile';
+      if (t.includes('DOOR') || t.includes('أبواب') || t.includes('باب')) return 'job-block';
+      if (t.includes('WINDOW') || t.includes('نوافذ') || t.includes('شباك')) return 'job-sky';
+      if (t.includes('طوب') || t.includes('بلك')) return 'job-block';
+      if (t.includes('جبس')) return 'job-gypsum';
+      if (t.includes('خرسانة')) return 'job-concrete';
+      if (t.includes('عزل')) return 'job-insulation';
       return 'job-other';
     }
 
@@ -1755,9 +1769,13 @@ const htmlContent = `<!DOCTYPE html>
         if (selProj !== 'ALL' && String(p.id) !== selProj) return;
 
         (p.items || []).forEach(it => {
-          if (selJob !== 'ALL' && it.jobType !== selJob) return;
+          if (selJob !== 'ALL') {
+            const itLabel = getJobLabel(it.jobType);
+            const selLabel = getJobLabel(selJob);
+            if (it.jobType !== selJob && itLabel !== selLabel) return;
+          }
 
-          const searchStr = (p.name + ' ' + (it.title || it.itemName || '') + ' ' + (it.jobType || '')).toLowerCase();
+          const searchStr = (p.name + ' ' + (it.title || it.itemName || '') + ' ' + (it.jobType || '') + ' ' + getJobLabel(it.jobType)).toLowerCase();
           if (q && !searchStr.includes(q)) return;
 
           count++;
@@ -1767,12 +1785,13 @@ const htmlContent = `<!DOCTYPE html>
           const price = Number(it.pricePerMeter || 0);
           const amount = Number(it.totalAmount || 0);
           const badgeCls = getJobBadgeClass(it.jobType);
+          const displayJobName = getJobLabel(it.jobType);
 
           const tr = document.createElement('tr');
           tr.innerHTML =
             '<td style="font-weight:800; color:var(--secondary);">' + (p.name || '-') + '</td>' +
             '<td style="font-weight:700;">' + (it.title || it.itemName || '-') + '</td>' +
-            '<td><span class="job-badge ' + badgeCls + '">' + (it.jobType || '-') + '</span></td>' +
+            '<td><span class="job-badge ' + badgeCls + '">' + displayJobName + '</span></td>' +
             '<td style="font-family:monospace; color:#64748b;">' + dim + '</td>' +
             '<td style="color:var(--rose); font-weight:700;">' + (voidTotal > 0 ? ('-' + voidTotal + ' م2') : '-') + '</td>' +
             '<td style="font-weight:900; color:var(--primary); font-family:monospace; font-size:1rem;">' + meters.toLocaleString() + '</td>' +
@@ -1849,7 +1868,7 @@ const htmlContent = `<!DOCTYPE html>
 
       globalProjectsData.forEach(p => {
         (p.items || []).forEach(it => {
-          const j = it.jobType || 'أخرى';
+          const j = getJobLabel(it.jobType);
           const amt = Number(it.totalAmount) || 0;
           const qty = Number(it.totalMeters) || Number(it.quantity) || 0;
           jobCostMap[j] = (jobCostMap[j] || 0) + amt;
@@ -1944,7 +1963,7 @@ const htmlContent = `<!DOCTYPE html>
         const totalsByJob = {};
 
         items.forEach(it => {
-          const j = it.jobType || 'أخرى';
+          const j = getJobLabel(it.jobType);
           if (!grouped[j]) {
             grouped[j] = [];
             totalsByJob[j] = { totalMeters: 0, totalAmount: 0 };
@@ -2115,26 +2134,34 @@ const htmlContent = `<!DOCTYPE html>
     // ==========================================
     function renderPricesTable() {
       const defaultJobs = [
-        'لياسة', 'دهان', 'بناء طوب', 'بلاط وسيراميك', 'جبس بورد',
-        'صب خرسانة', 'عزل مائي', 'عزل حراري', 'أخرى'
+        { code: 'PLASTER_IN', label: 'تلييس داخلي' },
+        { code: 'PLASTER_OUT', label: 'تلييس خارجي' },
+        { code: 'PAINT_IN', label: 'دهانات داخلية' },
+        { code: 'PAINT_OUT', label: 'دهانات خارجية' },
+        { code: 'TILES', label: 'بلاط' },
+        { code: 'DOORS', label: 'أبواب' },
+        { code: 'WINDOWS', label: 'نوافذ' }
       ];
 
       const priceMap = {};
-      globalPricesData.forEach(p => { priceMap[p.jobType] = p.pricePerUnit; });
+      globalPricesData.forEach(p => { 
+        priceMap[p.jobType] = p.pricePerUnit;
+        priceMap[getJobLabel(p.jobType)] = p.pricePerUnit;
+      });
 
       const tbody = document.getElementById('pricesTableBody');
       tbody.innerHTML = '';
 
-      defaultJobs.forEach(job => {
-        const curPrice = priceMap[job] !== undefined ? priceMap[job] : 0;
-        const inputId = 'price_input_' + encodeURIComponent(job);
+      defaultJobs.forEach(jobItem => {
+        const curPrice = priceMap[jobItem.code] !== undefined ? priceMap[jobItem.code] : (priceMap[jobItem.label] !== undefined ? priceMap[jobItem.label] : 0);
+        const inputId = 'price_input_' + encodeURIComponent(jobItem.code);
 
         const tr = document.createElement('tr');
         tr.innerHTML =
-          '<td style="font-weight:800; font-size:0.95rem;">' + job + '</td>' +
+          '<td style="font-weight:800; font-size:0.95rem;">' + jobItem.label + '</td>' +
           '<td style="font-weight:900; color:var(--primary); font-size:1.1rem; font-family:monospace;">' + curPrice.toLocaleString() + ' ر.س</td>' +
           '<td><input type="number" step="0.5" id="' + inputId + '" value="' + curPrice + '" class="custom-input" style="width:140px; padding:0.4rem 0.75rem;" /></td>' +
-          '<td style="text-align:center;"><button onclick="saveUnitPrice(\\'' + job + '\\', \\'' + inputId + '\\')" class="btn btn-primary" style="padding:0.35rem 0.95rem;"><i class="fa-solid fa-floppy-disk"></i> حفظ في الهاتف</button></td>';
+          '<td style="text-align:center;"><button onclick="saveUnitPrice(\\'' + jobItem.code + '\\', \\'' + inputId + '\\')" class="btn btn-primary" style="padding:0.35rem 0.95rem;"><i class="fa-solid fa-floppy-disk"></i> حفظ في الهاتف</button></td>';
         tbody.appendChild(tr);
       });
     }
@@ -2246,7 +2273,76 @@ const htmlContent = `<!DOCTYPE html>
       document.getElementById('editItemModal').style.display = 'flex';
     }
 
+    function calculateMetrixJobLogic(jobType, l, w, h, wc, voidArea, price, mode) {
+      const type = (jobType || '').trim().toUpperCase();
+      const m = (mode || 'WALLS').trim().toUpperCase();
+
+      let netMeters = 0;
+      if (type.includes('TILE') || type.includes('بلاط')) {
+        const floorGross = Math.max(0, l * w);
+        const wallsRatio = Math.min(4, Math.max(0, wc)) / 4.0;
+        const fullPerimeter = 2.0 * (l + w);
+        const wallsGross = Math.max(0, fullPerimeter * h * wallsRatio);
+
+        let gross = floorGross;
+        if (m === 'WALLS') gross = wallsGross;
+        else if (m === 'BOTH') gross = wallsGross + floorGross;
+        else gross = floorGross; // SURFACE
+
+        netMeters = Math.max(0, gross - voidArea);
+      } else if (
+        type.includes('PLASTER') || type.includes('PAINT') ||
+        type.includes('تلييس') || type.includes('دهان') || type.includes('لياسة')
+      ) {
+        const wallsRatio = Math.min(4, Math.max(0, wc)) / 4.0;
+        const fullPerimeter = (w > 0) ? (2.0 * (l + w)) : (l * wc);
+        const grossWalls = fullPerimeter * (h > 0 ? h : 1) * wallsRatio;
+        const netWalls = Math.max(0, grossWalls - voidArea);
+        const netSurface = Math.max(0, (l * (w > 0 ? w : 1)) - voidArea);
+
+        if (m === 'SURFACE') netMeters = netSurface;
+        else if (m === 'BOTH') netMeters = Math.max(0, netWalls + netSurface);
+        else netMeters = netWalls; // WALLS
+      } else if (type.includes('DOOR') || type.includes('WINDOW') || type.includes('أبواب') || type.includes('نوافذ')) {
+        if (l > 0 && w > 0) {
+          netMeters = (l * w) * Math.max(1, wc);
+        } else {
+          netMeters = 1.0 * Math.max(1, wc); // بالعدد
+        }
+      } else {
+        // حسابات عامة
+        if (m === 'WALLS') {
+          const perimeter = (w > 0) ? ((l + w) * 2) : (l * wc);
+          netMeters = Math.max(0, (perimeter * (h > 0 ? h : 1)) - voidArea);
+        } else {
+          netMeters = Math.max(0, (l * (w > 0 ? w : 1)) - voidArea);
+        }
+      }
+
+      netMeters = Math.round(netMeters * 100) / 100;
+      const totalAmount = Math.round((netMeters * price) * 100) / 100;
+      return { netMeters, totalAmount };
+    }
+
+    function calculateLiveItem() {
+      const job = document.getElementById('newItemJobType').value;
+      const mode = document.getElementById('newItemCalcMode').value;
+      const l = parseFloat(document.getElementById('newItemLength').value) || 0;
+      const w = parseFloat(document.getElementById('newItemWidth').value) || 0;
+      const h = parseFloat(document.getElementById('newItemHeight').value) || 0;
+      const walls = parseFloat(document.getElementById('newItemWallCount').value) || 1;
+      const dVoid = parseFloat(document.getElementById('newItemDoorsVoid').value) || 0;
+      const wVoid = parseFloat(document.getElementById('newItemWindowsVoid').value) || 0;
+      const price = parseFloat(document.getElementById('newItemPrice').value) || 0;
+
+      const res = calculateMetrixJobLogic(job, l, w, h, walls, (dVoid + wVoid), price, mode);
+
+      document.getElementById('newItemCalcMeters').value = res.netMeters;
+      document.getElementById('newItemCalcAmount').value = res.totalAmount.toLocaleString() + ' ر.س';
+    }
+
     function calculateLiveEditItem() {
+      const job = document.getElementById('editItemJobType').value;
       const mode = document.getElementById('editItemCalcMode').value;
       const l = parseFloat(document.getElementById('editItemLength').value) || 0;
       const w = parseFloat(document.getElementById('editItemWidth').value) || 0;
@@ -2256,25 +2352,10 @@ const htmlContent = `<!DOCTYPE html>
       const wVoid = parseFloat(document.getElementById('editItemWindowsVoid').value) || 0;
       const price = parseFloat(document.getElementById('editItemPrice').value) || 0;
 
-      let netMeters = 0;
-      if (mode === 'WALLS') {
-        const perimeter = (w > 0) ? ((l + w) * 2) : (l * walls);
-        const gross = perimeter * (h > 0 ? h : 1);
-        netMeters = Math.max(0, gross - (dVoid + wVoid));
-      } else if (mode === 'AREA') {
-        const gross = (l * (w > 0 ? w : 1)) * walls;
-        netMeters = Math.max(0, gross - (dVoid + wVoid));
-      } else if (mode === 'VOLUME') {
-        netMeters = l * (w > 0 ? w : 1) * (h > 0 ? h : 1) * walls;
-      } else if (mode === 'LENGTH') {
-        netMeters = l * walls;
-      }
+      const res = calculateMetrixJobLogic(job, l, w, h, walls, (dVoid + wVoid), price, mode);
 
-      netMeters = Math.round(netMeters * 100) / 100;
-      const totalAmount = Math.round((netMeters * price) * 100) / 100;
-
-      document.getElementById('editItemCalcMeters').value = netMeters;
-      document.getElementById('editItemCalcAmount').value = totalAmount.toLocaleString() + ' ر.س';
+      document.getElementById('editItemCalcMeters').value = res.netMeters;
+      document.getElementById('editItemCalcAmount').value = res.totalAmount.toLocaleString() + ' ر.س';
     }
 
     function submitEditItem() {
@@ -2414,36 +2495,7 @@ const htmlContent = `<!DOCTYPE html>
       if (calcFunc) calcFunc();
     }
 
-    function calculateLiveItem() {
-      const mode = document.getElementById('newItemCalcMode').value;
-      const l = parseFloat(document.getElementById('newItemLength').value) || 0;
-      const w = parseFloat(document.getElementById('newItemWidth').value) || 0;
-      const h = parseFloat(document.getElementById('newItemHeight').value) || 0;
-      const walls = parseFloat(document.getElementById('newItemWallCount').value) || 1;
-      const dVoid = parseFloat(document.getElementById('newItemDoorsVoid').value) || 0;
-      const wVoid = parseFloat(document.getElementById('newItemWindowsVoid').value) || 0;
-      const price = parseFloat(document.getElementById('newItemPrice').value) || 0;
 
-      let netMeters = 0;
-      if (mode === 'WALLS') {
-        const perimeter = (w > 0) ? ((l + w) * 2) : (l * walls);
-        const gross = perimeter * (h > 0 ? h : 1);
-        netMeters = Math.max(0, gross - (dVoid + wVoid));
-      } else if (mode === 'AREA') {
-        const gross = (l * (w > 0 ? w : 1)) * walls;
-        netMeters = Math.max(0, gross - (dVoid + wVoid));
-      } else if (mode === 'VOLUME') {
-        netMeters = l * (w > 0 ? w : 1) * (h > 0 ? h : 1) * walls;
-      } else if (mode === 'LENGTH') {
-        netMeters = l * walls;
-      }
-
-      netMeters = Math.round(netMeters * 100) / 100;
-      const totalAmount = Math.round((netMeters * price) * 100) / 100;
-
-      document.getElementById('newItemCalcMeters').value = netMeters;
-      document.getElementById('newItemCalcAmount').value = totalAmount.toLocaleString() + ' ر.س';
-    }
 
     function submitNewProject() {
       const name = document.getElementById('newProjName').value.trim();
@@ -2625,7 +2677,7 @@ const htmlContent = `<!DOCTYPE html>
             p.clientName || '',
             p.mobileNumber || '',
             it.title || it.itemName || '',
-            it.jobType || '',
+            getJobLabel(it.jobType),
             it.calcMode || '',
             it.length || 0,
             it.width || 0,

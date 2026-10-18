@@ -21,6 +21,7 @@ const htmlContent = `<!DOCTYPE html>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
@@ -416,88 +417,282 @@ const htmlContent = `<!DOCTYPE html>
     .chart-panel-card { background: var(--surface); border-radius: var(--radius); padding: 1.5rem; border: 1px solid var(--border); box-shadow: var(--shadow); }
 
     /* ========================================================== */
-    /* 4. تنسيق ملفات الـ PDF المتطابقة تماماً مع كود التطبيق      */
-    /* (ProjectReportHtml & QuotationReportHtml)                  */
-    /* ========================================================== */
+    /* 4. تنسيق ملفات الـ PDF المتطابقة 100% طبق الأصل مع تطبيق Metrix */
+    /* (ProjectReportsViewModel.kt — A4 Landscape Native Replica)     */
+    /* ============================================================== */
     .pdf-report-sheet {
-      background: #ffffff;
-      max-width: 900px;
+      background: transparent;
+      max-width: 1120px;
       margin: 0 auto;
       width: 100%;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-lg);
-      padding: 2rem;
+      padding: 0;
       position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
     }
 
-    /* هيدر تقرير حصر المشروع (ProjectReportHtml) */
-    .app-report-header {
-      background: linear-gradient(180deg, #1E3A8A 0%, #172554 100%);
-      color: white;
-      padding: 20px;
-      border-radius: 14px;
-      margin-bottom: 14px;
+    /* صفحة A4 بالعرض (Landscape 842pt x 595pt) مطابقة تماماً لـ ProjectReportsViewModel.kt */
+    .metrix-native-pdf-page {
+      background: #FFFFFF;
+      width: 100%;
+      min-height: 750px;
+      padding: 36px 40px 28px 40px;
+      border-radius: 12px;
+      border: 1px solid #CBD5E1;
+      box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.12);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      direction: rtl;
+      page-break-after: always;
+      break-after: page;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
-    .app-report-header h1 { margin: 0; font-size: 22px; font-weight: 800; }
-    .app-report-header .sub { margin-top: 6px; opacity: .9; font-size: 13px; font-weight: 600; }
-    .app-report-header .chip {
-      display: inline-block;
-      padding: 5px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.16);
-      margin-top: 10px;
+    .metrix-native-pdf-page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+
+    /* الهيدر الحديث المطابق لـ drawModernReportHeader (السطور 532-691) */
+    .native-pdf-header {
+      position: relative;
+      padding-bottom: 14px;
+      border-bottom: 3px solid #4F46E5;
+      margin-bottom: 12px;
+    }
+    .native-pdf-header-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: start;
+      gap: 16px;
+    }
+    /* يمين الهيدر (RTL) */
+    .native-pdf-right {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .native-pdf-main-title {
+      font-size: 16.5px;
+      font-weight: 900;
+      color: #111827;
+      line-height: 1.3;
+    }
+    .native-pdf-sub-muted {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #64748B;
+    }
+    .native-pdf-proj-line {
       font-size: 12px;
       font-weight: 700;
+      color: #111827;
+      line-height: 1.4;
     }
 
-    /* كروت المقاييس المالية المدمجة */
-    .app-report-kpi-card {
-      background: #F9FAFB;
-      border: 1px solid #E5E7EB;
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 18px;
+    /* وسط الهيدر: الشعار الدائري + اسم القسم تحت الشعار وفوق الخط الأزرق */
+    .native-pdf-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 190px;
     }
-    .app-report-kpi-row { display: flex; justify-content: space-between; gap: 12px; }
-    .app-report-metric {
-      flex: 1;
-      background: white;
-      border: 1px solid #E5E7EB;
-      border-radius: 12px;
-      padding: 12px;
+    .native-pdf-logo-circle {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #4F46E5;
+      color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.28);
+      border: 2.5px solid #EEF2FF;
+      margin-bottom: 8px;
+      font-weight: 900;
+      position: relative;
+    }
+    .native-pdf-logo-circle .logo-dollar {
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1;
+      font-family: Arial, sans-serif;
+    }
+    .native-pdf-logo-circle .logo-sub {
+      font-size: 9px;
+      letter-spacing: 1px;
+      font-weight: 800;
+      opacity: 0.95;
+      margin-top: 2px;
+      font-family: Arial, sans-serif;
+    }
+    .native-pdf-category-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #4F46E5;
       text-align: center;
+      margin-top: 2px;
     }
-    .app-report-metric .k { color: #4B5563; font-size: 12px; font-weight: 700; }
-    .app-report-metric .v { font-size: 17px; font-weight: 800; margin-top: 4px; }
-    .app-report-metric .v.primary { color: #1E3A8A; }
-    .app-report-metric .v.accent { color: #F59E0B; }
 
-    /* جداول تقارير الـ PDF المطابقة تماماً لتطبيق الأندرويد */
-    table.app-pdf-table {
+    /* يسار الهيدر (LTR aligned on left side of page) */
+    .native-pdf-left {
+      text-align: left;
+      direction: rtl;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .native-pdf-left-box {
+      text-align: left;
+      min-width: 190px;
+    }
+    .native-pdf-left-title {
+      font-size: 15px;
+      font-weight: 900;
+      color: #111827;
+      margin-bottom: 2px;
+    }
+    .native-pdf-left-muted {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #64748B;
+    }
+    .native-pdf-left-total {
+      font-size: 12.5px;
+      font-weight: 900;
+      color: #4F46E5;
+    }
+
+    /* جدول الأقسام التفصيلي المطابق لـ drawJobTypeTable (12 عمود / 8 أعمدة) */
+    table.native-job-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
-      margin-bottom: 20px;
+      table-layout: fixed;
+      margin-top: 6px;
+      margin-bottom: auto;
+      direction: rtl;
     }
-    table.app-pdf-table th, table.app-pdf-table td {
-      border: 1px solid #E5E7EB;
-      padding: 9px;
-      font-size: 11px;
+    table.native-job-table th {
+      background-color: #4F46E5 !important;
+      color: #FFFFFF !important;
+      font-size: 11.5px;
+      font-weight: 800;
+      text-align: center;
+      vertical-align: middle;
+      padding: 8px 4px;
+      height: 44px;
+      border: 1.2px solid #D1D5DB;
+      line-height: 1.25;
+      word-wrap: break-word;
+    }
+    table.native-job-table td {
+      font-size: 12px;
+      font-weight: 600;
+      color: #111827;
+      text-align: center;
+      vertical-align: middle;
+      padding: 7px 4px;
+      height: 35px;
+      border: 1.2px solid #D1D5DB;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    table.native-job-table tbody tr:nth-child(odd) td {
+      background-color: #FFFFFF;
+    }
+    table.native-job-table tbody tr:nth-child(even) td {
+      background-color: #F8FAFC;
+    }
+    /* الخلايا غير النشطة حسب طريقة الحساب (WALLS / SURFACE) مطابقة للسطور 1039-1062 */
+    table.native-job-table tbody tr td.cell-inactive {
+      background-color: #E2E8F0 !important;
+      color: #94A3B8 !important;
+      font-weight: 700;
+    }
+    /* صف الإجمالي السفلي (#EEF2FF) مطابق للسطور 1086-1133 */
+    table.native-job-table tr.native-total-row td {
+      background-color: #EEF2FF !important;
+      font-weight: 900 !important;
+      font-size: 13px !important;
+      height: 38px;
+      border: 1.2px solid #D1D5DB;
+      color: #111827 !important;
+    }
+    table.native-job-table tr.native-total-row td.total-label-merged {
+      color: #4F46E5 !important;
+      font-size: 13.5px !important;
       text-align: center;
     }
-    table.app-pdf-table th {
-      background: #1E3A8A;
-      color: white;
+
+    /* الفوتر المطابق لـ drawFooter (السطور 1140-1164) */
+    .native-pdf-footer {
+      margin-top: 22px;
+      padding-top: 10px;
+      border-top: 1.2px solid #D1D5DB;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11.5px;
       font-weight: 700;
+      color: #64748B;
     }
-    table.app-pdf-table .totalRow {
-      background: #FEF3C7;
-      font-weight: 700;
+    .native-pdf-footer-center {
+      flex: 1;
+      text-align: center;
     }
-    table.app-pdf-table .totalRow td {
-      border-top: 2px solid #F59E0B;
+    .native-pdf-footer-page {
+      min-width: 80px;
+      text-align: right;
     }
+    .native-pdf-footer-spacer {
+      min-width: 80px;
+    }
+
+    /* ملخص المشروع المالي المطابق لـ exportProjectSummaryPdf (السطور 89-187) */
+    .native-summary-body {
+      margin-top: 14px;
+      margin-bottom: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .native-summary-section-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: #111827;
+      margin-bottom: 4px;
+      border-right: 4px solid #4F46E5;
+      padding-right: 10px;
+    }
+    .native-kv-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+    .native-kv-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13.5px;
+      color: #111827;
+      padding: 4px 0;
+      border-bottom: 1px dashed #E2E8F0;
+    }
+    .native-kv-row:last-child { border-bottom: none; }
+    .native-kv-row .kv-key { font-weight: 700; }
+    .native-kv-row .kv-val { font-weight: 800; font-family: Arial, sans-serif; direction: rtl; }
 
     /* هيدر عرض السعر التقديري (QuotationReportHtml) */
     .app-quo-banner {
@@ -542,6 +737,32 @@ const htmlContent = `<!DOCTYPE html>
     }
     .app-quo-info-row { font-size: 12px; margin-bottom: 4px; color: #334155; }
     .app-quo-info-row b { color: #0F172A; }
+
+    /* جداول تقارير عرض السعر */
+    table.app-pdf-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+    table.app-pdf-table th, table.app-pdf-table td {
+      border: 1px solid #E5E7EB;
+      padding: 9px;
+      font-size: 11px;
+      text-align: center;
+    }
+    table.app-pdf-table th {
+      background: #1E3A8A;
+      color: white;
+      font-weight: 700;
+    }
+    table.app-pdf-table .totalRow {
+      background: #FEF3C7;
+      font-weight: 700;
+    }
+    table.app-pdf-table .totalRow td {
+      border-top: 2px solid #F59E0B;
+    }
 
     .app-quo-signatures {
       display: flex;
@@ -634,25 +855,79 @@ const htmlContent = `<!DOCTYPE html>
     .grid-3col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.85rem; }
 
     /* حركات وتأثيرات */
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: scale(1); } }
     @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     @keyframes pingDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.2); } }
 
-    /* ========================================= */
-    /* 6. أنماط الطباعة الرسمية النظيفة (Print CSS) */
-    /* ========================================= */
+    /* ============================================================== */
+    /* 6. أنماط الطباعة الرسمية المطابقة للتطبيق (A4 Landscape Print) */
+    /* ============================================================== */
     @media print {
-      @page { size: A4; margin: 10mm; }
-      body { background: #ffffff !important; color: #111827 !important; margin: 0; padding: 0; font-family: Arial, sans-serif !important; }
-      .app-header, .toolbar-bar, .btn, .icon-action-btn, #authScreen, .nav-tabs-wrapper, .modal-overlay, .tab-pill, .report-nav-strip { display: none !important; }
+      @page { size: A4 landscape; margin: 8mm; }
+      body {
+        background: #ffffff !important;
+        color: #111827 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .app-header, .toolbar-bar, .btn, .icon-action-btn, #authScreen, .nav-tabs-wrapper, .modal-overlay, .tab-pill, .report-nav-strip, #toastBox {
+        display: none !important;
+      }
       #dashboardScreen { display: block !important; }
-      .app-viewport { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+      .app-viewport { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
       .tab-pane { display: none !important; }
       .tab-pane.active { display: block !important; }
-      .pdf-report-sheet { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; }
-      table.app-pdf-table th { background: #1E3A8A !important; color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .app-report-header, .app-quo-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .totalRow { background: #FEF3C7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .pdf-report-sheet {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        gap: 0 !important;
+      }
+      .metrix-native-pdf-page {
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 6mm 8mm !important;
+        min-height: 188mm !important;
+        width: 100% !important;
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+      .metrix-native-pdf-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+      table.native-job-table th {
+        background-color: #4F46E5 !important;
+        color: #FFFFFF !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      table.native-job-table tbody tr td.cell-inactive {
+        background-color: #E2E8F0 !important;
+        color: #94A3B8 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      table.native-job-table tr.native-total-row td {
+        background-color: #EEF2FF !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .native-pdf-logo-circle {
+        background-color: #4F46E5 !important;
+        color: #FFFFFF !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      table.app-pdf-table th { background: #1E3A8A !important; color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .app-report-header, .app-quo-banner { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .totalRow { background: #FEF3C7 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
   </style>
 </head>
@@ -746,8 +1021,8 @@ const htmlContent = `<!DOCTYPE html>
 
         <!-- أدوات التحكم والطباعة والخروج -->
         <div class="header-btns">
-          <button onclick="window.print()" class="btn btn-sky" title="طباعة الصفحة الحالية">
-            <i class="fa-solid fa-print"></i> طباعة
+          <button onclick="quickOpenAndPrintReport()" class="btn btn-sky" title="معاينة وطباعة تقرير PDF">
+            <i class="fa-solid fa-print"></i> طباعة PDF
           </button>
           <button onclick="exportComprehensiveExcel()" class="btn btn-emerald" title="تصدير إكسل شامل">
             <i class="fa-solid fa-file-excel"></i> إكسل
@@ -964,24 +1239,42 @@ const htmlContent = `<!DOCTYPE html>
       <!-- ========================================== -->
       <section id="tabReports" class="tab-pane">
         <div class="toolbar-bar">
-          <div class="toolbar-inputs">
+          <div class="toolbar-inputs" style="flex-wrap:wrap; gap:0.65rem;">
             <label style="font-size:0.88rem; font-weight:700;"><i class="fa-solid fa-folder"></i> المشروع:</label>
             <select id="reportProjectSelect" onchange="renderActiveReport()" class="custom-select"></select>
 
-            <!-- التبديل بين نوعي التقرير المطابقين تماماً للتطبيق -->
-            <div class="report-nav-strip" style="display:flex; background:#f1f5f9; padding:0.25rem; border-radius:0.65rem; gap:0.25rem; margin-right:0.5rem;">
-              <button onclick="setReportType('projectReport')" id="btnReportTypeProject" class="tab-pill active" style="padding:0.4rem 0.9rem; font-size:0.82rem;">
-                <i class="fa-solid fa-file-lines"></i> تقرير حصر كميات المشروع
+            <label id="reportJobTypeLabel" style="font-size:0.88rem; font-weight:700;"><i class="fa-solid fa-layer-group"></i> القسم:</label>
+            <select id="reportJobTypeSelect" onchange="renderActiveReport()" class="custom-select">
+              <option value="ALL">جميع الأقسام (صفحة لكل قسم)</option>
+              <option value="PLASTER_IN">تلييس داخلي</option>
+              <option value="PLASTER_OUT">تلييس خارجي</option>
+              <option value="PAINT_IN">دهانات داخلية</option>
+              <option value="PAINT_OUT">دهانات خارجية</option>
+              <option value="TILES">بلاط</option>
+              <option value="DOORS">أبواب</option>
+              <option value="WINDOWS">نوافذ</option>
+            </select>
+
+            <!-- التبديل بين أنواع التقارير المطابقة تماماً للتطبيق -->
+            <div class="report-nav-strip" style="display:flex; background:#f1f5f9; padding:0.25rem; border-radius:0.65rem; gap:0.25rem; margin-right:0.25rem;">
+              <button onclick="setReportType('jobTablesReport')" id="btnReportTypeProject" class="tab-pill active" style="padding:0.4rem 0.85rem; font-size:0.81rem;">
+                <i class="fa-solid fa-table-cells"></i> كشف حساب الأقسام (مطابق للتطبيق)
               </button>
-              <button onclick="setReportType('quotationReport')" id="btnReportTypeQuo" class="tab-pill" style="padding:0.4rem 0.9rem; font-size:0.82rem;">
-                <i class="fa-solid fa-file-contract"></i> عرض سعر تقديري رسمي
+              <button onclick="setReportType('projectSummaryReport')" id="btnReportTypeSummary" class="tab-pill" style="padding:0.4rem 0.85rem; font-size:0.81rem;">
+                <i class="fa-solid fa-file-invoice-dollar"></i> ملخص المشروع المالي
+              </button>
+              <button onclick="setReportType('quotationReport')" id="btnReportTypeQuo" class="tab-pill" style="padding:0.4rem 0.85rem; font-size:0.81rem;">
+                <i class="fa-solid fa-file-contract"></i> عرض سعر تقديري
               </button>
             </div>
           </div>
 
-          <div style="display:flex; gap:0.75rem; align-items:center;">
-            <button onclick="window.print()" class="btn btn-primary">
-              <i class="fa-solid fa-print"></i> طباعة كـ PDF (A4)
+          <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+            <button onclick="downloadDirectPdfFile()" id="btnDownloadDirectPdf" class="btn btn-emerald" title="تنزيل ملف PDF مباشر جاهز للمشاركة">
+              <i class="fa-solid fa-file-arrow-down"></i> تحميل ملف PDF
+            </button>
+            <button onclick="window.print()" class="btn btn-primary" title="طباعة رسمية بحجم A4 عرضي">
+              <i class="fa-solid fa-print"></i> طباعة PDF (A4)
             </button>
           </div>
         </div>
@@ -1439,7 +1732,7 @@ const htmlContent = `<!DOCTYPE html>
     let pendingDeleteType = '';
     let pendingDeleteId = null;
 
-    let activeReportType = 'projectReport'; // 'projectReport' or 'quotationReport'
+    let activeReportType = 'jobTablesReport'; // 'jobTablesReport', 'projectSummaryReport', or 'quotationReport'
 
     let pieChartInstance = null;
     let barChartInstance = null;
@@ -1581,7 +1874,7 @@ const htmlContent = `<!DOCTYPE html>
     // إدارة التبويبات
     function switchTab(tabId) {
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-pill').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tabs-wrapper .tab-pill').forEach(el => el.classList.remove('active'));
 
       const target = document.getElementById(tabId);
       if (target) target.classList.add('active');
@@ -1603,14 +1896,31 @@ const htmlContent = `<!DOCTYPE html>
     // تبديل نوع التقرير
     function setReportType(type) {
       activeReportType = type;
-      if (type === 'projectReport') {
-        document.getElementById('btnReportTypeProject').classList.add('active');
-        document.getElementById('btnReportTypeQuo').classList.remove('active');
-      } else {
-        document.getElementById('btnReportTypeQuo').classList.add('active');
-        document.getElementById('btnReportTypeProject').classList.remove('active');
-      }
+      const btnJob = document.getElementById('btnReportTypeProject');
+      const btnSum = document.getElementById('btnReportTypeSummary');
+      const btnQuo = document.getElementById('btnReportTypeQuo');
+      if (btnJob) btnJob.classList.toggle('active', type === 'jobTablesReport');
+      if (btnSum) btnSum.classList.toggle('active', type === 'projectSummaryReport');
+      if (btnQuo) btnQuo.classList.toggle('active', type === 'quotationReport');
+
+      const jobSel = document.getElementById('reportJobTypeSelect');
+      const jobLbl = document.getElementById('reportJobTypeLabel');
+      const showJobFilter = (type === 'jobTablesReport');
+      if (jobSel) jobSel.style.display = showJobFilter ? 'inline-block' : 'none';
+      if (jobLbl) jobLbl.style.display = showJobFilter ? 'inline-block' : 'none';
+
       renderActiveReport();
+    }
+
+    function quickOpenAndPrintReport(projectId) {
+      if (projectId !== undefined && projectId !== null) {
+        const repSel = document.getElementById('reportProjectSelect');
+        if (repSel) repSel.value = String(projectId);
+      }
+      switchTab('tabReports');
+      setTimeout(() => {
+        window.print();
+      }, 180);
     }
 
     // تعبئة قوائم المشاريع المنسدلة
@@ -1693,6 +2003,19 @@ const htmlContent = `<!DOCTYPE html>
       return t;
     }
 
+    // العناوين الرسمية للأقسام كما تظهر في هيدر PDF التطبيق (JobTypes.getTitleRes)
+    function getReportCategoryTitle(jobType) {
+      const code = normalizeJobCode(jobType);
+      if (code === 'PLASTER_IN') return 'تلييس داخلي';
+      if (code === 'PLASTER_OUT') return 'تلييس خارجي';
+      if (code === 'PAINT_IN') return 'دهانات داخلية';
+      if (code === 'PAINT_OUT') return 'دهانات خارجية';
+      if (code === 'TILES') return 'أعمال البلاط';
+      if (code === 'DOORS') return 'أعمال الأبواب';
+      if (code === 'WINDOWS') return 'أعمال النوافذ';
+      return getJobLabel(jobType);
+    }
+
     function getJobBadgeClass(jobType) {
       if (!jobType) return 'job-other';
       const t = String(jobType).toUpperCase();
@@ -1769,10 +2092,11 @@ const htmlContent = `<!DOCTYPE html>
             '</div>' +
           '</div>' +
           '<div class="proj-card-footer">' +
-            '<div class="proj-action-group">' +
-              '<button onclick="filterByProjectAndOpenItems(' + p.id + ')" class="btn btn-sky" style="padding:0.35rem 0.65rem; font-size:0.8rem;"><i class="fa-solid fa-ruler"></i> البنود (' + items.length + ')</button>' +
-              '<button onclick="filterByProjectAndOpenPayments(' + p.id + ')" class="btn btn-amber" style="padding:0.35rem 0.65rem; font-size:0.8rem;"><i class="fa-solid fa-file-invoice"></i> الدفعات</button>' +
-              '<button onclick="openEditProjectModal(' + p.id + ')" class="btn btn-outline" style="padding:0.35rem 0.65rem; font-size:0.8rem;"><i class="fa-solid fa-pen"></i> تعديل</button>' +
+            '<div class="proj-action-group" style="flex-wrap:wrap;">' +
+              '<button onclick="filterByProjectAndOpenItems(' + p.id + ')" class="btn btn-sky" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-ruler"></i> البنود (' + items.length + ')</button>' +
+              '<button onclick="filterByProjectAndOpenPayments(' + p.id + ')" class="btn btn-amber" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-file-invoice"></i> الدفعات</button>' +
+              '<button onclick="openProjectReportPreview(' + p.id + ')" class="btn btn-primary" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-file-pdf"></i> PDF</button>' +
+              '<button onclick="openEditProjectModal(' + p.id + ')" class="btn btn-outline" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-pen"></i> تعديل</button>' +
             '</div>' +
             '<button onclick="requestDeleteProject(' + p.id + ')" class="icon-action-btn btn-action-delete" title="حذف المشروع نهائياً"><i class="fa-solid fa-trash-can"></i></button>' +
           '</div>';
@@ -1793,6 +2117,12 @@ const htmlContent = `<!DOCTYPE html>
       document.getElementById('kpiItemsCount').textContent = totalItems;
       document.getElementById('kpiTotalAmount').textContent = totalAmount.toLocaleString() + ' ر.س';
       document.getElementById('kpiTotalPaid').textContent = totalPaid.toLocaleString() + ' ر.س';
+    }
+
+    function openProjectReportPreview(projectId) {
+      const repSel = document.getElementById('reportProjectSelect');
+      if (repSel) repSel.value = String(projectId);
+      switchTab('tabReports');
     }
 
     function filterByProjectAndOpenItems(projectId) {
@@ -1988,17 +2318,304 @@ const htmlContent = `<!DOCTYPE html>
       }
     }
 
-    // ==========================================================
-    // 5. عرض تقارير الـ PDF المطابقة تماماً لكود تطبيق Metrix
-    // (ProjectReportHtml.kt & QuotationReportHtml.kt)
-    // ==========================================================
+    // =========================================================================
+    // 5. محرك تقارير الـ PDF المطابق 100% طبق الأصل لكود ProjectReportsViewModel.kt
+    // =========================================================================
+    function getItemTotalVoid(it) {
+      const explicitVoid = Number(it.voidArea);
+      if (!isNaN(explicitVoid) && explicitVoid > 0) return explicitVoid;
+      return Math.max(0, (Number(it.doorsVoid) || 0) + (Number(it.windowsVoid) || 0));
+    }
+
+    function computePdfWallArea(it) {
+      const l = Math.max(0, Number(it.length) || 0);
+      const w = Math.max(0, Number(it.width) || 0);
+      const h = Math.max(0, Number(it.height) || 0);
+      const v = getItemTotalVoid(it);
+      const fullPerimeter = 2.0 * (l + w);
+      const wcRaw = it.wallCount !== undefined && it.wallCount !== null ? Number(it.wallCount) : 4;
+      const wc = Math.min(4, Math.max(0, wcRaw));
+      const wallsRatio = wc / 4.0;
+      return Math.max(0, (fullPerimeter * h * wallsRatio) - v);
+    }
+
+    function computePdfCeilingArea(it) {
+      const l = Math.max(0, Number(it.length) || 0);
+      const w = Math.max(0, Number(it.width) || 0);
+      const v = getItemTotalVoid(it);
+      return Math.max(0, (l * w) - v);
+    }
+
+    function computePdfTotalArea(jobCode, it) {
+      const code = normalizeJobCode(jobCode);
+      const mode = String(it.calcMode || 'WALLS').trim().toUpperCase();
+      if (code === 'PLASTER_IN' || code === 'PLASTER_OUT' || code === 'PAINT_IN' || code === 'PAINT_OUT') {
+        const wall = computePdfWallArea(it);
+        const ceil = computePdfCeilingArea(it);
+        if (mode === 'SURFACE') return ceil;
+        if (mode === 'BOTH') return wall + ceil;
+        return wall;
+      }
+      if (code === 'TILES') {
+        const l = Math.max(0, Number(it.length) || 0);
+        const w = Math.max(0, Number(it.width) || 0);
+        const h = Math.max(0, Number(it.height) || 0);
+        const v = getItemTotalVoid(it);
+        const wcRaw = it.wallCount !== undefined && it.wallCount !== null ? Number(it.wallCount) : 4;
+        const wallsRatio = Math.min(4, Math.max(0, wcRaw)) / 4.0;
+        const fullPerimeter = 2.0 * (l + w);
+        const floorGross = Math.max(0, l * w);
+        const wallGross = Math.max(0, fullPerimeter * h * wallsRatio);
+        let gross = floorGross;
+        if (mode === 'WALLS') gross = wallGross;
+        else if (mode === 'BOTH') gross = wallGross + floorGross;
+        return Math.max(0, gross - v);
+      }
+      if (code === 'DOORS' || code === 'WINDOWS') {
+        const l = Math.max(0, Number(it.length) || 0);
+        const w = Math.max(0, Number(it.width) || 0);
+        const q = Math.max(1, Number(it.quantity) || Number(it.wallCount) || 1);
+        return (l > 0 && w > 0) ? ((l * w) * q) : (1.0 * q);
+      }
+      return Math.max(0, Number(it.totalMeters) || 0);
+    }
+
+    // بناء الهيدر المطابق لـ drawModernReportHeader (السطور 532-691 من ProjectReportsViewModel.kt)
+    function buildModernReportHeaderHtml(proj, reportTitle, totalText, dateStr, categoryTitle) {
+      let rightDetailsHtml = '';
+      if (proj.name) rightDetailsHtml += '<div class="native-pdf-proj-line">' + proj.name + '</div>';
+      if (proj.clientName) rightDetailsHtml += '<div class="native-pdf-proj-line">' + proj.clientName + '</div>';
+      if (proj.description) rightDetailsHtml += '<div class="native-pdf-proj-line">' + proj.description + '</div>';
+      if (proj.projectInfo) rightDetailsHtml += '<div class="native-pdf-proj-line">' + proj.projectInfo + '</div>';
+
+      return (
+        '<div class="native-pdf-header">' +
+          '<div class="native-pdf-header-grid">' +
+            '<div class="native-pdf-right">' +
+              '<div class="native-pdf-main-title">' + reportTitle + '</div>' +
+              rightDetailsHtml +
+            '</div>' +
+            '<div class="native-pdf-center">' +
+              '<div class="native-pdf-logo-circle">' +
+                '<span class="logo-dollar">$</span>' +
+                '<span class="logo-sub">METRIX</span>' +
+              '</div>' +
+              (categoryTitle ? ('<div class="native-pdf-category-title">' + categoryTitle + '</div>') : '') +
+            '</div>' +
+            '<div class="native-pdf-left">' +
+              '<div class="native-pdf-left-box">' +
+                '<div class="native-pdf-left-title">كشف الحساب</div>' +
+                '<div class="native-pdf-left-muted">التاريخ: <span dir="ltr">' + dateStr + '</span></div>' +
+                (totalText ? ('<div class="native-pdf-left-total">الإجمالي: ' + totalText + '</div>') : '') +
+                '<div class="native-pdf-left-muted">الفترة: كل الوقت</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    // بناء الفوتر المطابق لـ drawFooter (السطور 1140-1164 من ProjectReportsViewModel.kt)
+    function buildNativeFooterHtml(pageNumber) {
+      return (
+        '<div class="native-pdf-footer">' +
+          '<div class="native-pdf-footer-page">صفحة ' + pageNumber + '</div>' +
+          '<div class="native-pdf-footer-center">تقرير مُنشأ بواسطة Metrix</div>' +
+          '<div class="native-pdf-footer-spacer"></div>' +
+        '</div>'
+      );
+    }
+
+    // بناء صفحة جدول قسم تفصيلي مطابق لـ drawJobTypeTable (12 عمود أو 8 أعمدة)
+    function buildJobTypeTablePageHtml(proj, jobCode, sectionItems, dateStr, pageNum) {
+      const code = normalizeJobCode(jobCode);
+      const isDoorsOrWindows = (code === 'DOORS' || code === 'WINDOWS');
+      const isTiles = (code === 'TILES');
+      const categoryTitle = getReportCategoryTitle(code);
+
+      let sumArea = 0;
+      let sumCost = 0;
+
+      sectionItems.forEach(it => {
+        const area = computePdfTotalArea(code, it);
+        const price = Math.max(0, Number(it.pricePerMeter) || 0);
+        sumArea += area;
+        sumCost += (area * price);
+      });
+
+      const totalForTypeText = Math.round(sumCost).toLocaleString('en-US') + ' ريال';
+      const headerHtml = buildModernReportHeaderHtml(
+        proj,
+        'ميتركس المعماري للحسابات الذكية',
+        totalForTypeText,
+        dateStr,
+        categoryTitle
+      );
+
+      let tableHtml = '';
+
+      if (isDoorsOrWindows) {
+        // جدول الأبواب والنوافذ (8 أعمدة من اليمين لليسار - مطابق للسطور 791-817)
+        // الأوزان: 30, 220, 90, 90, 90, 140, 100, 140 (المجموع 900)
+        let rowsHtml = '';
+        sectionItems.forEach((it, idx) => {
+          const l = Math.max(0, Number(it.length) || 0);
+          const w = Math.max(0, Number(it.width) || 0);
+          const q = Math.max(1, Number(it.quantity) || Number(it.wallCount) || 1);
+          const totalVal = computePdfTotalArea(code, it);
+          const price = Math.max(0, Number(it.pricePerMeter) || 0);
+          const cost = totalVal * price;
+
+          rowsHtml +=
+            '<tr>' +
+              '<td>' + (idx + 1) + '</td>' +
+              '<td style="font-weight:700;">' + (it.title || it.itemName || '-') + '</td>' +
+              '<td>' + l.toFixed(1) + '</td>' +
+              '<td>' + w.toFixed(1) + '</td>' +
+              '<td>' + q + '</td>' +
+              '<td>' + totalVal.toFixed(1) + '</td>' +
+              '<td>' + price.toFixed(1) + '</td>' +
+              '<td style="font-weight:800;">' + Math.round(cost).toLocaleString('en-US') + '</td>' +
+            '</tr>';
+        });
+
+        tableHtml =
+          '<table class="native-job-table">' +
+            '<colgroup>' +
+              '<col style="width:3.33%;">' +
+              '<col style="width:24.44%;">' +
+              '<col style="width:10.00%;">' +
+              '<col style="width:10.00%;">' +
+              '<col style="width:10.00%;">' +
+              '<col style="width:15.56%;">' +
+              '<col style="width:11.11%;">' +
+              '<col style="width:15.56%;">' +
+            '</colgroup>' +
+            '<thead>' +
+              '<tr>' +
+                '<th>م</th>' +
+                '<th>الاسم</th>' +
+                '<th>الطول (م)</th>' +
+                '<th>العرض (م)</th>' +
+                '<th>العدد</th>' +
+                '<th>الإجمالي</th>' +
+                '<th>سعر القطعة (ريال)</th>' +
+                '<th>التكلفة (ريال)</th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody>' +
+              rowsHtml +
+              '<tr class="native-total-row">' +
+                '<td colspan="5" class="total-label-merged">الإجمالي</td>' +
+                '<td>' + sumArea.toFixed(1) + '</td>' +
+                '<td></td>' +
+                '<td>' + Math.round(sumCost).toLocaleString('en-US') + '</td>' +
+              '</tr>' +
+            '</tbody>' +
+          '</table>';
+      } else {
+        // جدول اللياسة والدهانات والبلاط (12 عمود من اليمين لليسار - مطابق للسطور 818-851)
+        // الأوزان: 30, 140, 60, 60, 60, 70, 70, 70, 70, 90, 80, 90 (المجموع 890)
+        const col9Title = isTiles ? 'أرضيات (م²)' : 'سقف (م²)';
+        let rowsHtml = '';
+
+        sectionItems.forEach((it, idx) => {
+          const mode = String(it.calcMode || 'WALLS').trim().toUpperCase();
+          const l = Math.max(0, Number(it.length) || 0);
+          const w = Math.max(0, Number(it.width) || 0);
+          const h = Math.max(0, Number(it.height) || 0);
+          const wcRaw = it.wallCount !== undefined && it.wallCount !== null ? Number(it.wallCount) : 4;
+          const v = getItemTotalVoid(it);
+
+          const wall = (mode === 'SURFACE') ? 0.0 : computePdfWallArea(it);
+          const floorOrCeil = (mode === 'WALLS') ? 0.0 : computePdfCeilingArea(it);
+          const totalArea = computePdfTotalArea(code, it);
+          const price = Math.max(0, Number(it.pricePerMeter) || 0);
+          const cost = totalArea * price;
+
+          // تظليل الخلايا غير النشطة باللون الرمادي #E2E8F0 وعلامة "-" تماماً مثل التطبيق (السطور 1039-1062)
+          const isSurfaceOnly = (mode === 'SURFACE');
+          const isWallsOnly = (mode === 'WALLS');
+
+          rowsHtml +=
+            '<tr>' +
+              '<td>' + (idx + 1) + '</td>' +
+              '<td style="font-weight:700;">' + (it.title || it.itemName || '-') + '</td>' +
+              '<td>' + l.toFixed(1) + '</td>' +
+              '<td>' + w.toFixed(1) + '</td>' +
+              (isSurfaceOnly ? '<td class="cell-inactive">-</td>' : ('<td>' + h.toFixed(1) + '</td>')) +
+              (isSurfaceOnly ? '<td class="cell-inactive">-</td>' : ('<td>' + wcRaw.toFixed(0) + '</td>')) +
+              (isSurfaceOnly ? '<td class="cell-inactive">-</td>' : ('<td>' + v.toFixed(1) + '</td>')) +
+              (isSurfaceOnly ? '<td class="cell-inactive">-</td>' : ('<td>' + wall.toFixed(1) + '</td>')) +
+              (isWallsOnly ? '<td class="cell-inactive">-</td>' : ('<td>' + floorOrCeil.toFixed(1) + '</td>')) +
+              '<td style="font-weight:700;">' + totalArea.toFixed(1) + '</td>' +
+              '<td>' + price.toFixed(1) + '</td>' +
+              '<td style="font-weight:800;">' + Math.round(cost).toLocaleString('en-US') + '</td>' +
+            '</tr>';
+        });
+
+        tableHtml =
+          '<table class="native-job-table">' +
+            '<colgroup>' +
+              '<col style="width:3.37%;">' +
+              '<col style="width:15.73%;">' +
+              '<col style="width:6.74%;">' +
+              '<col style="width:6.74%;">' +
+              '<col style="width:6.74%;">' +
+              '<col style="width:7.87%;">' +
+              '<col style="width:7.87%;">' +
+              '<col style="width:7.87%;">' +
+              '<col style="width:7.87%;">' +
+              '<col style="width:10.11%;">' +
+              '<col style="width:8.98%;">' +
+              '<col style="width:10.11%;">' +
+            '</colgroup>' +
+            '<thead>' +
+              '<tr>' +
+                '<th>م</th>' +
+                '<th>الاسم</th>' +
+                '<th>الطول (م)</th>' +
+                '<th>العرض (م)</th>' +
+                '<th>الارتفاع (م)</th>' +
+                '<th>عدد الجدران</th>' +
+                '<th>الفراغات (م²)</th>' +
+                '<th>حوائط (م²)</th>' +
+                '<th>' + col9Title + '</th>' +
+                '<th>إجمالي المساحة (م²)</th>' +
+                '<th>سعر المتر (ريال)</th>' +
+                '<th>التكلفة (ريال)</th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody>' +
+              rowsHtml +
+              '<tr class="native-total-row">' +
+                '<td colspan="9" class="total-label-merged">الإجمالي</td>' +
+                '<td>' + sumArea.toFixed(1) + '</td>' +
+                '<td></td>' +
+                '<td>' + Math.round(sumCost).toLocaleString('en-US') + '</td>' +
+              '</tr>' +
+            '</tbody>' +
+          '</table>';
+      }
+
+      return (
+        '<div class="metrix-native-pdf-page">' +
+          '<div>' +
+            headerHtml +
+            tableHtml +
+          '</div>' +
+          buildNativeFooterHtml(pageNum) +
+        '</div>'
+      );
+    }
+
     function renderActiveReport() {
       const viewer = document.getElementById('pdfReportViewer');
       const pId = document.getElementById('reportProjectSelect').value;
       const proj = globalProjectsData.find(p => String(p.id) === String(pId)) || globalProjectsData[0];
 
       if (!proj) {
-        viewer.innerHTML = '<div style="text-align:center; padding:3rem; color:#94a3b8;">يرجى إضافة مشروع أولاً لعرض التقرير المنسق</div>';
+        viewer.innerHTML = '<div style="background:#fff; border-radius:1rem; padding:3rem; text-align:center; color:#94a3b8; border:1px solid #e2e8f0;">يرجى إضافة مشروع أولاً لعرض التقرير المنسق</div>';
         return;
       }
 
@@ -2009,178 +2626,256 @@ const htmlContent = `<!DOCTYPE html>
       const remaining = Math.max(0, totalAmount - totalPaid);
       const dateStr = new Date().toISOString().split('T')[0];
 
-      if (activeReportType === 'projectReport') {
-        // ==========================================================
-        // تقرير حصر كميات المشروع (طِبق الأصل من ProjectReportHtml.kt)
-        // ==========================================================
-        const grouped = {};
-        const totalsByJob = {};
+      if (activeReportType === 'jobTablesReport') {
+        // =========================================================================
+        // 1. كشف حساب الأقسام التفصيلي (مطابق 100% لـ exportJobTypePdf في التطبيق)
+        // =========================================================================
+        const selJobFilter = (document.getElementById('reportJobTypeSelect') || {}).value || 'ALL';
+        const orderedCodes = ['PLASTER_IN', 'PLASTER_OUT', 'PAINT_IN', 'PAINT_OUT', 'TILES', 'DOORS', 'WINDOWS'];
+        const groupedByCode = {};
 
         items.forEach(it => {
-          const j = getJobLabel(it.jobType);
-          if (!grouped[j]) {
-            grouped[j] = [];
-            totalsByJob[j] = { totalMeters: 0, totalAmount: 0 };
-          }
-          const m = Number(it.totalMeters || it.quantity || 0);
-          const a = Number(it.totalAmount || 0);
-          totalsByJob[j].totalMeters += m;
-          totalsByJob[j].totalAmount += a;
-          grouped[j].push(it);
+          const code = normalizeJobCode(it.jobType);
+          if (!groupedByCode[code]) groupedByCode[code] = [];
+          groupedByCode[code].push(it);
         });
 
-        let jobSummaryRows = '';
-        let jobIdx = 1;
-        for (const j in totalsByJob) {
-          jobSummaryRows += '<tr>' +
-            '<td style="width: 8%;">' + (jobIdx++) + '</td>' +
-            '<td style="font-weight:700;">' + j + '</td>' +
-            '<td>' + totalsByJob[j].totalMeters.toFixed(2) + '</td>' +
-            '<td style="font-weight:700;">' + totalsByJob[j].totalAmount.toLocaleString() + ' ر.س</td>' +
-            '</tr>';
+        let pagesHtml = '';
+        let pageCounter = 1;
+
+        if (selJobFilter !== 'ALL') {
+          const targetItems = groupedByCode[selJobFilter] || [];
+          pagesHtml = buildJobTypeTablePageHtml(proj, selJobFilter, targetItems, dateStr, 1);
+        } else {
+          // عرض صفحة مستقلة لكل قسم يحتوي على بنود بالترتيب القياسي للتطبيق
+          orderedCodes.forEach(code => {
+            if (groupedByCode[code] && groupedByCode[code].length > 0) {
+              pagesHtml += buildJobTypeTablePageHtml(proj, code, groupedByCode[code], dateStr, pageCounter++);
+            }
+          });
+          // إن لم يكن في المشروع أي بنود بعد، نعرض جدول تلييس داخلي فارغ كمعاينة مطابقة للتطبيق
+          if (!pagesHtml) {
+            pagesHtml = buildJobTypeTablePageHtml(proj, 'PLASTER_IN', [], dateStr, 1);
+          }
         }
 
-        let detailedSections = '';
-        for (const j in grouped) {
-          let itemRows = '';
-          let subtotal = 0;
-          grouped[j].forEach((it, idx) => {
-            const amt = Number(it.totalAmount || 0);
-            subtotal += amt;
-            const m = Number(it.totalMeters || it.quantity || 0);
-            itemRows += '<tr>' +
-              '<td style="width: 8%;">' + (idx + 1) + '</td>' +
-              '<td style="font-weight:600;">' + (it.title || it.itemName || '-') + '</td>' +
-              '<td>' + m.toFixed(2) + '</td>' +
-              '<td>' + amt.toLocaleString() + ' ر.س</td>' +
-              '</tr>';
-          });
+        viewer.innerHTML = pagesHtml;
 
-          detailedSections += '<h2 style="margin: 20px 0 10px; font-size: 15px; font-weight: 800; color: #111827;">تفاصيل البنود: ' + j + '</h2>' +
-            '<table class="app-pdf-table">' +
-              '<thead><tr><th style="width: 8%;">#</th><th>البند</th><th>الكمية</th><th>الإجمالي (ر.س)</th></tr></thead>' +
-              '<tbody>' +
-                itemRows +
-                '<tr class="totalRow"><td colspan="2">مجموع ' + j + '</td><td style="color:#6B7280;">—</td><td>' + subtotal.toLocaleString() + ' ر.س</td></tr>' +
-              '</tbody>' +
-            '</table>';
+      } else if (activeReportType === 'projectSummaryReport') {
+        // =========================================================================
+        // 2. ملخص المشروع المالي (مطابق 100% لـ exportProjectSummaryPdf في التطبيق)
+        // =========================================================================
+        const totalFormatted = totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const paidFormatted = totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const remFormatted = remaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const headerHtml = buildModernReportHeaderHtml(
+          proj,
+          'ملخص المشروع',
+          totalFormatted + ' ريال',
+          dateStr,
+          ''
+        );
+
+        const totalsByJob = {};
+        items.forEach(it => {
+          const code = normalizeJobCode(it.jobType);
+          const label = getReportCategoryTitle(code);
+          const area = computePdfTotalArea(code, it);
+          const cost = area * Math.max(0, Number(it.pricePerMeter) || 0);
+          if (!totalsByJob[label]) totalsByJob[label] = 0;
+          totalsByJob[label] += cost;
+        });
+
+        let breakdownRowsHtml = '';
+        let idx = 1;
+        for (const label in totalsByJob) {
+          const valFormatted = totalsByJob[label].toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          breakdownRowsHtml +=
+            '<div class="native-kv-row">' +
+              '<span class="kv-key">' + (idx++) + '. ' + label + '</span>' +
+              '<span class="kv-val">' + valFormatted + ' ر.س</span>' +
+            '</div>';
+        }
+        if (!breakdownRowsHtml) {
+          breakdownRowsHtml = '<div style="color:#94a3b8; font-size:13px; text-align:center; padding:8px;">لا توجد بنود مسجلة بعد</div>';
         }
 
         viewer.innerHTML =
-          '<div class="app-report-header">' +
-            '<h1>تقرير حصر كميات المشروع</h1>' +
-            '<div class="sub"><b>' + (proj.name || 'مشروع بدون اسم') + '</b></div>' +
-            (proj.clientName ? ('<div class="sub">العميل: <b>' + proj.clientName + '</b></div>') : '') +
-            '<div class="sub">التاريخ: <b>' + dateStr + '</b></div>' +
-            '<div class="chip">Metrix</div>' +
-          '</div>' +
-
-          '<div class="app-report-kpi-card">' +
-            '<div class="app-report-kpi-row">' +
-              '<div class="app-report-metric">' +
-                '<div class="k">إجمالي التكاليف</div>' +
-                '<div class="v primary">' + totalAmount.toLocaleString() + ' ر.س</div>' +
-              '</div>' +
-              '<div class="app-report-metric">' +
-                '<div class="k">المدفوع</div>' +
-                '<div class="v" style="color:var(--emerald);">' + totalPaid.toLocaleString() + ' ر.س</div>' +
-              '</div>' +
-              '<div class="app-report-metric">' +
-                '<div class="k">المتبقي</div>' +
-                '<div class="v accent">' + remaining.toLocaleString() + ' ر.س</div>' +
+          '<div class="metrix-native-pdf-page">' +
+            '<div>' +
+              headerHtml +
+              '<div class="native-summary-body">' +
+                '<div>' +
+                  '<div class="native-summary-section-title">الملخص المالي</div>' +
+                  '<div class="native-kv-list">' +
+                    '<div class="native-kv-row">' +
+                      '<span class="kv-key">إجمالي التكاليف</span>' +
+                      '<span class="kv-val" style="color:#4F46E5;">' + totalFormatted + ' ر.س</span>' +
+                    '</div>' +
+                    '<div class="native-kv-row">' +
+                      '<span class="kv-key">المدفوع</span>' +
+                      '<span class="kv-val" style="color:#059669;">' + paidFormatted + ' ر.س</span>' +
+                    '</div>' +
+                    '<div class="native-kv-row">' +
+                      '<span class="kv-key">المتبقي</span>' +
+                      '<span class="kv-val" style="color:#DC2626;">' + remFormatted + ' ر.س</span>' +
+                    '</div>' +
+                    (proj.clientName ? (
+                      '<div class="native-kv-row">' +
+                        '<span class="kv-key">العميل</span>' +
+                        '<span class="kv-val">' + proj.clientName + '</span>' +
+                      '</div>'
+                    ) : '') +
+                  '</div>' +
+                '</div>' +
+                (proj.projectInfo ? (
+                  '<div>' +
+                    '<div class="native-summary-section-title">معلومات المشروع</div>' +
+                    '<div class="native-kv-list" style="font-size:13px; color:#111827; line-height:1.6;">' + proj.projectInfo + '</div>' +
+                  '</div>'
+                ) : '') +
+                '<div>' +
+                  '<div class="native-summary-section-title">توزيع التكاليف حسب نوع العمل</div>' +
+                  '<div class="native-kv-list">' +
+                    breakdownRowsHtml +
+                  '</div>' +
+                '</div>' +
               '</div>' +
             '</div>' +
-          '</div>' +
-
-          '<h2 style="margin: 18px 0 10px; font-size: 15px; font-weight: 800; color: #111827;">توزيع التكاليف حسب نوع العمل</h2>' +
-          '<table class="app-pdf-table">' +
-            '<thead><tr><th style="width: 8%;">#</th><th>نوع العمل</th><th>الكمية</th><th>الإجمالي (ر.س)</th></tr></thead>' +
-            '<tbody>' +
-              jobSummaryRows +
-              '<tr class="totalRow"><td colspan="2">الإجمالي</td><td style="color:#6B7280;">—</td><td>' + totalAmount.toLocaleString() + ' ر.س</td></tr>' +
-            '</tbody>' +
-          '</table>' +
-
-          detailedSections;
+            buildNativeFooterHtml(1) +
+          '</div>';
 
       } else {
         // ==========================================================
-        // عرض سعر تقديري رسمي (طِبق الأصل من QuotationReportHtml.kt)
+        // 3. عرض سعر تقديري رسمي
         // ==========================================================
         let totalMeters = 0;
         let itemRows = '';
 
         items.forEach((it, idx) => {
-          const m = Number(it.totalMeters || it.quantity || 0);
+          const code = normalizeJobCode(it.jobType);
+          const m = computePdfTotalArea(code, it);
           const p = Number(it.pricePerMeter || 0);
-          const amt = Number(it.totalAmount || (m * p));
+          const amt = m * p;
           totalMeters += m;
 
           itemRows += '<tr>' +
             '<td style="width: 8%;">' + (idx + 1) + '</td>' +
-            '<td style="text-align: right; padding-right: 15px; font-weight: 600;">' + (it.title || it.itemName || '-') + '</td>' +
+            '<td style="text-align: right; padding-right: 15px; font-weight: 600;">' + (it.title || it.itemName || '-') + ' (' + getJobLabel(code) + ')</td>' +
             '<td>' + m.toFixed(2) + ' م²</td>' +
-            '<td>' + p.toLocaleString() + '</td>' +
-            '<td><b>' + amt.toLocaleString() + '</b></td>' +
+            '<td>' + p.toLocaleString('en-US') + '</td>' +
+            '<td><b>' + Math.round(amt).toLocaleString('en-US') + '</b></td>' +
             '</tr>';
         });
 
         viewer.innerHTML =
-          '<div class="app-quo-banner">' +
-            '<h1>عرض سعر تقديري</h1>' +
-            '<span class="badge">ميتركس المعماري للحسابات الذكية</span>' +
-          '</div>' +
+          '<div class="metrix-native-pdf-page">' +
+            '<div>' +
+              '<div class="app-quo-banner">' +
+                '<h1>عرض سعر تقديري</h1>' +
+                '<span class="badge">ميتركس المعماري للحسابات الذكية</span>' +
+              '</div>' +
 
-          '<div class="app-quo-info-grid">' +
-            '<div class="app-quo-info-card">' +
-              '<h3>بيانات مقدم العرض (المقاول)</h3>' +
-              '<div class="app-quo-info-row"><b>مؤسسة / مقاول معتمد</b></div>' +
-              '<div class="app-quo-info-row">العنوان: <b>المملكة العربية السعودية</b></div>' +
-              '<div class="app-quo-info-row">رقم الجوال: <b dir="ltr">' + toEnglishDigits(proj.mobileNumber || '—') + '</b></div>' +
-            '</div>' +
-            '<div class="app-quo-info-card">' +
-              '<h3>بيانات العميل</h3>' +
-              '<div class="app-quo-info-row"><b>' + (proj.clientName || 'عميلنا العزيز') + '</b></div>' +
-              '<div class="app-quo-info-row">المشروع: <b>' + (proj.name || '—') + '</b></div>' +
-              '<div class="app-quo-info-row">تاريخ العرض: <b>' + dateStr + '</b></div>' +
-            '</div>' +
-          '</div>' +
+              '<div class="app-quo-info-grid">' +
+                '<div class="app-quo-info-card">' +
+                  '<h3>بيانات مقدم العرض (المقاول)</h3>' +
+                  '<div class="app-quo-info-row"><b>مؤسسة / مقاول معتمد</b></div>' +
+                  '<div class="app-quo-info-row">العنوان: <b>المملكة العربية السعودية</b></div>' +
+                  '<div class="app-quo-info-row">رقم الجوال: <b dir="ltr">' + toEnglishDigits(proj.mobileNumber || '—') + '</b></div>' +
+                '</div>' +
+                '<div class="app-quo-info-card">' +
+                  '<h3>بيانات العميل</h3>' +
+                  '<div class="app-quo-info-row"><b>' + (proj.clientName || 'عميلنا العزيز') + '</b></div>' +
+                  '<div class="app-quo-info-row">المشروع: <b>' + (proj.name || '—') + '</b></div>' +
+                  '<div class="app-quo-info-row">تاريخ العرض: <b dir="ltr">' + dateStr + '</b></div>' +
+                '</div>' +
+              '</div>' +
 
-          '<h3 style="font-size: 14px; font-weight: 800; color: #1E3A8A; margin-bottom: 6px;">تفاصيل بنود العرض</h3>' +
-          '<table class="app-pdf-table">' +
-            '<thead>' +
-              '<tr>' +
-                '<th style="width: 8%;">#</th>' +
-                '<th style="text-align: right; padding-right: 15px;">اسم البند</th>' +
-                '<th style="width: 20%;">كمية الأمتار</th>' +
-                '<th style="width: 20%;">سعر المتر (ر.س)</th>' +
-                '<th style="width: 22%;">الإجمالي (ر.س)</th>' +
-              '</tr>' +
-            '</thead>' +
-            '<tbody>' +
-              itemRows +
-              '<tr class="totalRow">' +
-                '<td colspan="2">إجمالي التكاليف</td>' +
-                '<td>' + totalMeters.toFixed(2) + ' م²</td>' +
-                '<td>—</td>' +
-                '<td style="color: #B45309; font-size: 12px; font-weight: 800;">' + totalAmount.toLocaleString() + ' ر.س</td>' +
-              '</tr>' +
-            '</tbody>' +
-          '</table>' +
+              '<h3 style="font-size: 14px; font-weight: 800; color: #1E3A8A; margin-bottom: 6px;">تفاصيل بنود العرض</h3>' +
+              '<table class="app-pdf-table">' +
+                '<thead>' +
+                  '<tr>' +
+                    '<th style="width: 8%;">#</th>' +
+                    '<th style="text-align: right; padding-right: 15px;">اسم البند</th>' +
+                    '<th style="width: 20%;">كمية الأمتار</th>' +
+                    '<th style="width: 20%;">سعر المتر (ر.س)</th>' +
+                    '<th style="width: 22%;">الإجمالي (ر.س)</th>' +
+                  '</tr>' +
+                '</thead>' +
+                '<tbody>' +
+                  itemRows +
+                  '<tr class="totalRow">' +
+                    '<td colspan="2">إجمالي التكاليف</td>' +
+                    '<td>' + totalMeters.toFixed(2) + ' م²</td>' +
+                    '<td>—</td>' +
+                    '<td style="color: #B45309; font-size: 12px; font-weight: 800;">' + Math.round(totalAmount).toLocaleString('en-US') + ' ر.س</td>' +
+                  '</tr>' +
+                '</tbody>' +
+              '</table>' +
 
-          '<div class="app-quo-signatures">' +
-            '<div class="app-quo-sig-box">' +
-              '<div class="app-quo-sig-line">توقيع مقدم العرض</div>' +
+              '<div class="app-quo-signatures">' +
+                '<div class="app-quo-sig-box">' +
+                  '<div class="app-quo-sig-line">توقيع مقدم العرض</div>' +
+                '</div>' +
+                '<div class="app-quo-sig-box">' +
+                  '<div class="app-quo-sig-line">توقيع واعتماد العميل</div>' +
+                '</div>' +
+              '</div>' +
             '</div>' +
-            '<div class="app-quo-sig-box">' +
-              '<div class="app-quo-sig-line">توقيع واعتماد العميل</div>' +
+            '<div class="app-quo-footer-note">' +
+              'هذا العرض تقديري وصالح لمدة 30 يوماً من تاريخ إصداره. تم الإنشاء بواسطة تطبيق ميتركس المعماري.' +
             '</div>' +
-          '</div>' +
-
-          '<div class="app-quo-footer-note">' +
-            'هذا العرض تقديري وصالح لمدة 30 يوماً من تاريخ إصداره. تم الإنشاء بواسطة تطبيق ميتركس المعماري.' +
           '</div>';
       }
+    }
+
+    // تنزيل ملف PDF مباشر بضغطة زر (A4 Landscape مطابق للتطبيق)
+    function downloadDirectPdfFile() {
+      const viewer = document.getElementById('pdfReportViewer');
+      if (!viewer || !viewer.children.length) {
+        showToast('لا يوجد تقرير جاهز للتنزيل', false);
+        return;
+      }
+      const pId = document.getElementById('reportProjectSelect').value;
+      const proj = globalProjectsData.find(p => String(p.id) === String(pId)) || globalProjectsData[0];
+      const projName = (proj && proj.name ? proj.name : 'Metrix_Report').replace(/\\s+/g, '_');
+      const dateStr = new Date().toISOString().split('T')[0];
+
+      if (typeof html2pdf === 'undefined') {
+        window.print();
+        return;
+      }
+
+      const btn = document.getElementById('btnDownloadDirectPdf');
+      const oldHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري تجهيز PDF...';
+      }
+
+      const opt = {
+        margin: [6, 6, 6, 6],
+        filename: 'Metrix_' + projName + '_' + dateStr + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        pagebreak: { mode: ['css', 'legacy'] }
+      };
+
+      html2pdf().set(opt).from(viewer).save().then(() => {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = oldHtml;
+        }
+        showToast('تم تحميل ملف PDF المنسق بنجاح');
+      }).catch(() => {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = oldHtml;
+        }
+        window.print();
+      });
     }
 
     // ==========================================

@@ -241,7 +241,7 @@ io.on('connection', (socket) => {
 
   socket.on('send_payload', ({ sessionId, payload }) => {
     console.log('[>] تمرير البيانات للجلسة:', sessionId);
-    socket.to(sessionId).emit('authenticated', payload);
+    io.to(sessionId).emit('authenticated', payload);
   });
 
   socket.on('terminate_session', (sessionId) => {

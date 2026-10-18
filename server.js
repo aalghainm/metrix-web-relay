@@ -1664,7 +1664,7 @@ const htmlContent = `<!DOCTYPE html>
   <div id="deleteConfirmModal" class="modal-overlay">
     <div class="modal-dialog" style="max-width: 440px;">
       <div class="modal-dialog-header" style="background:#fff1f2;">
-        <div class="modal-dialog-title" style="color:var(--rose);"><i class="fa-solid fa-shield-halved"></i> تأكيد الحذف برقم الأمان</div>
+        <div class="modal-dialog-title" style="color:var(--rose);"><i class="fa-solid fa-shield-halved"></i> تأكيد الحذف بالرقم السري</div>
         <button onclick="closeModal('deleteConfirmModal')" class="btn-close-modal">&times;</button>
       </div>
       <div class="modal-dialog-body" style="text-align: center;">
@@ -1675,9 +1675,10 @@ const htmlContent = `<!DOCTYPE html>
           هذا الإجراء سيقوم بحذف هذا العنصر نهائياً من قاعدة بيانات الهاتف.
         </p>
         <div class="form-field" style="margin-top: 1rem; text-align: right;">
-          <label style="color: #b91c1c;"><i class="fa-solid fa-key"></i> أدخل الرقم السري للتطبيق (Passcode) *</label>
-          <input type="password" id="deletePasscodeInput" style="font-size: 1.3rem; text-align: center; letter-spacing: 5px;" placeholder="••••" />
-          <span style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">إذا لم تكن قد عيّنت رقماً سرياً في إعدادات التطبيق، اضغط تأكيد مباشرة.</span>
+          <label style="color: #b91c1c;"><i class="fa-solid fa-key"></i> أدخل الرقم السري المرتبط بالتطبيق (إلزامي) *</label>
+          <input type="password" inputmode="numeric" id="deletePasscodeInput" oninput="hideDeletePasscodeError()" onkeydown="if(event.key==='Enter') executeConfirmedDelete()" style="font-size: 1.35rem; text-align: center; letter-spacing: 6px; font-family: Arial, sans-serif;" placeholder="••••" />
+          <div id="deletePasscodeErrorMsg" style="display:none; background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:0.55rem 0.75rem; border-radius:0.5rem; font-size:0.82rem; font-weight:700; margin-top:0.45rem; text-align:center;"></div>
+          <span style="font-size: 0.78rem; color: #64748b; margin-top: 4px; display:block;">يلزم إدخال الرقم السري المعيّن في إعدادات تطبيق Metrix لإتمام الحذف.</span>
         </div>
       </div>
       <div class="modal-dialog-footer" style="background:#fff1f2;">
@@ -1729,6 +1730,9 @@ const htmlContent = `<!DOCTYPE html>
     let countdownInterval;
     let globalProjectsData = [];
     let globalPricesData = [];
+    let globalHasPasscode = true;
+    let globalDeletionPasscode = '';
+    let lastPreDeleteBackup = null;
     let pendingDeleteType = '';
     let pendingDeleteId = null;
 
@@ -1782,7 +1786,9 @@ const htmlContent = `<!DOCTYPE html>
       try {
         localStorage.setItem('metrix_cached_data', JSON.stringify({
           projects: globalProjectsData,
-          prices: globalPricesData
+          prices: globalPricesData,
+          hasPasscode: globalHasPasscode,
+          deletionPasscode: globalDeletionPasscode
         }));
       } catch(e) {}
       populateAllProjectSelectors();
@@ -1816,19 +1822,37 @@ const htmlContent = `<!DOCTYPE html>
         document.getElementById('dashboardScreen').style.display = 'flex';
         updateConnectionBadge(true);
 
-        try {
-          localStorage.setItem('metrix_session_id', currentSessionId);
-          localStorage.setItem('metrix_cached_data', JSON.stringify(data));
-        } catch(e) {}
-
         globalProjectsData = data.projects || [];
         globalPricesData = data.prices || [];
+        if (typeof data.hasPasscode === 'boolean') {
+          globalHasPasscode = data.hasPasscode;
+        }
+        if (typeof data.deletionPasscode === 'string') {
+          globalDeletionPasscode = toEnglishDigits(data.deletionPasscode.trim());
+        }
+
+        try {
+          localStorage.setItem('metrix_session_id', currentSessionId);
+          localStorage.setItem('metrix_cached_data', JSON.stringify({
+            projects: globalProjectsData,
+            prices: globalPricesData,
+            hasPasscode: globalHasPasscode,
+            deletionPasscode: globalDeletionPasscode
+          }));
+        } catch(e) {}
 
         reRenderAll();
       });
 
       socket.on('security_error', (data) => {
-        alert('❌ تنبيه أمان: ' + (data.message || 'الرقم السري غير صحيح! تم رفض عملية الحذف.'));
+        if (lastPreDeleteBackup) {
+          globalProjectsData = lastPreDeleteBackup;
+          lastPreDeleteBackup = null;
+          reRenderAll();
+        }
+        const msg = (data && data.message) ? data.message : 'الرقم السري غير صحيح! تم رفض عملية الحذف.';
+        showToast(msg, false);
+        alert('❌ تنبيه أمان: ' + msg);
       });
 
       socket.on('session_terminated', () => logout());
@@ -3434,41 +3458,91 @@ const htmlContent = `<!DOCTYPE html>
     }
 
     // ==========================================
-    // إدارة الحذف مع التحقق من الرقم السري (PIN)
+    // إدارة الحذف مع التحقق الإلزامي من الرقم السري للتطبيق (PIN)
     // ==========================================
-    function requestDeleteProject(projectId) {
-      pendingDeleteType = 'project';
-      pendingDeleteId = projectId;
-      document.getElementById('deleteConfirmPromptText').textContent = 'هل أنت متأكد من رغبتك في حذف هذا المشروع وجميع بنوده ودفعاته نهائياً من الهاتف؟';
-      document.getElementById('deletePasscodeInput').value = '';
+    function showDeletePasscodeError(msg) {
+      const errBox = document.getElementById('deletePasscodeErrorMsg');
+      const inp = document.getElementById('deletePasscodeInput');
+      if (errBox) {
+        errBox.textContent = msg;
+        errBox.style.display = 'block';
+      }
+      if (inp) {
+        inp.style.borderColor = '#dc2626';
+        inp.focus();
+      }
+    }
+
+    function hideDeletePasscodeError() {
+      const errBox = document.getElementById('deletePasscodeErrorMsg');
+      const inp = document.getElementById('deletePasscodeInput');
+      if (errBox) {
+        errBox.style.display = 'none';
+        errBox.textContent = '';
+      }
+      if (inp) {
+        inp.style.borderColor = '';
+      }
+    }
+
+    function openDeleteSecurityModal(type, id, promptText) {
+      pendingDeleteType = type;
+      pendingDeleteId = id;
+      document.getElementById('deleteConfirmPromptText').textContent = promptText;
+      const inp = document.getElementById('deletePasscodeInput');
+      if (inp) inp.value = '';
+      hideDeletePasscodeError();
+      if (globalHasPasscode === false) {
+        showDeletePasscodeError('⚠️ لم يتم تفعيل الرقم السري للحذف في التطبيق! يرجى فتح إعدادات تطبيق Metrix في الهاتف وتعيين رقم سري للحذف أولاً.');
+      }
       document.getElementById('deleteConfirmModal').style.display = 'flex';
-      document.getElementById('deletePasscodeInput').focus();
+      if (inp) setTimeout(() => inp.focus(), 50);
+    }
+
+    function requestDeleteProject(projectId) {
+      openDeleteSecurityModal('project', projectId, 'هل أنت متأكد من رغبتك في حذف هذا المشروع وجميع بنوده ودفعاته نهائياً من الهاتف؟');
     }
 
     function requestDeleteItem(itemId) {
-      pendingDeleteType = 'item';
-      pendingDeleteId = itemId;
-      document.getElementById('deleteConfirmPromptText').textContent = 'هل أنت متأكد من رغبتك في حذف هذا البند نهائياً من الهاتف؟';
-      document.getElementById('deletePasscodeInput').value = '';
-      document.getElementById('deleteConfirmModal').style.display = 'flex';
-      document.getElementById('deletePasscodeInput').focus();
+      openDeleteSecurityModal('item', itemId, 'هل أنت متأكد من رغبتك في حذف هذا البند نهائياً من الهاتف؟');
     }
 
     function requestDeletePayment(paymentId) {
-      pendingDeleteType = 'payment';
-      pendingDeleteId = paymentId;
-      document.getElementById('deleteConfirmPromptText').textContent = 'هل أنت متأكد من رغبتك في حذف هذا السند المالي نهائياً من الهاتف؟';
-      document.getElementById('deletePasscodeInput').value = '';
-      document.getElementById('deleteConfirmModal').style.display = 'flex';
-      document.getElementById('deletePasscodeInput').focus();
+      openDeleteSecurityModal('payment', paymentId, 'هل أنت متأكد من رغبتك في حذف هذا السند المالي نهائياً من الهاتف؟');
     }
 
     function executeConfirmedDelete() {
-      const passcode = document.getElementById('deletePasscodeInput').value.trim();
       if (!pendingDeleteId) return;
+
+      const rawPasscode = document.getElementById('deletePasscodeInput').value.trim();
+      const passcode = toEnglishDigits(rawPasscode);
+
+      // 1. منع الحذف إذا لم يكن هناك رقم سري مفعل في التطبيق أصلاً (مطابق لسلوك التطبيق)
+      if (globalHasPasscode === false) {
+        showDeletePasscodeError('⚠️ لم يتم تفعيل الرقم السري للحذف في التطبيق! يرجى فتح إعدادات تطبيق Metrix وتعيين رقم سري للحذف أولاً.');
+        return;
+      }
+
+      // 2. منع الحذف منعاً باتاً بدون إدخال الرقم السري
+      if (!passcode) {
+        showDeletePasscodeError('⚠️ يلزم إدخال الرقم السري المرتبط بالتطبيق لتأكيد عملية الحذف!');
+        return;
+      }
+
+      // 3. التحقق الفوري من مطابقة الرقم السري المسجل في التطبيق
+      if (globalDeletionPasscode && passcode !== toEnglishDigits(String(globalDeletionPasscode).trim())) {
+        showDeletePasscodeError('❌ الرقم السري غير صحيح! يرجى إدخال الرقم السري الصحيح المسجل في التطبيق.');
+        document.getElementById('deletePasscodeInput').select();
+        return;
+      }
 
       const delId = pendingDeleteId;
       const delType = pendingDeleteType;
+
+      // حفظ نسخة احتياطية قبل الحذف لاستعادتها فوراً لو رفض الهاتف العملية
+      try {
+        lastPreDeleteBackup = JSON.parse(JSON.stringify(globalProjectsData));
+      } catch (_) {}
 
       let action = '';
       if (delType === 'project') {
@@ -3495,9 +3569,9 @@ const htmlContent = `<!DOCTYPE html>
           action: action,
           data: { id: delId, passcode: passcode }
         });
-        showToast('تم إرسال أمر الحذف إلى الهاتف');
+        showToast('تم التحقق من الرقم السري وتنفيذ الحذف بنجاح');
       } else {
-        showToast('تم الحذف محلياً (تأكد من اتصال الهاتف)', false);
+        showToast('تم الحذف وسيتم مزامنته فور اتصال الهاتف', false);
       }
 
       closeModal('deleteConfirmModal');
@@ -3585,6 +3659,12 @@ const htmlContent = `<!DOCTYPE html>
 
           globalProjectsData = parsed.projects || [];
           globalPricesData = parsed.prices || [];
+          if (typeof parsed.hasPasscode === 'boolean') {
+            globalHasPasscode = parsed.hasPasscode;
+          }
+          if (typeof parsed.deletionPasscode === 'string') {
+            globalDeletionPasscode = toEnglishDigits(parsed.deletionPasscode.trim());
+          }
 
           populateAllProjectSelectors();
           renderProjectsList();

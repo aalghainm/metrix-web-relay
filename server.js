@@ -13,297 +13,773 @@ const htmlContent = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Metrix Pro Desktop - المنصة السحابية المتكاملة للمشاريع وحصر الكميات</title>
+  <title>Metrix Pro - منصة إدارة المشاريع وحصر الكميات الذكية</title>
+  
+  <!-- مكتبات الخطوط والأيقونات والرسوم البيانية -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+    
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --primary-light: #e0e7ff;
+      --secondary: #0f172a;
+      --emerald: #059669;
+      --emerald-light: #dcfce7;
+      --amber: #d97706;
+      --amber-light: #fef3c7;
+      --rose: #e11d48;
+      --rose-light: #ffe4e6;
+      --sky: #0284c7;
+      --sky-light: #e0f2fe;
+      --surface: #ffffff;
+      --bg: #f8fafc;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --radius: 1rem;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+      --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
-    body { background-color: #f1f5f9; color: #1e293b; min-height: 100vh; overflow-x: hidden; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
 
-    /* Auth Screen (QR Login) */
-    #authScreen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.5rem; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); }
-    .auth-card { background: #ffffff; padding: 2.75rem 2.25rem; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); width: 100%; max-width: 450px; text-align: center; }
-    .auth-icon { width: 56px; height: 56px; background: #e0e7ff; color: #4338ca; border-radius: 1rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
-    .auth-title { font-size: 1.7rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem; }
-    .auth-desc { font-size: 0.9rem; color: #64748b; margin-bottom: 1.75rem; line-height: 1.5; }
-    .qr-container { position: relative; display: inline-block; padding: 1rem; background: #ffffff; border: 2px dashed #6366f1; border-radius: 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 4px 12px rgba(99,102,241,0.08); }
-    .qr-expired-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.96); display: none; flex-direction: column; align-items: center; justify-content: center; border-radius: 1.25rem; gap: 0.75rem; }
-    .btn-refresh-qr { padding: 0.6rem 1.4rem; background: #4f46e5; color: #fff; font-weight: 700; border: none; border-radius: 0.6rem; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
-    .btn-refresh-qr:hover { background: #4338ca; }
-    .auth-timer-bar { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #64748b; padding: 0.4rem 0.5rem; background: #f8fafc; border-radius: 0.5rem; }
-    .timer-badge { font-weight: 800; color: #4f46e5; }
+    /* ========================================= */
+    /* 1. شاشة تسجيل الدخول ومسح الرمز (QR AUTH) */
+    /* ========================================= */
+    #authScreen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+      background: radial-gradient(circle at 10% 20%, #1e1b4b 0%, #0f172a 90%);
+      position: relative;
+    }
+    .auth-glass-card {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(16px);
+      border-radius: 1.75rem;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      max-width: 480px;
+      padding: 2.75rem 2.25rem;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: fadeInUp 0.4s ease-out;
+    }
+    .auth-badge-logo {
+      width: 68px;
+      height: 68px;
+      background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+      color: #fff;
+      font-size: 2rem;
+      border-radius: 1.25rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+    }
+    .auth-title { font-size: 1.85rem; font-weight: 900; color: #0f172a; margin-bottom: 0.35rem; }
+    .auth-subtitle { font-size: 0.92rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.75rem; }
 
-    /* Dashboard Layout */
+    .qr-frame {
+      position: relative;
+      display: inline-block;
+      padding: 1.25rem;
+      background: #ffffff;
+      border-radius: 1.5rem;
+      border: 2px solid #e0e7ff;
+      box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.1);
+      margin-bottom: 1.25rem;
+    }
+    .qr-frame::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border: 2px dashed #818cf8;
+      border-radius: 1.25rem;
+      pointer-events: none;
+    }
+    .qr-expired-curtain {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.96);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 1.5rem;
+      gap: 0.75rem;
+      z-index: 10;
+    }
+
+    .auth-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid #f1f5f9;
+    }
+    .auth-step-item { font-size: 0.78rem; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 0.35rem; font-weight: 600; }
+    .auth-step-icon { width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
+
+    /* ========================================= */
+    /* 2. شريط التنقل العلوي (NAVBAR) */
+    /* ========================================= */
     #dashboardScreen { display: none; flex-direction: column; min-height: 100vh; }
-    .top-navbar { background: #ffffff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 40; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
-    .top-navbar-inner { max-width: 1400px; margin: 0 auto; padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-    .brand-logo { display: flex; align-items: center; gap: 0.75rem; }
-    .live-dot { width: 10px; height: 10px; border-radius: 50%; background: #10b981; animation: pulseDot 2s infinite; }
-    .brand-title { font-size: 1.35rem; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; }
-    .brand-badge { font-size: 0.75rem; background: #e0e7ff; color: #4338ca; padding: 0.2rem 0.6rem; border-radius: 9999px; font-weight: 700; }
-
-    /* Nav Tabs */
-    .tabs-nav { display: flex; gap: 0.35rem; background: #f1f5f9; padding: 0.3rem; border-radius: 0.75rem; }
-    .tab-btn { display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem; border: none; background: transparent; color: #64748b; font-size: 0.88rem; font-weight: 700; border-radius: 0.55rem; cursor: pointer; transition: 0.15s; }
-    .tab-btn:hover { color: #0f172a; background: rgba(255,255,255,0.6); }
-    .tab-btn.active { background: #ffffff; color: #4f46e5; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-
-    /* Global Buttons */
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.5rem 1rem; border-radius: 0.55rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; border: none; transition: 0.2s; text-decoration: none; }
-    .btn-indigo { background: #4f46e5; color: #fff; }
-    .btn-indigo:hover { background: #4338ca; }
-    .btn-emerald { background: #059669; color: #fff; }
-    .btn-emerald:hover { background: #047857; }
-    .btn-sky { background: #0284c7; color: #fff; }
-    .btn-sky:hover { background: #0369a1; }
-    .btn-amber { background: #d97706; color: #fff; }
-    .btn-amber:hover { background: #b45309; }
-    .btn-danger { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
-    .btn-danger:hover { background: #fecaca; }
-    .btn-gray { background: #e2e8f0; color: #475569; }
-    .btn-gray:hover { background: #cbd5e1; }
-    .btn-del-sm { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.15rem; padding: 4px 8px; border-radius: 6px; transition: 0.15s; }
-    .btn-del-sm:hover { background: #fee2e2; }
-    .btn-edit-sm { background: none; border: none; color: #4f46e5; cursor: pointer; font-size: 1.15rem; padding: 4px 8px; border-radius: 6px; transition: 0.15s; }
-    .btn-edit-sm:hover { background: #e0e7ff; }
-
-    /* Main Container & Tab Panes */
-    .app-main { flex: 1; padding: 1.75rem; max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 1.5rem; }
-    .tab-content { display: none; flex-direction: column; gap: 1.5rem; }
-    .tab-content.active { display: flex; }
-
-    /* Summary Stats Cards */
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
-    .stat-card { background: #ffffff; padding: 1.25rem 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 0.35rem; }
-    .stat-title { font-size: 0.85rem; color: #64748b; font-weight: 700; }
-    .stat-figure { font-size: 1.85rem; font-weight: 900; line-height: 1.2; }
-    .stat-desc { font-size: 0.78rem; color: #94a3b8; }
-
-    /* Card Panels & Tables */
-    .panel-card { background: #ffffff; border-radius: 1rem; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow: hidden; }
-    .panel-header { padding: 1rem 1.5rem; background: #ffffff; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; }
-    .panel-header-title { font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
-    .panel-body { padding: 1.25rem 1.5rem; }
-
-    .filter-strip { background: #ffffff; padding: 0.85rem 1.25rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; }
-    .search-box { padding: 0.5rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.88rem; min-width: 260px; outline: none; }
-    .search-box:focus { border-color: #6366f1; }
-    .select-box { padding: 0.5rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.88rem; background: #fff; outline: none; }
-    .select-box:focus { border-color: #6366f1; }
-
-    /* Tables */
-    .table-container { overflow-x: auto; width: 100%; }
-    table.data-table { width: 100%; border-collapse: collapse; text-align: right; font-size: 0.88rem; }
-    table.data-table th { background: #f8fafc; color: #475569; padding: 0.85rem 1rem; border-bottom: 1px solid #e2e8f0; font-weight: 800; white-space: nowrap; }
-    table.data-table td { padding: 0.85rem 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
-    table.data-table tr:hover td { background: #f8fafc; }
-    .tag-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 700; }
-    .tag-blue { background: #e0f2fe; color: #0284c7; }
-    .tag-indigo { background: #e0e7ff; color: #4338ca; }
-    .tag-green { background: #dcfce7; color: #15803d; }
-    .tag-amber { background: #fef3c7; color: #b45309; }
-
-    /* Projects Grid Cards View */
-    .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
-    .proj-card { background: #ffffff; border-radius: 1rem; border: 1px solid #e2e8f0; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; gap: 1rem; transition: transform 0.15s, box-shadow 0.15s; }
-    .proj-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05); }
-    .proj-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
-    .proj-name { font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 0.25rem; }
-    .proj-client { font-size: 0.85rem; color: #64748b; display: flex; align-items: center; gap: 0.35rem; }
-    .proj-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; background: #f8fafc; padding: 0.75rem; border-radius: 0.6rem; }
-    .metric-sub { font-size: 0.75rem; color: #64748b; font-weight: 600; }
-    .metric-val { font-size: 1rem; font-weight: 800; color: #0f172a; }
-    .proj-card-actions { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 0.75rem; }
-
-    /* Quotation Preview Document */
-    .quotation-paper { background: #ffffff; padding: 2.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; max-width: 900px; margin: 0 auto; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
-    .quote-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 1.5rem; margin-bottom: 1.5rem; }
-    .quote-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; background: #f8fafc; padding: 1.25rem; border-radius: 0.75rem; }
-    .quote-party-box h4 { font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; }
-    .quote-party-box p { font-size: 0.85rem; color: #475569; line-height: 1.6; }
-    .quote-totals { margin-top: 1.5rem; margin-right: auto; width: 320px; display: flex; flex-direction: column; gap: 0.5rem; }
-    .quote-total-row { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 0.35rem 0; border-bottom: 1px dashed #cbd5e1; }
-    .quote-total-grand { font-size: 1.15rem; font-weight: 900; color: #4f46e5; border-top: 2px solid #0f172a; border-bottom: none; padding-top: 0.5rem; }
-    .quote-signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; text-align: center; }
-    .sig-line { margin-top: 3.5rem; border-top: 1px dashed #94a3b8; padding-top: 0.5rem; font-size: 0.85rem; color: #64748b; font-weight: 700; }
-
-    /* Modals */
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 1.5rem; }
-    .modal-box { background: #ffffff; border-radius: 1.25rem; width: 100%; max-width: 580px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; overflow: hidden; animation: popUp 0.18s ease-out; }
-    .modal-head { padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-    .modal-head h3 { font-size: 1.2rem; font-weight: 800; color: #0f172a; }
-    .modal-close-btn { background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer; line-height: 1; }
-    .modal-close-btn:hover { color: #0f172a; }
-    .modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; max-height: 75vh; overflow-y: auto; }
-    .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
-    .form-label { font-size: 0.85rem; font-weight: 700; color: #475569; }
-    .form-input { padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.9rem; outline: none; transition: border-color 0.15s; }
-    .form-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12); }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-    .modal-footer { padding: 1rem 1.5rem; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 0.75rem; }
-
-    @keyframes popUp {
-      from { transform: scale(0.96); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+    .app-header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
-    @keyframes pulseDot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.35; transform: scale(1.15); }
+    .header-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0.75rem 1.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .brand-section { display: flex; align-items: center; gap: 0.85rem; }
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+      color: #fff;
+      border-radius: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+    }
+    .brand-text h2 { font-size: 1.25rem; font-weight: 900; color: var(--secondary); letter-spacing: -0.5px; }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      background: #ecfdf5;
+      color: #059669;
+      padding: 0.15rem 0.6rem;
+      border-radius: 9999px;
+      font-weight: 700;
+      border: 1px solid #a7f3d0;
+    }
+    .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pingDot 2s infinite; }
+
+    /* التبويبات الفاخرة (Tabs) */
+    .nav-tabs-wrapper {
+      display: flex;
+      background: #f1f5f9;
+      padding: 0.35rem;
+      border-radius: 0.9rem;
+      gap: 0.25rem;
+      overflow-x: auto;
+    }
+    .tab-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.5rem 1.1rem;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 700;
+      border-radius: 0.65rem;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+    }
+    .tab-pill:hover { color: var(--text); background: rgba(255,255,255,0.7); }
+    .tab-pill.active {
+      background: var(--surface);
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .tab-pill.active i { color: var(--primary); }
+
+    /* الأزرار العلوية */
+    .header-btns { display: flex; align-items: center; gap: 0.6rem; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.55rem 1.15rem;
+      border-radius: 0.65rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .btn i { font-size: 0.95rem; }
+    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25); }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-emerald { background: var(--emerald); color: #fff; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25); }
+    .btn-emerald:hover { background: #047857; transform: translateY(-1px); }
+    .btn-sky { background: var(--sky); color: #fff; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25); }
+    .btn-sky:hover { background: #0369a1; transform: translateY(-1px); }
+    .btn-amber { background: var(--amber); color: #fff; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25); }
+    .btn-amber:hover { background: #b45309; transform: translateY(-1px); }
+    .btn-danger-light { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+    .btn-danger-light:hover { background: #fecaca; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+    .btn-outline:hover { background: #f1f5f9; color: var(--text); }
+    .btn-danger { background: var(--rose); color: #fff; }
+    .btn-danger:hover { background: #be123c; }
+
+    /* ========================================= */
+    /* 3. الحاوية العامة والمحتوى */
+    /* ========================================= */
+    .app-viewport { flex: 1; padding: 2rem; max-width: 1440px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 1.75rem; }
+    .tab-pane { display: none; flex-direction: column; gap: 1.75rem; animation: fadeIn 0.25s ease-out; }
+    .tab-pane.active { display: flex; }
+
+    /* بطاقات المؤشرات الإحصائية (KPI Cards) */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; }
+    .kpi-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .kpi-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--primary);
+    }
+    .kpi-emerald::after { background: var(--emerald); }
+    .kpi-amber::after { background: var(--amber); }
+    .kpi-sky::after { background: var(--sky); }
+
+    .kpi-info-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
+    .kpi-info-val { font-size: 1.85rem; font-weight: 900; margin-top: 0.35rem; color: var(--secondary); letter-spacing: -0.5px; }
+    .kpi-info-sub { font-size: 0.78rem; color: #94a3b8; font-weight: 600; margin-top: 0.25rem; }
+    .kpi-icon-bubble {
+      width: 48px;
+      height: 48px;
+      border-radius: 0.85rem;
+      background: #f1f5f9;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+    }
+    .bubble-emerald { background: var(--emerald-light); color: var(--emerald); }
+    .bubble-amber { background: var(--amber-light); color: var(--amber); }
+    .bubble-sky { background: var(--sky-light); color: var(--sky); }
+
+    /* شريط الأدوات والفلترة */
+    .toolbar-bar {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1rem 1.5rem;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: var(--shadow);
+    }
+    .toolbar-inputs { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+    .input-icon-group { position: relative; display: flex; align-items: center; }
+    .input-icon-group i { position: absolute; right: 1rem; color: #94a3b8; font-size: 0.9rem; pointer-events: none; }
+    .custom-input {
+      padding: 0.55rem 2.4rem 0.55rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 0.65rem;
+      font-size: 0.9rem;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      min-width: 250px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .custom-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12); }
+    .custom-select {
+      padding: 0.55rem 2rem 0.55rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 0.65rem;
+      font-size: 0.9rem;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
     }
 
-    /* Print Stylesheet */
+    /* بطاقات المشاريع العصرية (Project Cards) */
+    .projects-masonry { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
+    .project-item-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.25rem;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .project-item-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: #cbd5e1; }
+    .proj-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+    .proj-title-area h3 { font-size: 1.2rem; font-weight: 800; color: var(--secondary); margin-bottom: 0.25rem; }
+    .proj-client-row { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+    .proj-date-chip { font-size: 0.75rem; background: #f1f5f9; color: #475569; padding: 0.25rem 0.65rem; border-radius: 0.5rem; font-weight: 700; }
+    
+    .proj-financial-bar { background: #f8fafc; padding: 0.9rem 1rem; border-radius: 0.75rem; border: 1px solid #f1f5f9; }
+    .progress-track { height: 7px; background: #e2e8f0; border-radius: 9999px; overflow: hidden; margin: 0.5rem 0; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 9999px; }
+    .proj-fin-metrics { display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; }
+
+    .proj-card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 0.9rem; }
+    .proj-action-group { display: flex; gap: 0.4rem; }
+
+    /* الجداول الفاخرة (Data Tables) */
+    .table-container-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .table-card-top {
+      padding: 1.15rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fdfdfe;
+    }
+    .table-card-title { font-size: 1.1rem; font-weight: 800; color: var(--secondary); display: flex; align-items: center; gap: 0.5rem; }
+    
+    table.metrix-table { width: 100%; border-collapse: collapse; text-align: right; font-size: 0.88rem; }
+    table.metrix-table th { background: #f8fafc; color: #475569; padding: 1rem 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    table.metrix-table td { padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+    table.metrix-table tr:hover td { background: #f8fafc; }
+
+    /* شارات أنواع الأعمال الملونة */
+    .job-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 0.5rem; font-size: 0.78rem; font-weight: 700; }
+    .job-plaster { background: #e0f2fe; color: #0369a1; }
+    .job-paint { background: #f3e8ff; color: #7e22ce; }
+    .job-tile { background: #fef3c7; color: #b45309; }
+    .job-block { background: #ffedd5; color: #c2410c; }
+    .job-gypsum { background: #f1f5f9; color: #475569; }
+    .job-concrete { background: #e2e8f0; color: #1e293b; }
+    .job-insulation { background: #dcfce7; color: #15803d; }
+    .job-other { background: #e0e7ff; color: #4338ca; }
+
+    /* أزرار الإجراءات في الجداول */
+    .icon-action-btn { width: 34px; height: 34px; border-radius: 0.5rem; border: none; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; transition: all 0.15s; }
+    .btn-action-edit { color: var(--primary); }
+    .btn-action-edit:hover { background: var(--primary-light); }
+    .btn-action-delete { color: var(--rose); }
+    .btn-action-delete:hover { background: var(--rose-light); }
+
+    /* بطاقة عدم وجود بيانات (Empty State) */
+    .empty-state-box {
+      padding: 4rem 2rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .empty-illustration {
+      width: 90px;
+      height: 90px;
+      background: #f1f5f9;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* تبويب التحليلات البيانية */
+    .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .chart-panel-card { background: var(--surface); border-radius: var(--radius); padding: 1.5rem; border: 1px solid var(--border); box-shadow: var(--shadow); }
+
+    /* ========================================= */
+    /* 4. عرض الأسعار الرسمي المعتمد (QUOTATION) */
+    /* ========================================= */
+    .official-letterhead {
+      background: #ffffff;
+      max-width: 920px;
+      margin: 0 auto;
+      width: 100%;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      padding: 3.5rem 3rem;
+      position: relative;
+    }
+    .letterhead-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 1.75rem;
+      margin-bottom: 2rem;
+    }
+    .org-brand { display: flex; align-items: center; gap: 1rem; }
+    .org-logo { width: 56px; height: 56px; border-radius: 12px; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+    .org-info h1 { font-size: 1.6rem; font-weight: 900; color: #0f172a; }
+    .org-info p { font-size: 0.85rem; color: #64748b; font-weight: 600; }
+    
+    .quotation-parties-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 1.5rem;
+      background: #f8fafc;
+      padding: 1.5rem;
+      border-radius: 0.85rem;
+      margin-bottom: 2rem;
+      border: 1px solid #e2e8f0;
+    }
+    .party-title { font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+    .party-p { font-size: 0.86rem; color: #475569; line-height: 1.7; }
+
+    .quote-financial-summary {
+      width: 340px;
+      margin-right: auto;
+      margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .quote-sum-row { display: flex; justify-content: space-between; font-size: 0.95rem; padding: 0.4rem 0; border-bottom: 1px dashed #cbd5e1; }
+    .quote-sum-grand {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: var(--primary);
+      border-top: 2px solid #0f172a;
+      border-bottom: none;
+      padding-top: 0.75rem;
+    }
+
+    .quote-stamps-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+      margin-top: 3.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid #e2e8f0;
+      text-align: center;
+    }
+    .stamp-box { border: 2px dashed #cbd5e1; border-radius: 0.75rem; padding: 1.5rem; color: #94a3b8; font-size: 0.85rem; font-weight: 700; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; }
+
+    /* ========================================= */
+    /* 5. النوافذ المنبثقة التفاعلية (MODALS) */
+    /* ========================================= */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1.5rem;
+    }
+    .modal-dialog {
+      background: var(--surface);
+      border-radius: 1.25rem;
+      width: 100%;
+      max-width: 620px;
+      box-shadow: 0 25px 60px -15px rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      animation: zoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-dialog-header {
+      padding: 1.25rem 1.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafafa;
+    }
+    .modal-dialog-title { font-size: 1.2rem; font-weight: 800; color: var(--secondary); display: flex; align-items: center; gap: 0.5rem; }
+    .btn-close-modal { width: 32px; height: 32px; border-radius: 50%; border: none; background: #e2e8f0; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .btn-close-modal:hover { background: #cbd5e1; color: var(--secondary); }
+
+    .modal-dialog-body { padding: 1.75rem; display: flex; flex-direction: column; gap: 1.15rem; max-height: 75vh; overflow-y: auto; }
+    .form-field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-field label { font-size: 0.86rem; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 0.35rem; }
+    .form-field input, .form-field select, .form-field textarea {
+      padding: 0.65rem 0.95rem;
+      border: 1px solid var(--border);
+      border-radius: 0.65rem;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+    .modal-dialog-footer {
+      padding: 1.1rem 1.75rem;
+      background: #f8fafc;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+    .grid-3col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.85rem; }
+
+    /* حركات وتأثيرات */
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    @keyframes pingDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.2); } }
+
+    /* أنماط الطباعة الرسمية النظيفة (Print CSS) */
     @media print {
       body { background: #fff !important; }
-      .top-navbar, .filter-strip, .btn, .btn-del-sm, .btn-edit-sm, #authScreen, .tabs-nav, .panel-header button { display: none !important; }
+      .app-header, .toolbar-bar, .btn, .icon-action-btn, #authScreen, .nav-tabs-wrapper, .modal-overlay, .tab-pill { display: none !important; }
       #dashboardScreen { display: block !important; }
-      .app-main { max-width: 100% !important; padding: 0 !important; }
-      .tab-content { display: none !important; }
-      .tab-content.active { display: block !important; }
-      .quotation-paper { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; }
-      .panel-card { border: none !important; box-shadow: none !important; }
-      table.data-table th, table.data-table td { border: 1px solid #000 !important; color: #000 !important; }
-      .print-only-header { display: block !important; }
+      .app-viewport { max-width: 100% !important; padding: 0 !important; }
+      .tab-pane { display: none !important; }
+      .tab-pane.active { display: block !important; }
+      .official-letterhead { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; }
+      .table-container-card { border: 1px solid #000 !important; box-shadow: none !important; }
+      table.metrix-table th, table.metrix-table td { border: 1px solid #000 !important; color: #000 !important; }
+      .print-page-header { display: block !important; }
     }
-    .print-only-header { display: none; text-align: center; margin-bottom: 1.5rem; border-bottom: 2px solid #000; padding-bottom: 0.75rem; }
+    .print-page-header { display: none; text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #000; padding-bottom: 1rem; }
   </style>
 </head>
 <body>
 
-  <!-- شاشة المصادقة عبر QR -->
+  <!-- ========================================= -->
+  <!-- 1. شاشة تسجيل الدخول ومسح الرمز (QR AUTH) -->
+  <!-- ========================================= -->
   <div id="authScreen">
-    <div class="auth-card">
-      <div class="auth-icon">
-        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+    <div class="auth-glass-card">
+      <div class="auth-badge-logo">
+        <i class="fa-solid fa-compass-drafting"></i>
       </div>
       <h1 class="auth-title">منصة Metrix Web</h1>
-      <p class="auth-desc">امسح الرمز ضوئياً من قائمة التطبيق بالهاتف [ربط المتصفح] للتحكم الكامل المباشر في مشاريعك وحساباتك.</p>
+      <p class="auth-subtitle">امسح رمز الاستجابة السريعة (QR) من تطبيق الهاتف عبر خيار <b>[ربط المتصفح]</b> لفتح لوحة التحكم الشاملة.</p>
 
-      <div class="qr-container">
+      <div class="qr-frame">
         <div id="qrcode"></div>
-        <div id="qrOverlay" class="qr-expired-overlay">
-          <p style="color: #e11d48; font-weight: 800; font-size: 0.95rem;">انتهت صلاحية الرمز</p>
-          <button onclick="initSession()" class="btn-refresh-qr">تحديث الرمز 🔄</button>
+        <div id="qrOverlay" class="qr-expired-curtain">
+          <i class="fa-solid fa-clock-rotate-left" style="font-size: 2.2rem; color: var(--rose);"></i>
+          <p style="color: var(--rose); font-weight: 800; font-size: 0.95rem;">انتهت صلاحية الرمز المؤقت</p>
+          <button onclick="initSession()" class="btn btn-primary" style="padding: 0.5rem 1.25rem;">
+            <i class="fa-solid fa-arrows-rotate"></i> تحديث الرمز
+          </button>
         </div>
       </div>
 
-      <div class="auth-timer-bar">
-        <span>صلاحية الرمز المؤقت:</span>
-        <span id="timerText" class="timer-badge">60 ثانية</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:0.5rem 1rem; border-radius:0.75rem; border:1px solid #e2e8f0; font-size:0.85rem;">
+        <span style="color:var(--text-muted);"><i class="fa-regular fa-clock"></i> صلاحية الرمز:</span>
+        <span id="timerText" style="font-weight:800; color:var(--primary);">60 ثانية</span>
+      </div>
+
+      <div class="auth-steps">
+        <div class="auth-step-item">
+          <div class="auth-step-icon"><i class="fa-solid fa-mobile-screen"></i></div>
+          <span>1. افتح تطبيق Metrix</span>
+        </div>
+        <div class="auth-step-item">
+          <div class="auth-step-icon"><i class="fa-solid fa-bars"></i></div>
+          <span>2. اختر ربط المتصفح</span>
+        </div>
+        <div class="auth-step-item">
+          <div class="auth-step-icon"><i class="fa-solid fa-qrcode"></i></div>
+          <span>3. وجه الكاميرا للرمز</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- لوحة التحكم الكاملة لسطح المكتب -->
+  <!-- ========================================= -->
+  <!-- 2. لوحة التحكم الشاملة لسطح المكتب -->
+  <!-- ========================================= -->
   <div id="dashboardScreen">
-    <header class="top-navbar">
-      <div class="top-navbar-inner">
-        <div class="brand-logo">
-          <div class="live-dot"></div>
-          <span class="brand-title">Metrix Pro</span>
-          <span class="brand-badge">متصل بالهاتف مباشر</span>
+    <header class="app-header">
+      <div class="header-container">
+        
+        <div class="brand-section">
+          <div class="brand-icon">
+            <i class="fa-solid fa-ruler-combined"></i>
+          </div>
+          <div class="brand-text">
+            <h2>Metrix Pro Desktop</h2>
+            <div class="status-badge">
+              <div class="pulse-dot"></div>
+              <span>متصل مباشر بالهاتف</span>
+            </div>
+          </div>
         </div>
 
-        <!-- أزرار التبويبات الرئيسية للنظام بالكامل -->
-        <div class="tabs-nav">
-          <button onclick="switchTab('tabProjects')" id="btnTabProjects" class="tab-btn active">
-            🏢 المشاريع
+        <!-- التبويبات الرئيسية -->
+        <nav class="nav-tabs-wrapper">
+          <button onclick="switchTab('tabProjects')" id="btnTabProjects" class="tab-pill active">
+            <i class="fa-solid fa-city"></i> المشاريع
           </button>
-          <button onclick="switchTab('tabItems')" id="btnTabItems" class="tab-btn">
-            📐 حصر الكميات
+          <button onclick="switchTab('tabItems')" id="btnTabItems" class="tab-pill">
+            <i class="fa-solid fa-calculator"></i> حصر الكميات
           </button>
-          <button onclick="switchTab('tabPayments')" id="btnTabPayments" class="tab-btn">
-            💰 الدفعات والمالية
+          <button onclick="switchTab('tabPayments')" id="btnTabPayments" class="tab-pill">
+            <i class="fa-solid fa-file-invoice-dollar"></i> الدفعات والمالية
           </button>
-          <button onclick="switchTab('tabQuotations')" id="btnTabQuotations" class="tab-btn">
-            📄 عروض الأسعار
+          <button onclick="switchTab('tabAnalytics')" id="btnTabAnalytics" class="tab-pill">
+            <i class="fa-solid fa-chart-pie"></i> التحليلات
           </button>
-          <button onclick="switchTab('tabPrices')" id="btnTabPrices" class="tab-btn">
-            ⚙️ دليل الأسعار
+          <button onclick="switchTab('tabQuotations')" id="btnTabQuotations" class="tab-pill">
+            <i class="fa-solid fa-file-signature"></i> عروض الأسعار
+          </button>
+          <button onclick="switchTab('tabPrices')" id="btnTabPrices" class="tab-pill">
+            <i class="fa-solid fa-sliders"></i> دليل الأسعار
+          </button>
+        </nav>
+
+        <!-- أدوات التحكم والطباعة والخروج -->
+        <div class="header-btns">
+          <button onclick="window.print()" class="btn btn-sky" title="طباعة الصفحة الحالية">
+            <i class="fa-solid fa-print"></i> طباعة
+          </button>
+          <button onclick="exportComprehensiveExcel()" class="btn btn-emerald" title="تصدير إكسل شامل">
+            <i class="fa-solid fa-file-excel"></i> إكسل
+          </button>
+          <button onclick="logout()" class="btn btn-danger-light" title="قطع الاتصال وتسجيل الخروج">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> خروج
           </button>
         </div>
 
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
-          <button onclick="printCurrentView()" class="btn btn-sky" title="طباعة">🖨️ طباعة</button>
-          <button onclick="exportComprehensiveExcel()" class="btn btn-emerald" title="تصدير إكسل شامل">📊 إكسل</button>
-          <button onclick="logout()" class="btn btn-danger" title="قطع الاتصال">خروج</button>
-        </div>
       </div>
     </header>
 
-    <main class="app-main">
+    <main class="app-viewport">
 
       <!-- ========================================== -->
       <!-- 1. تبويب المشاريع (PROJECTS TAB) -->
       <!-- ========================================== -->
-      <section id="tabProjects" class="tab-content active">
-        <div class="stats-row">
-          <div class="stat-card">
-            <span class="stat-title">إجمالي المشاريع</span>
-            <span id="statTotalProjects" class="stat-figure" style="color:#0f172a;">0</span>
-            <span class="stat-desc">مشروع مسجل في الهاتف</span>
+      <section id="tabProjects" class="tab-pane active">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-info-title">إجمالي المشاريع المسجلة</div>
+              <div id="kpiProjectsCount" class="kpi-info-val">0</div>
+              <div class="kpi-info-sub">مشروع في قاعدة بيانات الهاتف</div>
+            </div>
+            <div class="kpi-icon-bubble"><i class="fa-solid fa-building-wheat"></i></div>
           </div>
-          <div class="stat-card">
-            <span class="stat-title">إجمالي بنود الحصر</span>
-            <span id="statTotalItemsAll" class="stat-figure" style="color:#4f46e5;">0</span>
-            <span class="stat-desc">بند قياس وحصر</span>
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-info-title">إجمالي بنود الحصر</div>
+              <div id="kpiItemsCount" class="kpi-info-val" style="color:var(--primary);">0</div>
+              <div class="kpi-info-sub">غرفة وبند قياس هندسي</div>
+            </div>
+            <div class="kpi-icon-bubble bubble-sky"><i class="fa-solid fa-ruler-horizontal"></i></div>
           </div>
-          <div class="stat-card">
-            <span class="stat-title">إجمالي المبالغ التقديرية</span>
-            <span id="statTotalAmountAll" class="stat-figure" style="color:#059669;">0 ر.س</span>
-            <span class="stat-desc">القيمة الإجمالية للعقود</span>
+          <div class="kpi-card kpi-emerald">
+            <div>
+              <div class="kpi-info-title">إجمالي القيمة التعاقدية</div>
+              <div id="kpiTotalAmount" class="kpi-info-val" style="color:var(--emerald);">0 ر.س</div>
+              <div class="kpi-info-sub">إجمالي مبالغ الحصر التقديرية</div>
+            </div>
+            <div class="kpi-icon-bubble bubble-emerald"><i class="fa-solid fa-sack-dollar"></i></div>
           </div>
-          <div class="stat-card">
-            <span class="stat-title">إجمالي الدفعات المقبوضة</span>
-            <span id="statTotalPaidAll" class="stat-figure" style="color:#0284c7;">0 ر.س</span>
-            <span class="stat-desc">مسلم في الحسابات</span>
+          <div class="kpi-card kpi-amber">
+            <div>
+              <div class="kpi-info-title">إجمالي المقبوض الفعلي</div>
+              <div id="kpiTotalPaid" class="kpi-info-val" style="color:var(--amber);">0 ر.س</div>
+              <div class="kpi-info-sub">سندات القبض والدفعات المستلمة</div>
+            </div>
+            <div class="kpi-icon-bubble bubble-amber"><i class="fa-solid fa-hand-holding-dollar"></i></div>
           </div>
         </div>
 
-        <div class="filter-strip">
-          <div style="display:flex; gap:0.5rem; align-items:center;">
-            <input type="text" id="projectSearchInput" oninput="renderProjectsList()" placeholder="🔍 ابحث عن اسم المشروع، العميل، الهاتف..." class="search-box" />
+        <div class="toolbar-bar">
+          <div class="toolbar-inputs">
+            <div class="input-icon-group">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="projectSearchInput" oninput="renderProjectsList()" placeholder="ابحث باسم المشروع، العميل، الهاتف..." class="custom-input" style="min-width:320px;" />
+            </div>
           </div>
-          <button onclick="openNewProjectModal()" class="btn btn-indigo">
-            ➕ إضافة مشروع جديد للهاتف
+          <button onclick="openNewProjectModal()" class="btn btn-primary">
+            <i class="fa-solid fa-folder-plus"></i> إضافة مشروع جديد للهاتف
           </button>
         </div>
 
-        <div id="projectsCardsGrid" class="projects-grid"></div>
+        <div id="projectsContainer" class="projects-masonry"></div>
       </section>
 
       <!-- ========================================== -->
       <!-- 2. تبويب حصر الكميات (ITEMS SURVEY TAB) -->
       <!-- ========================================== -->
-      <section id="tabItems" class="tab-content">
-        <div class="filter-strip">
-          <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-            <input type="text" id="itemsSearchInput" oninput="renderItemsTable()" placeholder="🔍 ابحث في البنود..." class="search-box" />
-            <select id="itemsProjectFilter" onchange="renderItemsTable()" class="select-box">
-              <option value="ALL">جميع المشاريع</option>
-            </select>
-            <select id="itemsJobTypeFilter" onchange="renderItemsTable()" class="select-box">
-              <option value="ALL">جميع أنواع الأعمال</option>
-            </select>
+      <section id="tabItems" class="tab-pane">
+        <div class="toolbar-bar">
+          <div class="toolbar-inputs">
+            <div class="input-icon-group">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="itemsSearchInput" oninput="renderItemsTable()" placeholder="ابحث في أسماء البنود..." class="custom-input" />
+            </div>
+            <select id="itemsProjectFilter" onchange="renderItemsTable()" class="custom-select"></select>
+            <select id="itemsJobTypeFilter" onchange="renderItemsTable()" class="custom-select"></select>
           </div>
           <button onclick="openNewItemModal()" class="btn btn-emerald">
-            ➕ إضافة بند حصر جديد
+            <i class="fa-solid fa-plus-circle"></i> إضافة بند حصر جديد
           </button>
         </div>
 
-        <div class="panel-card">
-          <div class="panel-header">
-            <div class="panel-header-title">
-              <span>📐 جدول حصر الكميات والمقاسات التفصيلي</span>
+        <div class="table-container-card">
+          <div class="table-card-top">
+            <div class="table-card-title">
+              <i class="fa-solid fa-list-check" style="color:var(--primary);"></i>
+              <span>جدول حصر الكميات والمقاسات الهندسية الصافية</span>
             </div>
-            <div style="font-size:0.85rem; color:#64748b;">
-              عدد البنود: <b id="displayedItemsCount" style="color:#0f172a;">0</b>
+            <div style="font-size:0.86rem; color:var(--text-muted); font-weight:700;">
+              عدد البنود: <span id="displayedItemsCount" style="color:var(--primary);">0</span>
             </div>
           </div>
-          <div class="table-container">
-            <table class="data-table">
+          <div style="overflow-x:auto;">
+            <table class="metrix-table">
               <thead>
                 <tr>
                   <th>المشروع</th>
@@ -313,7 +789,7 @@ const htmlContent = `<!DOCTYPE html>
                   <th>الفراغات المخصومة</th>
                   <th>الكمية الصافية</th>
                   <th>سعر المتر</th>
-                  <th>الإجمالي</th>
+                  <th>المبلغ الإجمالي</th>
                   <th style="text-align:center;">إجراء</th>
                 </tr>
               </thead>
@@ -324,56 +800,64 @@ const htmlContent = `<!DOCTYPE html>
       </section>
 
       <!-- ========================================== -->
-      <!-- 3. تبويب الدفعات والحسابات المالية (PAYMENTS TAB) -->
+      <!-- 3. تبويب الدفعات والمالية (PAYMENTS TAB) -->
       <!-- ========================================== -->
-      <section id="tabPayments" class="tab-content">
-        <div class="stats-row">
-          <div class="stat-card">
-            <span class="stat-title">قيمة العقود المحددة</span>
-            <span id="statPayTotalContracts" class="stat-figure" style="color:#0f172a;">0 ر.س</span>
-            <span class="stat-desc">إجمالي قيمة الحصر للمشروع</span>
+      <section id="tabPayments" class="tab-pane">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-info-title">إجمالي العقود المحددة</div>
+              <div id="statPayTotalContracts" class="kpi-info-val">0 ر.س</div>
+              <div class="kpi-info-sub">القيمة الإجمالية للمشروع المختار</div>
+            </div>
+            <div class="kpi-icon-bubble"><i class="fa-solid fa-file-contract"></i></div>
           </div>
-          <div class="stat-card">
-            <span class="stat-title">إجمالي المقبوض</span>
-            <span id="statPayTotalReceived" class="stat-figure" style="color:#059669;">0 ر.س</span>
-            <span class="stat-desc">الدفعات المحصلة بالفعل</span>
+          <div class="kpi-card kpi-emerald">
+            <div>
+              <div class="kpi-info-title">إجمالي المقبوض</div>
+              <div id="statPayTotalReceived" class="kpi-info-val" style="color:var(--emerald);">0 ر.س</div>
+              <div class="kpi-info-sub">الدفعات المحصلة بالفعل</div>
+            </div>
+            <div class="kpi-icon-bubble bubble-emerald"><i class="fa-solid fa-circle-check"></i></div>
           </div>
-          <div class="stat-card">
-            <span class="stat-title">المتبقي للتحصيل</span>
-            <span id="statPayTotalRemaining" class="stat-figure" style="color:#dc2626;">0 ر.س</span>
-            <span class="stat-desc">رصيد العميل المستحق</span>
+          <div class="kpi-card" style="border-right: 4px solid var(--rose);">
+            <div>
+              <div class="kpi-info-title">المتبقي للتحصيل</div>
+              <div id="statPayTotalRemaining" class="kpi-info-val" style="color:var(--rose);">0 ر.س</div>
+              <div class="kpi-info-sub">رصيد العميل المستحق للقبض</div>
+            </div>
+            <div class="kpi-icon-bubble" style="background:var(--rose-light); color:var(--rose);"><i class="fa-solid fa-hourglass-half"></i></div>
           </div>
         </div>
 
-        <div class="filter-strip">
-          <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-            <select id="paymentProjectFilter" onchange="renderPaymentsTable()" class="select-box">
-              <option value="ALL">جميع المشاريع</option>
-            </select>
+        <div class="toolbar-bar">
+          <div class="toolbar-inputs">
+            <select id="paymentProjectFilter" onchange="renderPaymentsTable()" class="custom-select"></select>
           </div>
           <button onclick="openNewPaymentModal()" class="btn btn-amber">
-            ➕ إضافة دفعة مالية (سند قبض)
+            <i class="fa-solid fa-receipt"></i> إضافة سند قبض / دفعة مالية
           </button>
         </div>
 
-        <div class="panel-card">
-          <div class="panel-header">
-            <div class="panel-header-title">
-              <span>💰 سجل الدفعات وسندات القبض</span>
+        <div class="table-container-card">
+          <div class="table-card-top">
+            <div class="table-card-title">
+              <i class="fa-solid fa-money-bill-wave" style="color:var(--amber);"></i>
+              <span>سجل سندات القبض والدفعات المستلمة</span>
             </div>
-            <div style="font-size:0.85rem; color:#64748b;">
-              عدد السندات: <b id="displayedPaymentsCount" style="color:#0f172a;">0</b>
+            <div style="font-size:0.86rem; color:var(--text-muted); font-weight:700;">
+              عدد السندات: <span id="displayedPaymentsCount" style="color:var(--amber);">0</span>
             </div>
           </div>
-          <div class="table-container">
-            <table class="data-table">
+          <div style="overflow-x:auto;">
+            <table class="metrix-table">
               <thead>
                 <tr>
                   <th>المشروع</th>
                   <th>المبلغ المستلم</th>
                   <th>نوع العمل / المرحلة</th>
-                  <th>ملاحظات السند</th>
-                  <th>تاريخ الإضافة</th>
+                  <th>ملاحظات السند / طريقة الدفع</th>
+                  <th>تاريخ الاستلام</th>
                   <th style="text-align:center;">إجراء</th>
                 </tr>
               </thead>
@@ -384,58 +868,87 @@ const htmlContent = `<!DOCTYPE html>
       </section>
 
       <!-- ========================================== -->
-      <!-- 4. تبويب عروض الأسعار الرسمية (QUOTATIONS TAB) -->
+      <!-- 4. تبويب التحليلات البيانية (ANALYTICS TAB) -->
       <!-- ========================================== -->
-      <section id="tabQuotations" class="tab-content">
-        <div class="filter-strip">
-          <div style="display:flex; gap:0.75rem; align-items:center;">
-            <label class="form-label">اختر المشروع لعرض السعر:</label>
-            <select id="quoteProjectSelect" onchange="renderQuotationView()" class="select-box"></select>
+      <section id="tabAnalytics" class="tab-pane">
+        <div class="analytics-grid">
+          <div class="chart-panel-card">
+            <h3 style="font-size:1.1rem; font-weight:800; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fa-solid fa-chart-pie" style="color:var(--primary);"></i>
+              توزيع تكلفة الأعمال حسب البنود (ر.س)
+            </h3>
+            <div style="position:relative; height:300px; display:flex; align-items:center; justify-content:center;">
+              <canvas id="jobTypesPieChart"></canvas>
+            </div>
+          </div>
+          <div class="chart-panel-card">
+            <h3 style="font-size:1.1rem; font-weight:800; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fa-solid fa-chart-column" style="color:var(--emerald);"></i>
+              الكميات المقدرة لكل نوع عمل (متر/م2/م3)
+            </h3>
+            <div style="position:relative; height:300px; display:flex; align-items:center; justify-content:center;">
+              <canvas id="jobTypesBarChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 5. تبويب عروض الأسعار الرسمية (QUOTATIONS) -->
+      <!-- ========================================== -->
+      <section id="tabQuotations" class="tab-pane">
+        <div class="toolbar-bar">
+          <div class="toolbar-inputs">
+            <label style="font-size:0.88rem; font-weight:700;"><i class="fa-solid fa-folder"></i> اختر المشروع:</label>
+            <select id="quoteProjectSelect" onchange="renderQuotationView()" class="custom-select"></select>
           </div>
           <div style="display:flex; gap:0.75rem; align-items:center;">
-            <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.88rem; font-weight:700; cursor:pointer;">
+            <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.88rem; font-weight:700; cursor:pointer;">
               <input type="checkbox" id="quoteVatCheckbox" onchange="renderQuotationView()" checked />
               تضمين ضريبة القيمة المضافة (15%)
             </label>
-            <button onclick="window.print()" class="btn btn-indigo">
-              🖨️ طباعة عرض السعر الرسمي PDF
+            <button onclick="window.print()" class="btn btn-primary">
+              <i class="fa-solid fa-print"></i> طباعة عرض السعر المعتمد PDF
             </button>
           </div>
         </div>
 
-        <div id="quotationSheet" class="quotation-paper">
-          <div class="quote-header">
-            <div>
-              <h2 style="font-size: 1.6rem; font-weight: 900; color: #0f172a;">عرض سعر مقاولة وأعمال حصر</h2>
-              <p style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">تاريخ العرض: <span id="quoteDate"></span></p>
+        <div id="quotationSheet" class="official-letterhead">
+          <div class="letterhead-top">
+            <div class="org-brand">
+              <div class="org-logo"><i class="fa-solid fa-helmet-safety"></i></div>
+              <div class="org-info">
+                <h1>عرض سعر أعمال مقاولة وحصر كميات</h1>
+                <p>تطبيق Metrix للهندسة وحصر الكميات الذكي</p>
+              </div>
             </div>
             <div style="text-align: left;">
-              <h3 style="font-size: 1.3rem; font-weight: 800; color: #4f46e5;">تطبيق Metrix</h3>
-              <p style="font-size: 0.8rem; color: #64748b;">نظام الحصر وإدارة المشاريع</p>
+              <div style="font-size: 0.85rem; color: #64748b; font-weight: 700;">رقم العرض: <span id="quoteNumber" style="color:#0f172a;">#QUO-2026</span></div>
+              <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">التاريخ: <span id="quoteDate" style="font-weight:700; color:#0f172a;"></span></div>
             </div>
           </div>
 
-          <div class="quote-parties">
-            <div class="quote-party-box">
-              <h4>بيانات العميل والمشروع</h4>
-              <p><b>اسم المشروع:</b> <span id="quoteProjName">-</span></p>
-              <p><b>العميل المكرم:</b> <span id="quoteClientName">-</span></p>
-              <p><b>رقم الجوال:</b> <span id="quoteClientMobile">-</span></p>
+          <div class="quotation-parties-grid">
+            <div>
+              <div class="party-title"><i class="fa-solid fa-user-tie" style="color:var(--primary);"></i> بيانات العميل والموقع</div>
+              <p class="party-p"><b>المشروع:</b> <span id="quoteProjName">-</span></p>
+              <p class="party-p"><b>السيد / السادة:</b> <span id="quoteClientName">-</span></p>
+              <p class="party-p"><b>رقم الاتصال:</b> <span id="quoteClientMobile">-</span></p>
             </div>
-            <div class="quote-party-box">
-              <h4>شروط التعاقد والتنفيذ</h4>
-              <p>• جميع القياسات هندسية صافية بعد خصم الفراغات المعتمدة.</p>
-              <p>• الدفعات تصرف بحسب نسب الإنجاز وسندات القبض الموقعة.</p>
-              <p>• صلاحية هذا العرض 30 يوماً من تاريخ إصداره.</p>
+            <div>
+              <div class="party-title"><i class="fa-solid fa-scale-balanced" style="color:var(--primary);"></i> شروط وأحكام العرض</div>
+              <p class="party-p">• جميع الكميات هندسية صافية بعد تطبيق خصومات الفتحات والفراغات.</p>
+              <p class="party-p">• الدفعات تسدد بحسب نسب الإنجاز وسندات القبض الموقعة.</p>
+              <p class="party-p">• هذا العرض ساري لمدة 30 يوماً من تاريخ صدوره.</p>
             </div>
           </div>
 
-          <div class="table-container" style="margin-bottom: 1.5rem;">
-            <table class="data-table" style="border: 1px solid #e2e8f0;">
+          <div style="border: 1px solid var(--border); border-radius: 0.75rem; overflow: hidden; margin-bottom: 1.5rem;">
+            <table class="metrix-table">
               <thead>
                 <tr>
                   <th style="width: 40px;">#</th>
-                  <th>بيان البند والوصف</th>
+                  <th>بيان الأعمال والبنود</th>
                   <th>نوع العمل</th>
                   <th>الكمية المقدرة</th>
                   <th>سعر الوحدة</th>
@@ -446,51 +959,58 @@ const htmlContent = `<!DOCTYPE html>
             </table>
           </div>
 
-          <div class="quote-totals">
-            <div class="quote-total-row">
-              <span>المجموع الفرعي:</span>
+          <div class="quote-financial-summary">
+            <div class="quote-sum-row">
+              <span style="color:#64748b;">المجموع الفرعي:</span>
               <span id="quoteSubtotal" style="font-weight:700;">0 ر.س</span>
             </div>
-            <div class="quote-total-row">
-              <span>ضريبة القيمة المضافة (15%):</span>
+            <div class="quote-sum-row">
+              <span style="color:#64748b;">ضريبة القيمة المضافة (15%):</span>
               <span id="quoteVatAmount" style="font-weight:700;">0 ر.س</span>
             </div>
-            <div class="quote-total-row quote-total-grand">
+            <div class="quote-sum-row quote-sum-grand">
               <span>المبلغ الإجمالي النهائي:</span>
               <span id="quoteGrandTotal">0 ر.س</span>
             </div>
           </div>
 
-          <div class="quote-signatures">
+          <div class="quote-stamps-section">
             <div>
-              <p style="font-weight:800; font-size:0.95rem;">الطرف الأول (المقاول / المنفذ)</p>
-              <div class="sig-line">الاسم والتوقيع والختم</div>
+              <p style="font-weight:800; font-size:0.95rem; margin-bottom:0.75rem;">الطرف الأول (المقاول / المنفذ)</p>
+              <div class="stamp-box">
+                <i class="fa-solid fa-stamp" style="font-size:1.8rem; color:#cbd5e1;"></i>
+                <span>الاسم والختم والتوقيع المعتمد</span>
+              </div>
             </div>
             <div>
-              <p style="font-weight:800; font-size:0.95rem;">الطرف الثاني (العميل / المالك)</p>
-              <div class="sig-line">الموافقة والاعتماد</div>
+              <p style="font-weight:800; font-size:0.95rem; margin-bottom:0.75rem;">الطرف الثاني (العميل / المالك)</p>
+              <div class="stamp-box">
+                <i class="fa-solid fa-pen-nib" style="font-size:1.8rem; color:#cbd5e1;"></i>
+                <span>الموافقة والاعتماد</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       <!-- ========================================== -->
-      <!-- 5. تبويب دليل وتعديل الأسعار (PRICES TAB) -->
+      <!-- 6. تبويب دليل وتعديل الأسعار (PRICES TAB) -->
       <!-- ========================================== -->
-      <section id="tabPrices" class="tab-content">
-        <div class="panel-card">
-          <div class="panel-header">
-            <div class="panel-header-title">
-              <span>⚙️ دليل أسعار بنود الأعمال والتشطيبات الافتراضية</span>
+      <section id="tabPrices" class="tab-pane">
+        <div class="table-container-card">
+          <div class="table-card-top">
+            <div class="table-card-title">
+              <i class="fa-solid fa-sliders" style="color:var(--primary);"></i>
+              <span>دليل أسعار بنود الأعمال والتشطيبات الافتراضية</span>
             </div>
-            <span class="tag-badge tag-indigo">محفوظ ومزامن مع الهاتف</span>
+            <span class="status-badge"><i class="fa-solid fa-cloud-arrow-up"></i> محفوظ ومزامن بالهاتف</span>
           </div>
-          <div class="panel-body">
-            <p style="font-size:0.88rem; color:#64748b; margin-bottom:1.25rem;">
-              يمكنك هنا ضبط وتعديل أسعار المتر الافتراضية لكل بند. عند تحديث أي سعر، سيتم حفظه فوراً في قاعدة بيانات الهاتف وتطبيقه تلقائياً عند إضافة بنود جديدة.
+          <div style="padding:1.5rem;">
+            <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.5rem; line-height:1.6;">
+              يمكنك هنا ضبط أسعار المتر الافتراضية لكل بند. عند تحديث أي سعر، سيتم حفظه فوراً في قاعدة بيانات الهاتف واستخدامه تلقائياً عند إضافة بنود حصر جديدة.
             </p>
-            <div class="table-container">
-              <table class="data-table">
+            <div style="overflow-x:auto;">
+              <table class="metrix-table">
                 <thead>
                   <tr>
                     <th>نوع العمل / البند</th>
@@ -514,105 +1034,105 @@ const htmlContent = `<!DOCTYPE html>
   <!-- ========================================== -->
 
   <!-- نافذة إضافة مشروع جديد -->
-  <div id="newProjectModal" class="modal-backdrop">
-    <div class="modal-box">
-      <div class="modal-head">
-        <h3>🏢 إضافة مشروع جديد إلى الهاتف</h3>
-        <button onclick="closeModal('newProjectModal')" class="modal-close-btn">&times;</button>
+  <div id="newProjectModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-dialog-header">
+        <div class="modal-dialog-title"><i class="fa-solid fa-folder-plus" style="color:var(--primary);"></i> إضافة مشروع جديد إلى الهاتف</div>
+        <button onclick="closeModal('newProjectModal')" class="btn-close-modal">&times;</button>
       </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">اسم المشروع *</label>
-          <input type="text" id="newProjName" class="form-input" placeholder="مثلاً: فيلا حي الياسمين" />
+      <div class="modal-dialog-body">
+        <div class="form-field">
+          <label><i class="fa-solid fa-tag"></i> اسم المشروع *</label>
+          <input type="text" id="newProjName" placeholder="مثلاً: فيلا حي الياسمين" />
         </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">اسم العميل</label>
-            <input type="text" id="newProjClient" class="form-input" placeholder="اسم مالك المشروع" />
+        <div class="grid-2col">
+          <div class="form-field">
+            <label><i class="fa-solid fa-user"></i> اسم العميل</label>
+            <input type="text" id="newProjClient" placeholder="اسم مالك المشروع" />
           </div>
-          <div class="form-group">
-            <label class="form-label">رقم جوال العميل</label>
-            <input type="tel" id="newProjMobile" class="form-input" placeholder="05xxxxxxxx" />
+          <div class="form-field">
+            <label><i class="fa-solid fa-phone"></i> رقم جوال العميل</label>
+            <input type="tel" id="newProjMobile" placeholder="05xxxxxxxx" />
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">تاريخ المشروع</label>
-          <input type="date" id="newProjDate" class="form-input" />
+        <div class="form-field">
+          <label><i class="fa-solid fa-calendar-days"></i> تاريخ المشروع</label>
+          <input type="date" id="newProjDate" />
         </div>
-        <div class="form-group">
-          <label class="form-label">ملاحظات / وصف المشروع</label>
-          <textarea id="newProjDesc" class="form-input" rows="2" placeholder="ملاحظات العقد أو الموقع..."></textarea>
+        <div class="form-field">
+          <label><i class="fa-solid fa-note-sticky"></i> ملاحظات / وصف المشروع</label>
+          <textarea id="newProjDesc" rows="2" placeholder="ملاحظات العقد أو الموقع..."></textarea>
         </div>
       </div>
-      <div class="modal-footer">
-        <button onclick="closeModal('newProjectModal')" class="btn btn-gray">إلغاء</button>
-        <button onclick="submitNewProject()" class="btn btn-indigo">حفظ المشروع في الهاتف</button>
+      <div class="modal-dialog-footer">
+        <button onclick="closeModal('newProjectModal')" class="btn btn-outline">إلغاء</button>
+        <button onclick="submitNewProject()" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> حفظ في الهاتف</button>
       </div>
     </div>
   </div>
 
   <!-- نافذة تعديل مشروع -->
-  <div id="editProjectModal" class="modal-backdrop">
-    <div class="modal-box">
-      <div class="modal-head">
-        <h3>✏️ تعديل بيانات المشروع</h3>
-        <button onclick="closeModal('editProjectModal')" class="modal-close-btn">&times;</button>
+  <div id="editProjectModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-dialog-header">
+        <div class="modal-dialog-title"><i class="fa-solid fa-pen-to-square" style="color:var(--sky);"></i> تعديل بيانات المشروع</div>
+        <button onclick="closeModal('editProjectModal')" class="btn-close-modal">&times;</button>
       </div>
-      <div class="modal-body">
+      <div class="modal-dialog-body">
         <input type="hidden" id="editProjId" />
-        <div class="form-group">
-          <label class="form-label">اسم المشروع *</label>
-          <input type="text" id="editProjName" class="form-input" />
+        <div class="form-field">
+          <label><i class="fa-solid fa-tag"></i> اسم المشروع *</label>
+          <input type="text" id="editProjName" />
         </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">اسم العميل</label>
-            <input type="text" id="editProjClient" class="form-input" />
+        <div class="grid-2col">
+          <div class="form-field">
+            <label><i class="fa-solid fa-user"></i> اسم العميل</label>
+            <input type="text" id="editProjClient" />
           </div>
-          <div class="form-group">
-            <label class="form-label">رقم جوال العميل</label>
-            <input type="tel" id="editProjMobile" class="form-input" />
+          <div class="form-field">
+            <label><i class="fa-solid fa-phone"></i> رقم جوال العميل</label>
+            <input type="tel" id="editProjMobile" />
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">تاريخ المشروع</label>
-          <input type="date" id="editProjDate" class="form-input" />
+        <div class="form-field">
+          <label><i class="fa-solid fa-calendar-days"></i> تاريخ المشروع</label>
+          <input type="date" id="editProjDate" />
         </div>
-        <div class="form-group">
-          <label class="form-label">ملاحظات / وصف المشروع</label>
-          <textarea id="editProjDesc" class="form-input" rows="2"></textarea>
+        <div class="form-field">
+          <label><i class="fa-solid fa-note-sticky"></i> ملاحظات / وصف المشروع</label>
+          <textarea id="editProjDesc" rows="2"></textarea>
         </div>
       </div>
-      <div class="modal-footer">
-        <button onclick="closeModal('editProjectModal')" class="btn btn-gray">إلغاء</button>
-        <button onclick="submitEditProject()" class="btn btn-sky">حفظ التعديلات في الهاتف</button>
+      <div class="modal-dialog-footer">
+        <button onclick="closeModal('editProjectModal')" class="btn btn-outline">إلغاء</button>
+        <button onclick="submitEditProject()" class="btn btn-sky"><i class="fa-solid fa-check"></i> حفظ التعديلات في الهاتف</button>
       </div>
     </div>
   </div>
 
   <!-- نافذة إضافة بند حصر جديد -->
-  <div id="newItemModal" class="modal-backdrop">
-    <div class="modal-box" style="max-width:640px;">
-      <div class="modal-head">
-        <h3>📐 إضافة بند حصر هندسي إلى الهاتف</h3>
-        <button onclick="closeModal('newItemModal')" class="modal-close-btn">&times;</button>
+  <div id="newItemModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 660px;">
+      <div class="modal-dialog-header">
+        <div class="modal-dialog-title"><i class="fa-solid fa-calculator" style="color:var(--emerald);"></i> إضافة بند حصر هندسي إلى الهاتف</div>
+        <button onclick="closeModal('newItemModal')" class="btn-close-modal">&times;</button>
       </div>
-      <div class="modal-body">
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">المشروع التابع له *</label>
-            <select id="modalItemProjectSelect" class="form-input"></select>
+      <div class="modal-dialog-body">
+        <div class="grid-2col">
+          <div class="form-field">
+            <label><i class="fa-solid fa-folder"></i> المشروع التابع له *</label>
+            <select id="modalItemProjectSelect"></select>
           </div>
-          <div class="form-group">
-            <label class="form-label">اسم البند / الغرفة *</label>
-            <input type="text" id="newItemTitle" class="form-input" placeholder="مجلس الرجال، غرفة النوم..." />
+          <div class="form-field">
+            <label><i class="fa-solid fa-signature"></i> اسم البند / الغرفة *</label>
+            <input type="text" id="newItemTitle" placeholder="مجلس الضيوف، غرفة نوم 1..." />
           </div>
         </div>
 
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">نوع العمل</label>
-            <select id="newItemJobType" onchange="onJobTypeChanged('newItemJobType', 'newItemPrice', calculateLiveItem)" class="form-input">
+        <div class="grid-2col">
+          <div class="form-field">
+            <label><i class="fa-solid fa-hammer"></i> نوع العمل</label>
+            <select id="newItemJobType" onchange="onJobTypeChanged('newItemJobType', 'newItemPrice', calculateLiveItem)">
               <option value="لياسة">لياسة (تلييس)</option>
               <option value="دهان">دهان</option>
               <option value="بناء طوب">بناء طوب</option>
@@ -624,9 +1144,9 @@ const htmlContent = `<!DOCTYPE html>
               <option value="أخرى">أخرى</option>
             </select>
           </div>
-          <div class="form-group">
-            <label class="form-label">طريقة الحساب</label>
-            <select id="newItemCalcMode" onchange="calculateLiveItem()" class="form-input">
+          <div class="form-field">
+            <label><i class="fa-solid fa-compass"></i> طريقة الحساب</label>
+            <select id="newItemCalcMode" onchange="calculateLiveItem()">
               <option value="WALLS">جدران / حوائط (محيط × ارتفاع)</option>
               <option value="AREA">مسطح / مساحة (طول × عرض)</option>
               <option value="VOLUME">حجم / مكعب (طول × عرض × ارتفاع)</option>
@@ -635,82 +1155,82 @@ const htmlContent = `<!DOCTYPE html>
           </div>
         </div>
 
-        <div class="grid-3">
-          <div class="form-group">
-            <label class="form-label">الطول (م)</label>
-            <input type="number" step="0.01" id="newItemLength" oninput="calculateLiveItem()" class="form-input" placeholder="0.00" />
+        <div class="grid-3col">
+          <div class="form-field">
+            <label>الطول (م)</label>
+            <input type="number" step="0.01" id="newItemLength" oninput="calculateLiveItem()" placeholder="0.00" />
           </div>
-          <div class="form-group">
-            <label class="form-label">العرض (م)</label>
-            <input type="number" step="0.01" id="newItemWidth" oninput="calculateLiveItem()" class="form-input" placeholder="0.00" />
+          <div class="form-field">
+            <label>العرض (م)</label>
+            <input type="number" step="0.01" id="newItemWidth" oninput="calculateLiveItem()" placeholder="0.00" />
           </div>
-          <div class="form-group">
-            <label class="form-label">الارتفاع (م)</label>
-            <input type="number" step="0.01" id="newItemHeight" oninput="calculateLiveItem()" class="form-input" placeholder="0.00" />
-          </div>
-        </div>
-
-        <div class="grid-3">
-          <div class="form-group">
-            <label class="form-label">عدد الجدران / التكرار</label>
-            <input type="number" step="1" id="newItemWallCount" value="1" oninput="calculateLiveItem()" class="form-input" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">خصم الأبواب (م2)</label>
-            <input type="number" step="0.01" id="newItemDoorsVoid" value="0" oninput="calculateLiveItem()" class="form-input" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">خصم النوافذ (م2)</label>
-            <input type="number" step="0.01" id="newItemWindowsVoid" value="0" oninput="calculateLiveItem()" class="form-input" />
+          <div class="form-field">
+            <label>الارتفاع (م)</label>
+            <input type="number" step="0.01" id="newItemHeight" oninput="calculateLiveItem()" placeholder="0.00" />
           </div>
         </div>
 
-        <div class="grid-3">
-          <div class="form-group">
-            <label class="form-label">سعر المتر (ر.س)</label>
-            <input type="number" step="0.1" id="newItemPrice" oninput="calculateLiveItem()" class="form-input" placeholder="0" />
+        <div class="grid-3col">
+          <div class="form-field">
+            <label>عدد الجدران / التكرار</label>
+            <input type="number" step="1" id="newItemWallCount" value="1" oninput="calculateLiveItem()" />
           </div>
-          <div class="form-group">
-            <label class="form-label">الكمية الصافية المحسوبة</label>
-            <input type="text" id="newItemCalcMeters" readonly class="form-input" style="background:#f8fafc; font-weight:800; color:#4f46e5;" value="0" />
+          <div class="form-field">
+            <label>خصم الأبواب (م2)</label>
+            <input type="number" step="0.01" id="newItemDoorsVoid" value="0" oninput="calculateLiveItem()" />
           </div>
-          <div class="form-group">
-            <label class="form-label">المبلغ الإجمالي</label>
-            <input type="text" id="newItemCalcAmount" readonly class="form-input" style="background:#f8fafc; font-weight:800; color:#059669;" value="0 ر.س" />
+          <div class="form-field">
+            <label>خصم النوافذ (م2)</label>
+            <input type="number" step="0.01" id="newItemWindowsVoid" value="0" oninput="calculateLiveItem()" />
+          </div>
+        </div>
+
+        <div class="grid-3col">
+          <div class="form-field">
+            <label>سعر المتر (ر.س)</label>
+            <input type="number" step="0.1" id="newItemPrice" oninput="calculateLiveItem()" placeholder="0" />
+          </div>
+          <div class="form-field">
+            <label>الكمية الصافية المحسوبة</label>
+            <input type="text" id="newItemCalcMeters" readonly style="background:#f8fafc; font-weight:800; color:var(--primary);" value="0" />
+          </div>
+          <div class="form-field">
+            <label>المبلغ الإجمالي</label>
+            <input type="text" id="newItemCalcAmount" readonly style="background:#f8fafc; font-weight:800; color:var(--emerald);" value="0 ر.س" />
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button onclick="closeModal('newItemModal')" class="btn btn-gray">إلغاء</button>
-        <button onclick="submitNewItem()" class="btn btn-emerald">حفظ وإرسال إلى الهاتف</button>
+      <div class="modal-dialog-footer">
+        <button onclick="closeModal('newItemModal')" class="btn btn-outline">إلغاء</button>
+        <button onclick="submitNewItem()" class="btn btn-emerald"><i class="fa-solid fa-paper-plane"></i> إرسال وحفظ في الهاتف</button>
       </div>
     </div>
   </div>
 
   <!-- نافذة تعديل بند حصر -->
-  <div id="editItemModal" class="modal-backdrop">
-    <div class="modal-box" style="max-width:640px;">
-      <div class="modal-head">
-        <h3>✏️ تعديل بند حصر هندسي</h3>
-        <button onclick="closeModal('editItemModal')" class="modal-close-btn">&times;</button>
+  <div id="editItemModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 660px;">
+      <div class="modal-dialog-header">
+        <div class="modal-dialog-title"><i class="fa-solid fa-pen-to-square" style="color:var(--sky);"></i> تعديل بند حصر هندسي</div>
+        <button onclick="closeModal('editItemModal')" class="btn-close-modal">&times;</button>
       </div>
-      <div class="modal-body">
+      <div class="modal-dialog-body">
         <input type="hidden" id="editItemId" />
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">المشروع التابع له *</label>
-            <select id="editItemProjectSelect" class="form-input"></select>
+        <div class="grid-2col">
+          <div class="form-field">
+            <label><i class="fa-solid fa-folder"></i> المشروع التابع له *</label>
+            <select id="editItemProjectSelect"></select>
           </div>
-          <div class="form-group">
-            <label class="form-label">اسم البند / الغرفة *</label>
-            <input type="text" id="editItemTitle" class="form-input" />
+          <div class="form-field">
+            <label><i class="fa-solid fa-signature"></i> اسم البند / الغرفة *</label>
+            <input type="text" id="editItemTitle" />
           </div>
         </div>
 
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">نوع العمل</label>
-            <select id="editItemJobType" onchange="calculateLiveEditItem()" class="form-input">
+        <div class="grid-2col">
+          <div class="form-field">
+            <label><i class="fa-solid fa-hammer"></i> نوع العمل</label>
+            <select id="editItemJobType" onchange="calculateLiveEditItem()">
               <option value="لياسة">لياسة (تلييس)</option>
               <option value="دهان">دهان</option>
               <option value="بناء طوب">بناء طوب</option>
@@ -722,9 +1242,9 @@ const htmlContent = `<!DOCTYPE html>
               <option value="أخرى">أخرى</option>
             </select>
           </div>
-          <div class="form-group">
-            <label class="form-label">طريقة الحساب</label>
-            <select id="editItemCalcMode" onchange="calculateLiveEditItem()" class="form-input">
+          <div class="form-field">
+            <label><i class="fa-solid fa-compass"></i> طريقة الحساب</label>
+            <select id="editItemCalcMode" onchange="calculateLiveEditItem()">
               <option value="WALLS">جدران / حوائط (محيط × ارتفاع)</option>
               <option value="AREA">مسطح / مساحة (طول × عرض)</option>
               <option value="VOLUME">حجم / مكعب (طول × عرض × ارتفاع)</option>
@@ -733,147 +1253,150 @@ const htmlContent = `<!DOCTYPE html>
           </div>
         </div>
 
-        <div class="grid-3">
-          <div class="form-group">
-            <label class="form-label">الطول (م)</label>
-            <input type="number" step="0.01" id="editItemLength" oninput="calculateLiveEditItem()" class="form-input" />
+        <div class="grid-3col">
+          <div class="form-field">
+            <label>الطول (م)</label>
+            <input type="number" step="0.01" id="editItemLength" oninput="calculateLiveEditItem()" />
           </div>
-          <div class="form-group">
-            <label class="form-label">العرض (م)</label>
-            <input type="number" step="0.01" id="editItemWidth" oninput="calculateLiveEditItem()" class="form-input" />
+          <div class="form-field">
+            <label>العرض (م)</label>
+            <input type="number" step="0.01" id="editItemWidth" oninput="calculateLiveEditItem()" />
           </div>
-          <div class="form-group">
-            <label class="form-label">الارتفاع (م)</label>
-            <input type="number" step="0.01" id="editItemHeight" oninput="calculateLiveEditItem()" class="form-input" />
-          </div>
-        </div>
-
-        <div class="grid-3">
-          <div class="form-group">
-            <label class="form-label">عدد الجدران / التكرار</label>
-            <input type="number" step="1" id="editItemWallCount" oninput="calculateLiveEditItem()" class="form-input" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">خصم الأبواب (م2)</label>
-            <input type="number" step="0.01" id="editItemDoorsVoid" oninput="calculateLiveEditItem()" class="form-input" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">خصم النوافذ (م2)</label>
-            <input type="number" step="0.01" id="editItemWindowsVoid" oninput="calculateLiveEditItem()" class="form-input" />
+          <div class="form-field">
+            <label>الارتفاع (م)</label>
+            <input type="number" step="0.01" id="editItemHeight" oninput="calculateLiveEditItem()" />
           </div>
         </div>
 
-        <div class="grid-3">
-          <div class="form-group">
-            <label class="form-label">سعر المتر (ر.س)</label>
-            <input type="number" step="0.1" id="editItemPrice" oninput="calculateLiveEditItem()" class="form-input" />
+        <div class="grid-3col">
+          <div class="form-field">
+            <label>عدد الجدران / التكرار</label>
+            <input type="number" step="1" id="editItemWallCount" oninput="calculateLiveEditItem()" />
           </div>
-          <div class="form-group">
-            <label class="form-label">الكمية الصافية المحسوبة</label>
-            <input type="text" id="editItemCalcMeters" readonly class="form-input" style="background:#f8fafc; font-weight:800; color:#4f46e5;" />
+          <div class="form-field">
+            <label>خصم الأبواب (م2)</label>
+            <input type="number" step="0.01" id="editItemDoorsVoid" oninput="calculateLiveEditItem()" />
           </div>
-          <div class="form-group">
-            <label class="form-label">المبلغ الإجمالي</label>
-            <input type="text" id="editItemCalcAmount" readonly class="form-input" style="background:#f8fafc; font-weight:800; color:#059669;" />
+          <div class="form-field">
+            <label>خصم النوافذ (م2)</label>
+            <input type="number" step="0.01" id="editItemWindowsVoid" oninput="calculateLiveEditItem()" />
+          </div>
+        </div>
+
+        <div class="grid-3col">
+          <div class="form-field">
+            <label>سعر المتر (ر.س)</label>
+            <input type="number" step="0.1" id="editItemPrice" oninput="calculateLiveEditItem()" />
+          </div>
+          <div class="form-field">
+            <label>الكمية الصافية المحسوبة</label>
+            <input type="text" id="editItemCalcMeters" readonly style="background:#f8fafc; font-weight:800; color:var(--primary);" />
+          </div>
+          <div class="form-field">
+            <label>المبلغ الإجمالي</label>
+            <input type="text" id="editItemCalcAmount" readonly style="background:#f8fafc; font-weight:800; color:var(--emerald);" />
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button onclick="closeModal('editItemModal')" class="btn btn-gray">إلغاء</button>
-        <button onclick="submitEditItem()" class="btn btn-sky">حفظ التعديل في الهاتف</button>
+      <div class="modal-dialog-footer">
+        <button onclick="closeModal('editItemModal')" class="btn btn-outline">إلغاء</button>
+        <button onclick="submitEditItem()" class="btn btn-sky"><i class="fa-solid fa-check"></i> حفظ التعديل في الهاتف</button>
       </div>
     </div>
   </div>
 
   <!-- نافذة إضافة دفعة مالية جديدة -->
-  <div id="newPaymentModal" class="modal-backdrop">
-    <div class="modal-box">
-      <div class="modal-head">
-        <h3>💰 إضافة سند قبض / دفعة مالية إلى الهاتف</h3>
-        <button onclick="closeModal('newPaymentModal')" class="modal-close-btn">&times;</button>
+  <div id="newPaymentModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-dialog-header">
+        <div class="modal-dialog-title"><i class="fa-solid fa-receipt" style="color:var(--amber);"></i> إضافة سند قبض إلى الهاتف</div>
+        <button onclick="closeModal('newPaymentModal')" class="btn-close-modal">&times;</button>
       </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">المشروع *</label>
-          <select id="modalPaymentProjectSelect" class="form-input"></select>
+      <div class="modal-dialog-body">
+        <div class="form-field">
+          <label><i class="fa-solid fa-folder"></i> المشروع *</label>
+          <select id="modalPaymentProjectSelect"></select>
         </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">المبلغ المستلم (ر.س) *</label>
-            <input type="number" step="0.01" id="newPayAmount" class="form-input" placeholder="0.00" />
+        <div class="grid-2col">
+          <div class="form-field">
+            <label><i class="fa-solid fa-money-bill-1-wave"></i> المبلغ المستلم (ر.س) *</label>
+            <input type="number" step="0.01" id="newPayAmount" placeholder="0.00" />
           </div>
-          <div class="form-group">
-            <label class="form-label">نوع العمل / المرحلة</label>
-            <input type="text" id="newPayJobType" class="form-input" placeholder="دفعة مقدمة، لياسة، دهان..." />
+          <div class="form-field">
+            <label><i class="fa-solid fa-layer-group"></i> نوع العمل / المرحلة</label>
+            <input type="text" id="newPayJobType" placeholder="دفعة مقدمة، لياسة، بلاط..." />
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">ملاحظات السند / رقم الإيصال</label>
-          <textarea id="newPayNote" class="form-input" rows="2" placeholder="ملاحظات الحوالة أو الاستلام..."></textarea>
+        <div class="form-field">
+          <label><i class="fa-solid fa-note-sticky"></i> ملاحظات السند / رقم الحوالة</label>
+          <textarea id="newPayNote" rows="2" placeholder="ملاحظات الاستلام..."></textarea>
         </div>
       </div>
-      <div class="modal-footer">
-        <button onclick="closeModal('newPaymentModal')" class="btn btn-gray">إلغاء</button>
-        <button onclick="submitNewPayment()" class="btn btn-amber">حفظ الدفعة في الهاتف</button>
+      <div class="modal-dialog-footer">
+        <button onclick="closeModal('newPaymentModal')" class="btn btn-outline">إلغاء</button>
+        <button onclick="submitNewPayment()" class="btn btn-amber"><i class="fa-solid fa-floppy-disk"></i> حفظ الدفعة في الهاتف</button>
       </div>
     </div>
   </div>
 
   <!-- نافذة تعديل دفعة مالية -->
-  <div id="editPaymentModal" class="modal-backdrop">
-    <div class="modal-box">
-      <div class="modal-head">
-        <h3>✏️ تعديل سند الدفعة المالية</h3>
-        <button onclick="closeModal('editPaymentModal')" class="modal-close-btn">&times;</button>
+  <div id="editPaymentModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-dialog-header">
+        <div class="modal-dialog-title"><i class="fa-solid fa-pen-to-square" style="color:var(--sky);"></i> تعديل سند الدفعة المالية</div>
+        <button onclick="closeModal('editPaymentModal')" class="btn-close-modal">&times;</button>
       </div>
-      <div class="modal-body">
+      <div class="modal-dialog-body">
         <input type="hidden" id="editPayId" />
-        <div class="form-group">
-          <label class="form-label">المشروع *</label>
-          <select id="editPaymentProjectSelect" class="form-input"></select>
+        <div class="form-field">
+          <label><i class="fa-solid fa-folder"></i> المشروع *</label>
+          <select id="editPaymentProjectSelect"></select>
         </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label class="form-label">المبلغ المستلم (ر.س) *</label>
-            <input type="number" step="0.01" id="editPayAmount" class="form-input" />
+        <div class="grid-2col">
+          <div class="form-field">
+            <label><i class="fa-solid fa-money-bill-1-wave"></i> المبلغ المستلم (ر.س) *</label>
+            <input type="number" step="0.01" id="editPayAmount" />
           </div>
-          <div class="form-group">
-            <label class="form-label">نوع العمل / المرحلة</label>
-            <input type="text" id="editPayJobType" class="form-input" />
+          <div class="form-field">
+            <label><i class="fa-solid fa-layer-group"></i> نوع العمل / المرحلة</label>
+            <input type="text" id="editPayJobType" />
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">ملاحظات السند</label>
-          <textarea id="editPayNote" class="form-input" rows="2"></textarea>
+        <div class="form-field">
+          <label><i class="fa-solid fa-note-sticky"></i> ملاحظات السند</label>
+          <textarea id="editPayNote" rows="2"></textarea>
         </div>
       </div>
-      <div class="modal-footer">
-        <button onclick="closeModal('editPaymentModal')" class="btn btn-gray">إلغاء</button>
-        <button onclick="submitEditPayment()" class="btn btn-sky">حفظ التعديل في الهاتف</button>
+      <div class="modal-dialog-footer">
+        <button onclick="closeModal('editPaymentModal')" class="btn btn-outline">إلغاء</button>
+        <button onclick="submitEditPayment()" class="btn btn-sky"><i class="fa-solid fa-check"></i> حفظ التعديل في الهاتف</button>
       </div>
     </div>
   </div>
 
   <!-- نافذة تأكيد الحذف بالرقم السري (PIN SECURITY MODAL) -->
-  <div id="deleteConfirmModal" class="modal-backdrop">
-    <div class="modal-box" style="max-width: 440px;">
-      <div class="modal-head" style="background: #fef2f2;">
-        <h3 style="color: #dc2626;">🔒 تأكيد الحذف برقم الأمان</h3>
-        <button onclick="closeModal('deleteConfirmModal')" class="modal-close-btn">&times;</button>
+  <div id="deleteConfirmModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 440px;">
+      <div class="modal-dialog-header" style="background:#fff1f2;">
+        <div class="modal-dialog-title" style="color:var(--rose);"><i class="fa-solid fa-shield-halved"></i> تأكيد الحذف برقم الأمان</div>
+        <button onclick="closeModal('deleteConfirmModal')" class="btn-close-modal">&times;</button>
       </div>
-      <div class="modal-body" style="text-align: center;">
+      <div class="modal-dialog-body" style="text-align: center;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 0.5rem auto;">
+          <i class="fa-solid fa-trash-can"></i>
+        </div>
         <p style="font-size: 0.92rem; color: #475569; line-height: 1.6;" id="deleteConfirmPromptText">
-          هذا الإجراء سيقوم بحذف العنصر نهائياً من قاعدة بيانات الهاتف.
+          هذا الإجراء سيقوم بحذف هذا العنصر نهائياً من قاعدة بيانات الهاتف.
         </p>
-        <div class="form-group" style="margin-top: 1rem; text-align: right;">
-          <label class="form-label" style="color: #b91c1c;">أدخل الرقم السري للتطبيق (Passcode) *</label>
-          <input type="password" id="deletePasscodeInput" class="form-input" style="font-size: 1.2rem; text-align: center; letter-spacing: 4px;" placeholder="••••" />
-          <span style="font-size: 0.78rem; color: #94a3b8;">إذا لم يتم تعيين رقم سري في إعدادات التطبيق، يمكنك الضغط على تأكيد مباشرة.</span>
+        <div class="form-field" style="margin-top: 1rem; text-align: right;">
+          <label style="color: #b91c1c;"><i class="fa-solid fa-key"></i> أدخل الرقم السري للتطبيق (Passcode) *</label>
+          <input type="password" id="deletePasscodeInput" style="font-size: 1.3rem; text-align: center; letter-spacing: 5px;" placeholder="••••" />
+          <span style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">إذا لم تكن قد عيّنت رقماً سرياً في إعدادات التطبيق، اضغط تأكيد مباشرة.</span>
         </div>
       </div>
-      <div class="modal-footer" style="background: #fef2f2;">
-        <button onclick="closeModal('deleteConfirmModal')" class="btn btn-gray">إلغاء</button>
-        <button onclick="executeConfirmedDelete()" class="btn btn-danger">تأكيد الحذف النهائي 🗑️</button>
+      <div class="modal-dialog-footer" style="background:#fff1f2;">
+        <button onclick="closeModal('deleteConfirmModal')" class="btn btn-outline">إلغاء</button>
+        <button onclick="executeConfirmedDelete()" class="btn btn-danger"><i class="fa-solid fa-trash-can"></i> تأكيد الحذف النهائي</button>
       </div>
     </div>
   </div>
@@ -886,6 +1409,9 @@ const htmlContent = `<!DOCTYPE html>
     let globalPricesData = [];
     let pendingDeleteType = ''; // 'project', 'item', 'payment'
     let pendingDeleteId = null;
+
+    let pieChartInstance = null;
+    let barChartInstance = null;
 
     // الاتصال بالخادم السحابي
     function initSocket() {
@@ -917,6 +1443,7 @@ const htmlContent = `<!DOCTYPE html>
         renderPaymentsTable();
         renderQuotationView();
         renderPricesTable();
+        renderAnalyticsCharts();
       });
 
       socket.on('security_error', (data) => {
@@ -937,8 +1464,8 @@ const htmlContent = `<!DOCTYPE html>
       qrContainer.innerHTML = '';
       new QRCode(qrContainer, {
         text: JSON.stringify({ type: 'METRIX_AUTH', sessionId: currentSessionId }),
-        width: 220,
-        height: 220,
+        width: 210,
+        height: 210,
         colorDark: "#0f172a",
         colorLight: "#ffffff"
       });
@@ -965,8 +1492,8 @@ const htmlContent = `<!DOCTYPE html>
 
     // إدارة التبويبات
     function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-pill').forEach(el => el.classList.remove('active'));
 
       const target = document.getElementById(tabId);
       if (target) target.classList.add('active');
@@ -974,11 +1501,15 @@ const htmlContent = `<!DOCTYPE html>
       if (tabId === 'tabProjects') document.getElementById('btnTabProjects').classList.add('active');
       if (tabId === 'tabItems') document.getElementById('btnTabItems').classList.add('active');
       if (tabId === 'tabPayments') document.getElementById('btnTabPayments').classList.add('active');
+      if (tabId === 'tabAnalytics') {
+        document.getElementById('btnTabAnalytics').classList.add('active');
+        renderAnalyticsCharts();
+      }
       if (tabId === 'tabQuotations') document.getElementById('btnTabQuotations').classList.add('active');
       if (tabId === 'tabPrices') document.getElementById('btnTabPrices').classList.add('active');
     }
 
-    // تعبئة قوائم المشاريع المنسدلة في كافة الواجهات
+    // تعبئة قوائم المشاريع المنسدلة
     function populateAllProjectSelectors() {
       const selects = [
         document.getElementById('itemsProjectFilter'),
@@ -1025,6 +1556,19 @@ const htmlContent = `<!DOCTYPE html>
       }
     }
 
+    // فئة CSS لنوع العمل
+    function getJobBadgeClass(jobType) {
+      if (!jobType) return 'job-other';
+      if (jobType.includes('لياسة')) return 'job-plaster';
+      if (jobType.includes('دهان')) return 'job-paint';
+      if (jobType.includes('طوب') || jobType.includes('بلك')) return 'job-block';
+      if (jobType.includes('بلاط') || jobType.includes('سيراميك') || jobType.includes('رخام')) return 'job-tile';
+      if (jobType.includes('جبس')) return 'job-gypsum';
+      if (jobType.includes('خرسانة')) return 'job-concrete';
+      if (jobType.includes('عزل')) return 'job-insulation';
+      return 'job-other';
+    }
+
     // ==========================================
     // 1. عرض بطاقات المشاريع وإحصائياتها
     // ==========================================
@@ -1035,8 +1579,10 @@ const htmlContent = `<!DOCTYPE html>
       let totalPaid = 0;
 
       const q = (document.getElementById('projectSearchInput').value || '').trim().toLowerCase();
-      const grid = document.getElementById('projectsCardsGrid');
-      grid.innerHTML = '';
+      const container = document.getElementById('projectsContainer');
+      container.innerHTML = '';
+
+      let matchedCount = 0;
 
       globalProjectsData.forEach(p => {
         const items = p.items || [];
@@ -1044,6 +1590,7 @@ const htmlContent = `<!DOCTYPE html>
         const pTotalAmount = items.reduce((sum, it) => sum + (Number(it.totalAmount) || 0), 0);
         const pTotalPaid = payments.reduce((sum, pm) => sum + (Number(pm.amount) || 0), 0);
         const remaining = pTotalAmount - pTotalPaid;
+        const percentPaid = pTotalAmount > 0 ? Math.min(100, Math.round((pTotalPaid / pTotalAmount) * 100)) : 0;
 
         totalItems += items.length;
         totalAmount += pTotalAmount;
@@ -1051,53 +1598,62 @@ const htmlContent = `<!DOCTYPE html>
 
         const match = !q || (p.name + ' ' + (p.clientName || '') + ' ' + (p.mobileNumber || '')).toLowerCase().includes(q);
         if (!match) return;
+        matchedCount++;
 
         const card = document.createElement('div');
-        card.className = 'proj-card';
+        card.className = 'project-item-card';
         card.innerHTML =
           '<div>' +
-            '<div class="proj-card-top">' +
-              '<div>' +
-                '<h3 class="proj-name">' + (p.name || 'بدون اسم') + '</h3>' +
-                '<div class="proj-client">👤 ' + (p.clientName || 'عميل عام') + (p.mobileNumber ? (' | 📞 ' + p.mobileNumber) : '') + '</div>' +
+            '<div class="proj-card-header">' +
+              '<div class="proj-title-area">' +
+                '<h3>' + (p.name || 'مشروع بدون اسم') + '</h3>' +
+                '<div class="proj-client-row">' +
+                  '<i class="fa-solid fa-user-circle"></i> ' + (p.clientName || 'عميل عام') +
+                  (p.mobileNumber ? (' <span style="color:#cbd5e1;">|</span> <i class="fa-solid fa-phone"></i> ' + p.mobileNumber) : '') +
+                '</div>' +
               '</div>' +
-              '<span class="tag-badge tag-blue">' + (p.projectDate || 'بدون تاريخ') + '</span>' +
+              '<span class="proj-date-chip"><i class="fa-regular fa-calendar"></i> ' + (p.projectDate || 'بدون تاريخ') + '</span>' +
             '</div>' +
-            (p.description ? ('<p style="font-size:0.82rem; color:#64748b; margin-top:0.5rem;">' + p.description + '</p>') : '') +
-            '<div class="proj-metrics" style="margin-top:0.75rem;">' +
-              '<div>' +
-                '<div class="metric-sub">إجمالي الحصر</div>' +
-                '<div class="metric-val" style="color:#4f46e5;">' + pTotalAmount.toLocaleString() + ' ر.س</div>' +
+            (p.description ? ('<p style="font-size:0.83rem; color:#64748b; margin-top:0.6rem; line-height:1.5;">' + p.description + '</p>') : '') +
+            '<div class="proj-financial-bar" style="margin-top:0.85rem;">' +
+              '<div class="proj-fin-metrics">' +
+                '<span>التحصيل: <b style="color:var(--emerald);">' + percentPaid + '%</b></span>' +
+                '<span>قيمة الحصر: <b>' + pTotalAmount.toLocaleString() + ' ر.س</b></span>' +
               '</div>' +
-              '<div>' +
-                '<div class="metric-sub">المقبوض</div>' +
-                '<div class="metric-val" style="color:#059669;">' + pTotalPaid.toLocaleString() + ' ر.س</div>' +
+              '<div class="progress-track">' +
+                '<div class="progress-fill" style="width: ' + percentPaid + '%;"></div>' +
               '</div>' +
-              '<div>' +
-                '<div class="metric-sub">المتبقي</div>' +
-                '<div class="metric-val" style="color:' + (remaining > 0 ? '#dc2626' : '#10b981') + ';">' + remaining.toLocaleString() + ' ر.س</div>' +
-              '</div>' +
-              '<div>' +
-                '<div class="metric-sub">عدد البنود</div>' +
-                '<div class="metric-val">' + items.length + ' بند</div>' +
+              '<div class="proj-fin-metrics" style="color:#64748b; font-size:0.78rem;">' +
+                '<span>المقبوض: <b style="color:var(--emerald);">' + pTotalPaid.toLocaleString() + ' ر.س</b></span>' +
+                '<span>المتبقي: <b style="color:' + (remaining > 0 ? 'var(--rose)' : 'var(--emerald)') + ';">' + remaining.toLocaleString() + ' ر.س</b></span>' +
               '</div>' +
             '</div>' +
           '</div>' +
-          '<div class="proj-card-actions">' +
-            '<div style="display:flex; gap:0.4rem;">' +
-              '<button onclick="filterByProjectAndOpenItems(' + p.id + ')" class="btn btn-sky" style="padding:0.35rem 0.65rem; font-size:0.8rem;">📐 البنود</button>' +
-              '<button onclick="filterByProjectAndOpenPayments(' + p.id + ')" class="btn btn-amber" style="padding:0.35rem 0.65rem; font-size:0.8rem;">💰 الدفعات</button>' +
-              '<button onclick="openEditProjectModal(' + p.id + ')" class="btn btn-gray" style="padding:0.35rem 0.65rem; font-size:0.8rem;">✏️ تعديل</button>' +
+          '<div class="proj-card-footer">' +
+            '<div class="proj-action-group">' +
+              '<button onclick="filterByProjectAndOpenItems(' + p.id + ')" class="btn btn-sky" style="padding:0.35rem 0.65rem; font-size:0.8rem;"><i class="fa-solid fa-ruler"></i> البنود (' + items.length + ')</button>' +
+              '<button onclick="filterByProjectAndOpenPayments(' + p.id + ')" class="btn btn-amber" style="padding:0.35rem 0.65rem; font-size:0.8rem;"><i class="fa-solid fa-file-invoice"></i> الدفعات</button>' +
+              '<button onclick="openEditProjectModal(' + p.id + ')" class="btn btn-outline" style="padding:0.35rem 0.65rem; font-size:0.8rem;"><i class="fa-solid fa-pen"></i> تعديل</button>' +
             '</div>' +
-            '<button onclick="requestDeleteProject(' + p.id + ')" class="btn-del-sm" title="حذف المشروع بالكامل من الهاتف">🗑️</button>' +
+            '<button onclick="requestDeleteProject(' + p.id + ')" class="icon-action-btn btn-action-delete" title="حذف المشروع نهائياً"><i class="fa-solid fa-trash-can"></i></button>' +
           '</div>';
-        grid.appendChild(card);
+        container.appendChild(card);
       });
 
-      document.getElementById('statTotalProjects').textContent = totalProjects;
-      document.getElementById('statTotalItemsAll').textContent = totalItems;
-      document.getElementById('statTotalAmountAll').textContent = totalAmount.toLocaleString() + ' ر.س';
-      document.getElementById('statTotalPaidAll').textContent = totalPaid.toLocaleString() + ' ر.س';
+      if (matchedCount === 0) {
+        container.innerHTML =
+          '<div class="empty-state-box" style="grid-column: 1 / -1;">' +
+            '<div class="empty-illustration"><i class="fa-solid fa-folder-open"></i></div>' +
+            '<h3 style="font-size:1.15rem; font-weight:800; color:#475569;">لا توجد مشاريع مطابقة</h3>' +
+            '<p style="font-size:0.88rem; color:#94a3b8;">يمكنك إضافة مشروع جديد إلى الهاتف بضغطة زر</p>' +
+            '<button onclick="openNewProjectModal()" class="btn btn-primary" style="margin-top:0.5rem;"><i class="fa-solid fa-plus"></i> إضافة مشروع جديد</button>' +
+          '</div>';
+      }
+
+      document.getElementById('kpiProjectsCount').textContent = totalProjects;
+      document.getElementById('kpiItemsCount').textContent = totalItems;
+      document.getElementById('kpiTotalAmount').textContent = totalAmount.toLocaleString() + ' ر.س';
+      document.getElementById('kpiTotalPaid').textContent = totalPaid.toLocaleString() + ' ر.س';
     }
 
     function filterByProjectAndOpenItems(projectId) {
@@ -1139,27 +1695,28 @@ const htmlContent = `<!DOCTYPE html>
           const meters = Number(it.totalMeters || it.quantity || 0);
           const price = Number(it.pricePerMeter || 0);
           const amount = Number(it.totalAmount || 0);
+          const badgeCls = getJobBadgeClass(it.jobType);
 
           const tr = document.createElement('tr');
           tr.innerHTML =
-            '<td style="font-weight:800; color:#0f172a;">' + (p.name || '-') + '</td>' +
+            '<td style="font-weight:800; color:var(--secondary);">' + (p.name || '-') + '</td>' +
             '<td style="font-weight:700;">' + (it.title || it.itemName || '-') + '</td>' +
-            '<td><span class="tag-badge tag-indigo">' + (it.jobType || '-') + '</span></td>' +
+            '<td><span class="job-badge ' + badgeCls + '">' + (it.jobType || '-') + '</span></td>' +
             '<td style="font-family:monospace; color:#64748b;">' + dim + '</td>' +
-            '<td style="color:#ef4444; font-weight:700;">' + (voidTotal > 0 ? ('-' + voidTotal + ' م2') : '-') + '</td>' +
-            '<td style="font-weight:900; color:#4f46e5; font-family:monospace;">' + meters.toLocaleString() + '</td>' +
+            '<td style="color:var(--rose); font-weight:700;">' + (voidTotal > 0 ? ('-' + voidTotal + ' م2') : '-') + '</td>' +
+            '<td style="font-weight:900; color:var(--primary); font-family:monospace; font-size:1rem;">' + meters.toLocaleString() + '</td>' +
             '<td style="color:#64748b;">' + (price > 0 ? (price.toLocaleString() + ' ر.س') : '-') + '</td>' +
-            '<td style="font-weight:900; color:#059669; font-family:monospace;">' + amount.toLocaleString() + ' ر.س</td>' +
+            '<td style="font-weight:900; color:var(--emerald); font-family:monospace; font-size:1.05rem;">' + amount.toLocaleString() + ' ر.س</td>' +
             '<td style="text-align:center; white-space:nowrap;">' +
-              '<button onclick="openEditItemModal(' + it.itemId + ')" class="btn-edit-sm" title="تعديل البند">✏️</button>' +
-              '<button onclick="requestDeleteItem(' + it.itemId + ')" class="btn-del-sm" title="حذف من الهاتف">🗑️</button>' +
+              '<button onclick="openEditItemModal(' + it.itemId + ')" class="icon-action-btn btn-action-edit" title="تعديل البند"><i class="fa-solid fa-pen"></i></button>' +
+              '<button onclick="requestDeleteItem(' + it.itemId + ')" class="icon-action-btn btn-action-delete" title="حذف من الهاتف"><i class="fa-solid fa-trash-can"></i></button>' +
             '</td>';
           tbody.appendChild(tr);
         });
       });
 
       if (count === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#94a3b8; padding:2.5rem;">لا توجد بنود مطابقة للبحث أو التصفية</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#94a3b8; padding:3rem;"><i class="fa-solid fa-box-open" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>لا توجد بنود حصر مطابقة للبحث</td></tr>';
       }
       document.getElementById('displayedItemsCount').textContent = count;
     }
@@ -1188,21 +1745,21 @@ const htmlContent = `<!DOCTYPE html>
 
           const tr = document.createElement('tr');
           tr.innerHTML =
-            '<td style="font-weight:800; color:#0f172a;">' + (p.name || '-') + '</td>' +
-            '<td style="font-weight:900; color:#059669; font-size:1.05rem; font-family:monospace;">' + amt.toLocaleString() + ' ر.س</td>' +
-            '<td><span class="tag-badge tag-amber">' + (pm.jobType || 'عام') + '</span></td>' +
+            '<td style="font-weight:800; color:var(--secondary);">' + (p.name || '-') + '</td>' +
+            '<td style="font-weight:900; color:var(--emerald); font-size:1.05rem; font-family:monospace;">' + amt.toLocaleString() + ' ر.س</td>' +
+            '<td><span class="job-badge job-tile">' + (pm.jobType || 'عام') + '</span></td>' +
             '<td>' + (pm.note || 'سند استلام نقدي / حوالة') + '</td>' +
-            '<td style="color:#64748b; font-size:0.85rem;">' + (pm.dateAdded ? new Date(pm.dateAdded).toLocaleDateString('ar-SA') : '-') + '</td>' +
+            '<td style="color:#64748b; font-size:0.85rem;"><i class="fa-regular fa-calendar-check"></i> ' + (pm.dateAdded ? new Date(pm.dateAdded).toLocaleDateString('ar-SA') : '-') + '</td>' +
             '<td style="text-align:center; white-space:nowrap;">' +
-              '<button onclick="openEditPaymentModal(' + pm.id + ')" class="btn-edit-sm" title="تعديل الدفعة">✏️</button>' +
-              '<button onclick="requestDeletePayment(' + pm.id + ')" class="btn-del-sm" title="حذف السند من الهاتف">🗑️</button>' +
+              '<button onclick="openEditPaymentModal(' + pm.id + ')" class="icon-action-btn btn-action-edit" title="تعديل الدفعة"><i class="fa-solid fa-pen"></i></button>' +
+              '<button onclick="requestDeletePayment(' + pm.id + ')" class="icon-action-btn btn-action-delete" title="حذف السند"><i class="fa-solid fa-trash-can"></i></button>' +
             '</td>';
           tbody.appendChild(tr);
         });
       });
 
       if (count === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:2.5rem;">لا توجد دفعات مالية مسجلة</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:3rem;"><i class="fa-solid fa-receipt" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>لا توجد دفعات مالية مسجلة</td></tr>';
       }
 
       const remaining = totalContract - totalReceived;
@@ -1213,7 +1770,84 @@ const htmlContent = `<!DOCTYPE html>
     }
 
     // ==========================================
-    // 4. عرض وتوليد عروض الأسعار (QUOTATIONS)
+    // 4. التحليلات البيانية (CHARTS)
+    // ==========================================
+    function renderAnalyticsCharts() {
+      const jobCostMap = {};
+      const jobQtyMap = {};
+
+      globalProjectsData.forEach(p => {
+        (p.items || []).forEach(it => {
+          const j = it.jobType || 'أخرى';
+          const amt = Number(it.totalAmount) || 0;
+          const qty = Number(it.totalMeters) || Number(it.quantity) || 0;
+          jobCostMap[j] = (jobCostMap[j] || 0) + amt;
+          jobQtyMap[j] = (jobQtyMap[j] || 0) + qty;
+        });
+      });
+
+      const labels = Object.keys(jobCostMap);
+      const costData = Object.values(jobCostMap);
+      const qtyData = labels.map(l => jobQtyMap[l] || 0);
+
+      const colors = ['#4f46e5', '#059669', '#d97706', '#0284c7', '#7e22ce', '#c2410c', '#e11d48', '#64748b'];
+
+      // Pie Chart
+      const pieCtx = document.getElementById('jobTypesPieChart');
+      if (pieCtx) {
+        if (pieChartInstance) pieChartInstance.destroy();
+        pieChartInstance = new Chart(pieCtx, {
+          type: 'doughnut',
+          data: {
+            labels: labels.length ? labels : ['لا توجد بيانات'],
+            datasets: [{
+              data: costData.length ? costData : [1],
+              backgroundColor: colors,
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { font: { family: 'Cairo' } } }
+            }
+          }
+        });
+      }
+
+      // Bar Chart
+      const barCtx = document.getElementById('jobTypesBarChart');
+      if (barCtx) {
+        if (barChartInstance) barChartInstance.destroy();
+        barChartInstance = new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels: labels.length ? labels : ['لا توجد بيانات'],
+            datasets: [{
+              label: 'إجمالي الكمية (متر)',
+              data: qtyData.length ? qtyData : [0],
+              backgroundColor: '#059669',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              y: { beginAtZero: true }
+            }
+          }
+        });
+      }
+    }
+
+    // ==========================================
+    // 5. عرض وتوليد عروض الأسعار (QUOTATIONS)
     // ==========================================
     function renderQuotationView() {
       const pId = document.getElementById('quoteProjectSelect').value;
@@ -1247,7 +1881,7 @@ const htmlContent = `<!DOCTYPE html>
           '<td>' + (it.jobType || '-') + '</td>' +
           '<td style="font-family:monospace; font-weight:700;">' + qty.toLocaleString() + '</td>' +
           '<td>' + price.toLocaleString() + ' ر.س</td>' +
-          '<td style="font-family:monospace; font-weight:900; color:#059669;">' + amount.toLocaleString() + ' ر.س</td>';
+          '<td style="font-family:monospace; font-weight:900; color:var(--emerald);">' + amount.toLocaleString() + ' ر.س</td>';
         tbody.appendChild(tr);
       });
 
@@ -1261,7 +1895,7 @@ const htmlContent = `<!DOCTYPE html>
     }
 
     // ==========================================
-    // 5. عرض وتعديل دليل الأسعار (PRICES GUIDE)
+    // 6. عرض وتعديل دليل الأسعار (PRICES GUIDE)
     // ==========================================
     function renderPricesTable() {
       const defaultJobs = [
@@ -1282,9 +1916,9 @@ const htmlContent = `<!DOCTYPE html>
         const tr = document.createElement('tr');
         tr.innerHTML =
           '<td style="font-weight:800; font-size:0.95rem;">' + job + '</td>' +
-          '<td style="font-weight:900; color:#4f46e5; font-size:1.1rem; font-family:monospace;">' + curPrice.toLocaleString() + ' ر.س</td>' +
-          '<td><input type="number" step="0.5" id="' + inputId + '" value="' + curPrice + '" class="form-input" style="width:140px;" /></td>' +
-          '<td style="text-align:center;"><button onclick="saveUnitPrice(\\'' + job + '\\', \\'' + inputId + '\\')" class="btn btn-indigo" style="padding:0.35rem 0.85rem;">💾 حفظ في الهاتف</button></td>';
+          '<td style="font-weight:900; color:var(--primary); font-size:1.1rem; font-family:monospace;">' + curPrice.toLocaleString() + ' ر.س</td>' +
+          '<td><input type="number" step="0.5" id="' + inputId + '" value="' + curPrice + '" class="custom-input" style="width:140px; padding:0.4rem 0.75rem;" /></td>' +
+          '<td style="text-align:center;"><button onclick="saveUnitPrice(\\'' + job + '\\', \\'' + inputId + '\\')" class="btn btn-primary" style="padding:0.35rem 0.95rem;"><i class="fa-solid fa-floppy-disk"></i> حفظ في الهاتف</button></td>';
         tbody.appendChild(tr);
       });
     }
@@ -1356,13 +1990,9 @@ const htmlContent = `<!DOCTYPE html>
 
     function openEditItemModal(itemId) {
       let foundItem = null;
-      let foundProj = null;
       globalProjectsData.forEach(p => {
         (p.items || []).forEach(it => {
-          if (it.itemId === itemId) {
-            foundItem = it;
-            foundProj = p;
-          }
+          if (it.itemId === itemId) foundItem = it;
         });
       });
       if (!foundItem) return;
@@ -1701,10 +2331,6 @@ const htmlContent = `<!DOCTYPE html>
       pendingDeleteType = '';
     }
 
-    function printCurrentView() {
-      window.print();
-    }
-
     function exportComprehensiveExcel() {
       if (!globalProjectsData || globalProjectsData.length === 0) {
         alert('لا توجد بيانات للتصدير!');
@@ -1792,6 +2418,7 @@ const htmlContent = `<!DOCTYPE html>
           renderPaymentsTable();
           renderQuotationView();
           renderPricesTable();
+          renderAnalyticsCharts();
 
           if (socket && socket.connected) {
             socket.emit('join_session', currentSessionId);
@@ -1834,5 +2461,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log('Metrix Pro Relay Server running on port', PORT);
+  console.log('Metrix Pro Enterprise Server running on port', PORT);
 });

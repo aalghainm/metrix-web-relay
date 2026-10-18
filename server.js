@@ -551,6 +551,45 @@ const htmlContent = `<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- نافذة تعديل مشروع -->
+  <div id="editProjectModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>✏️ تعديل بيانات المشروع</h3>
+        <button onclick="closeModal('editProjectModal')" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editProjId" />
+        <div class="form-group">
+          <label class="form-label">اسم المشروع *</label>
+          <input type="text" id="editProjName" class="form-input" />
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">اسم العميل</label>
+            <input type="text" id="editProjClient" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم جوال العميل</label>
+            <input type="tel" id="editProjMobile" class="form-input" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ المشروع</label>
+          <input type="date" id="editProjDate" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات / وصف المشروع</label>
+          <textarea id="editProjDesc" class="form-input" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('editProjectModal')" class="btn btn-gray">إلغاء</button>
+        <button onclick="submitEditProject()" class="btn btn-sky">حفظ التعديلات في الهاتف</button>
+      </div>
+    </div>
+  </div>
+
   <!-- نافذة إضافة بند حصر جديد -->
   <div id="newItemModal" class="modal-backdrop">
     <div class="modal-box" style="max-width:640px;">
@@ -573,7 +612,7 @@ const htmlContent = `<!DOCTYPE html>
         <div class="grid-2">
           <div class="form-group">
             <label class="form-label">نوع العمل</label>
-            <select id="newItemJobType" onchange="onJobTypeChanged()" class="form-input">
+            <select id="newItemJobType" onchange="onJobTypeChanged('newItemJobType', 'newItemPrice', calculateLiveItem)" class="form-input">
               <option value="لياسة">لياسة (تلييس)</option>
               <option value="دهان">دهان</option>
               <option value="بناء طوب">بناء طوب</option>
@@ -648,6 +687,104 @@ const htmlContent = `<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- نافذة تعديل بند حصر -->
+  <div id="editItemModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width:640px;">
+      <div class="modal-head">
+        <h3>✏️ تعديل بند حصر هندسي</h3>
+        <button onclick="closeModal('editItemModal')" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editItemId" />
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">المشروع التابع له *</label>
+            <select id="editItemProjectSelect" class="form-input"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">اسم البند / الغرفة *</label>
+            <input type="text" id="editItemTitle" class="form-input" />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">نوع العمل</label>
+            <select id="editItemJobType" onchange="calculateLiveEditItem()" class="form-input">
+              <option value="لياسة">لياسة (تلييس)</option>
+              <option value="دهان">دهان</option>
+              <option value="بناء طوب">بناء طوب</option>
+              <option value="بلاط وسيراميك">بلاط وسيراميك</option>
+              <option value="جبس بورد">جبس بورد</option>
+              <option value="صب خرسانة">صب خرسانة</option>
+              <option value="عزل مائي">عزل مائي</option>
+              <option value="عزل حراري">عزل حراري</option>
+              <option value="أخرى">أخرى</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">طريقة الحساب</label>
+            <select id="editItemCalcMode" onchange="calculateLiveEditItem()" class="form-input">
+              <option value="WALLS">جدران / حوائط (محيط × ارتفاع)</option>
+              <option value="AREA">مسطح / مساحة (طول × عرض)</option>
+              <option value="VOLUME">حجم / مكعب (طول × عرض × ارتفاع)</option>
+              <option value="LENGTH">طولي (طول فقط)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label class="form-label">الطول (م)</label>
+            <input type="number" step="0.01" id="editItemLength" oninput="calculateLiveEditItem()" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">العرض (م)</label>
+            <input type="number" step="0.01" id="editItemWidth" oninput="calculateLiveEditItem()" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">الارتفاع (م)</label>
+            <input type="number" step="0.01" id="editItemHeight" oninput="calculateLiveEditItem()" class="form-input" />
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label class="form-label">عدد الجدران / التكرار</label>
+            <input type="number" step="1" id="editItemWallCount" oninput="calculateLiveEditItem()" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">خصم الأبواب (م2)</label>
+            <input type="number" step="0.01" id="editItemDoorsVoid" oninput="calculateLiveEditItem()" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">خصم النوافذ (م2)</label>
+            <input type="number" step="0.01" id="editItemWindowsVoid" oninput="calculateLiveEditItem()" class="form-input" />
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label class="form-label">سعر المتر (ر.س)</label>
+            <input type="number" step="0.1" id="editItemPrice" oninput="calculateLiveEditItem()" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">الكمية الصافية المحسوبة</label>
+            <input type="text" id="editItemCalcMeters" readonly class="form-input" style="background:#f8fafc; font-weight:800; color:#4f46e5;" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">المبلغ الإجمالي</label>
+            <input type="text" id="editItemCalcAmount" readonly class="form-input" style="background:#f8fafc; font-weight:800; color:#059669;" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('editItemModal')" class="btn btn-gray">إلغاء</button>
+        <button onclick="submitEditItem()" class="btn btn-sky">حفظ التعديل في الهاتف</button>
+      </div>
+    </div>
+  </div>
+
   <!-- نافذة إضافة دفعة مالية جديدة -->
   <div id="newPaymentModal" class="modal-backdrop">
     <div class="modal-box">
@@ -682,12 +819,73 @@ const htmlContent = `<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- نافذة تعديل دفعة مالية -->
+  <div id="editPaymentModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>✏️ تعديل سند الدفعة المالية</h3>
+        <button onclick="closeModal('editPaymentModal')" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editPayId" />
+        <div class="form-group">
+          <label class="form-label">المشروع *</label>
+          <select id="editPaymentProjectSelect" class="form-input"></select>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">المبلغ المستلم (ر.س) *</label>
+            <input type="number" step="0.01" id="editPayAmount" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">نوع العمل / المرحلة</label>
+            <input type="text" id="editPayJobType" class="form-input" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات السند</label>
+          <textarea id="editPayNote" class="form-input" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('editPaymentModal')" class="btn btn-gray">إلغاء</button>
+        <button onclick="submitEditPayment()" class="btn btn-sky">حفظ التعديل في الهاتف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة تأكيد الحذف بالرقم السري (PIN SECURITY MODAL) -->
+  <div id="deleteConfirmModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 440px;">
+      <div class="modal-head" style="background: #fef2f2;">
+        <h3 style="color: #dc2626;">🔒 تأكيد الحذف برقم الأمان</h3>
+        <button onclick="closeModal('deleteConfirmModal')" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <p style="font-size: 0.92rem; color: #475569; line-height: 1.6;" id="deleteConfirmPromptText">
+          هذا الإجراء سيقوم بحذف العنصر نهائياً من قاعدة بيانات الهاتف.
+        </p>
+        <div class="form-group" style="margin-top: 1rem; text-align: right;">
+          <label class="form-label" style="color: #b91c1c;">أدخل الرقم السري للتطبيق (Passcode) *</label>
+          <input type="password" id="deletePasscodeInput" class="form-input" style="font-size: 1.2rem; text-align: center; letter-spacing: 4px;" placeholder="••••" />
+          <span style="font-size: 0.78rem; color: #94a3b8;">إذا لم يتم تعيين رقم سري في إعدادات التطبيق، يمكنك الضغط على تأكيد مباشرة.</span>
+        </div>
+      </div>
+      <div class="modal-footer" style="background: #fef2f2;">
+        <button onclick="closeModal('deleteConfirmModal')" class="btn btn-gray">إلغاء</button>
+        <button onclick="executeConfirmedDelete()" class="btn btn-danger">تأكيد الحذف النهائي 🗑️</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let socket;
     let currentSessionId = '';
     let countdownInterval;
     let globalProjectsData = [];
     let globalPricesData = [];
+    let pendingDeleteType = ''; // 'project', 'item', 'payment'
+    let pendingDeleteId = null;
 
     // الاتصال بالخادم السحابي
     function initSocket() {
@@ -719,6 +917,10 @@ const htmlContent = `<!DOCTYPE html>
         renderPaymentsTable();
         renderQuotationView();
         renderPricesTable();
+      });
+
+      socket.on('security_error', (data) => {
+        alert('❌ تنبيه أمان: ' + (data.message || 'الرقم السري غير صحيح! تم رفض عملية الحذف.'));
       });
 
       socket.on('session_terminated', () => logout());
@@ -783,7 +985,9 @@ const htmlContent = `<!DOCTYPE html>
         document.getElementById('paymentProjectFilter'),
         document.getElementById('quoteProjectSelect'),
         document.getElementById('modalItemProjectSelect'),
-        document.getElementById('modalPaymentProjectSelect')
+        document.getElementById('modalPaymentProjectSelect'),
+        document.getElementById('editItemProjectSelect'),
+        document.getElementById('editPaymentProjectSelect')
       ];
 
       selects.forEach(sel => {
@@ -883,8 +1087,9 @@ const htmlContent = `<!DOCTYPE html>
             '<div style="display:flex; gap:0.4rem;">' +
               '<button onclick="filterByProjectAndOpenItems(' + p.id + ')" class="btn btn-sky" style="padding:0.35rem 0.65rem; font-size:0.8rem;">📐 البنود</button>' +
               '<button onclick="filterByProjectAndOpenPayments(' + p.id + ')" class="btn btn-amber" style="padding:0.35rem 0.65rem; font-size:0.8rem;">💰 الدفعات</button>' +
+              '<button onclick="openEditProjectModal(' + p.id + ')" class="btn btn-gray" style="padding:0.35rem 0.65rem; font-size:0.8rem;">✏️ تعديل</button>' +
             '</div>' +
-            '<button onclick="deleteProject(' + p.id + ')" class="btn-del-sm" title="حذف المشروع بالكامل من الهاتف">🗑️</button>' +
+            '<button onclick="requestDeleteProject(' + p.id + ')" class="btn-del-sm" title="حذف المشروع بالكامل من الهاتف">🗑️</button>' +
           '</div>';
         grid.appendChild(card);
       });
@@ -945,7 +1150,10 @@ const htmlContent = `<!DOCTYPE html>
             '<td style="font-weight:900; color:#4f46e5; font-family:monospace;">' + meters.toLocaleString() + '</td>' +
             '<td style="color:#64748b;">' + (price > 0 ? (price.toLocaleString() + ' ر.س') : '-') + '</td>' +
             '<td style="font-weight:900; color:#059669; font-family:monospace;">' + amount.toLocaleString() + ' ر.س</td>' +
-            '<td style="text-align:center;"><button onclick="deleteItem(' + it.itemId + ')" class="btn-del-sm" title="حذف من الهاتف">🗑️</button></td>';
+            '<td style="text-align:center; white-space:nowrap;">' +
+              '<button onclick="openEditItemModal(' + it.itemId + ')" class="btn-edit-sm" title="تعديل البند">✏️</button>' +
+              '<button onclick="requestDeleteItem(' + it.itemId + ')" class="btn-del-sm" title="حذف من الهاتف">🗑️</button>' +
+            '</td>';
           tbody.appendChild(tr);
         });
       });
@@ -985,7 +1193,10 @@ const htmlContent = `<!DOCTYPE html>
             '<td><span class="tag-badge tag-amber">' + (pm.jobType || 'عام') + '</span></td>' +
             '<td>' + (pm.note || 'سند استلام نقدي / حوالة') + '</td>' +
             '<td style="color:#64748b; font-size:0.85rem;">' + (pm.dateAdded ? new Date(pm.dateAdded).toLocaleDateString('ar-SA') : '-') + '</td>' +
-            '<td style="text-align:center;"><button onclick="deletePayment(' + pm.id + ')" class="btn-del-sm" title="حذف السند من الهاتف">🗑️</button></td>';
+            '<td style="text-align:center; white-space:nowrap;">' +
+              '<button onclick="openEditPaymentModal(' + pm.id + ')" class="btn-edit-sm" title="تعديل الدفعة">✏️</button>' +
+              '<button onclick="requestDeletePayment(' + pm.id + ')" class="btn-del-sm" title="حذف السند من الهاتف">🗑️</button>' +
+            '</td>';
           tbody.appendChild(tr);
         });
       });
@@ -1089,11 +1300,46 @@ const htmlContent = `<!DOCTYPE html>
     }
 
     // ==========================================
-    // إدارة النوافذ المنبثقة والعمليات التفاعلية
+    // إدارة النوافذ المنبثقة والإضافة والتعديل
     // ==========================================
     function openNewProjectModal() {
       document.getElementById('newProjectModal').style.display = 'flex';
       document.getElementById('newProjName').focus();
+    }
+
+    function openEditProjectModal(projectId) {
+      const proj = globalProjectsData.find(p => p.id === projectId);
+      if (!proj) return;
+      document.getElementById('editProjId').value = proj.id;
+      document.getElementById('editProjName').value = proj.name || '';
+      document.getElementById('editProjClient').value = proj.clientName || '';
+      document.getElementById('editProjMobile').value = proj.mobileNumber || '';
+      document.getElementById('editProjDate').value = proj.projectDate || '';
+      document.getElementById('editProjDesc').value = proj.description || '';
+      document.getElementById('editProjectModal').style.display = 'flex';
+    }
+
+    function submitEditProject() {
+      const id = parseInt(document.getElementById('editProjId').value);
+      const name = document.getElementById('editProjName').value.trim();
+      if (!id || !name) { alert('يرجى إدخال اسم المشروع'); return; }
+
+      const projData = {
+        id: id,
+        name: name,
+        clientName: document.getElementById('editProjClient').value.trim(),
+        mobileNumber: document.getElementById('editProjMobile').value.trim(),
+        projectDate: document.getElementById('editProjDate').value,
+        description: document.getElementById('editProjDesc').value.trim()
+      };
+
+      socket.emit('relay_to_phone', {
+        sessionId: currentSessionId,
+        action: 'update_project_from_web',
+        data: projData
+      });
+
+      closeModal('editProjectModal');
     }
 
     function openNewItemModal() {
@@ -1103,9 +1349,114 @@ const htmlContent = `<!DOCTYPE html>
         return;
       }
       document.getElementById('newItemModal').style.display = 'flex';
-      onJobTypeChanged();
+      onJobTypeChanged('newItemJobType', 'newItemPrice', calculateLiveItem);
       calculateLiveItem();
       document.getElementById('newItemTitle').focus();
+    }
+
+    function openEditItemModal(itemId) {
+      let foundItem = null;
+      let foundProj = null;
+      globalProjectsData.forEach(p => {
+        (p.items || []).forEach(it => {
+          if (it.itemId === itemId) {
+            foundItem = it;
+            foundProj = p;
+          }
+        });
+      });
+      if (!foundItem) return;
+
+      document.getElementById('editItemId').value = foundItem.itemId;
+      document.getElementById('editItemProjectSelect').value = foundItem.projectId;
+      document.getElementById('editItemTitle').value = foundItem.title || foundItem.itemName || '';
+      document.getElementById('editItemJobType').value = foundItem.jobType || 'لياسة';
+      document.getElementById('editItemCalcMode').value = foundItem.calcMode || 'WALLS';
+      document.getElementById('editItemLength').value = foundItem.length || 0;
+      document.getElementById('editItemWidth').value = foundItem.width || 0;
+      document.getElementById('editItemHeight').value = foundItem.height || 0;
+      document.getElementById('editItemWallCount').value = foundItem.wallCount || 1;
+      document.getElementById('editItemDoorsVoid').value = foundItem.doorsVoid || 0;
+      document.getElementById('editItemWindowsVoid').value = foundItem.windowsVoid || 0;
+      document.getElementById('editItemPrice').value = foundItem.pricePerMeter || 0;
+
+      calculateLiveEditItem();
+      document.getElementById('editItemModal').style.display = 'flex';
+    }
+
+    function calculateLiveEditItem() {
+      const mode = document.getElementById('editItemCalcMode').value;
+      const l = parseFloat(document.getElementById('editItemLength').value) || 0;
+      const w = parseFloat(document.getElementById('editItemWidth').value) || 0;
+      const h = parseFloat(document.getElementById('editItemHeight').value) || 0;
+      const walls = parseFloat(document.getElementById('editItemWallCount').value) || 1;
+      const dVoid = parseFloat(document.getElementById('editItemDoorsVoid').value) || 0;
+      const wVoid = parseFloat(document.getElementById('editItemWindowsVoid').value) || 0;
+      const price = parseFloat(document.getElementById('editItemPrice').value) || 0;
+
+      let netMeters = 0;
+      if (mode === 'WALLS') {
+        const perimeter = (w > 0) ? ((l + w) * 2) : (l * walls);
+        const gross = perimeter * (h > 0 ? h : 1);
+        netMeters = Math.max(0, gross - (dVoid + wVoid));
+      } else if (mode === 'AREA') {
+        const gross = (l * (w > 0 ? w : 1)) * walls;
+        netMeters = Math.max(0, gross - (dVoid + wVoid));
+      } else if (mode === 'VOLUME') {
+        netMeters = l * (w > 0 ? w : 1) * (h > 0 ? h : 1) * walls;
+      } else if (mode === 'LENGTH') {
+        netMeters = l * walls;
+      }
+
+      netMeters = Math.round(netMeters * 100) / 100;
+      const totalAmount = Math.round((netMeters * price) * 100) / 100;
+
+      document.getElementById('editItemCalcMeters').value = netMeters;
+      document.getElementById('editItemCalcAmount').value = totalAmount.toLocaleString() + ' ر.س';
+    }
+
+    function submitEditItem() {
+      const itemId = parseInt(document.getElementById('editItemId').value);
+      const pId = parseInt(document.getElementById('editItemProjectSelect').value);
+      const title = document.getElementById('editItemTitle').value.trim();
+      if (!itemId || !pId || !title) { alert('يرجى تحديد اسم البند'); return; }
+
+      const l = parseFloat(document.getElementById('editItemLength').value) || 0;
+      const w = parseFloat(document.getElementById('editItemWidth').value) || 0;
+      const h = parseFloat(document.getElementById('editItemHeight').value) || 0;
+      const walls = parseInt(document.getElementById('editItemWallCount').value) || 1;
+      const dVoid = parseFloat(document.getElementById('editItemDoorsVoid').value) || 0;
+      const wVoid = parseFloat(document.getElementById('editItemWindowsVoid').value) || 0;
+      const price = parseFloat(document.getElementById('editItemPrice').value) || 0;
+      const meters = parseFloat(document.getElementById('editItemCalcMeters').value) || 0;
+      const totalAmount = meters * price;
+
+      const itemData = {
+        itemId: itemId,
+        projectId: pId,
+        itemName: title,
+        jobType: document.getElementById('editItemJobType').value,
+        calcMode: document.getElementById('editItemCalcMode').value,
+        length: l,
+        width: w,
+        height: h,
+        wallCount: walls,
+        voidArea: (dVoid + wVoid),
+        pricePerMeter: price,
+        quantity: 1,
+        totalMeters: meters,
+        totalAmount: totalAmount,
+        doorsVoid: dVoid,
+        windowsVoid: wVoid
+      };
+
+      socket.emit('relay_to_phone', {
+        sessionId: currentSessionId,
+        action: 'update_item_from_web',
+        data: itemData
+      });
+
+      closeModal('editItemModal');
     }
 
     function openNewPaymentModal() {
@@ -1117,21 +1468,59 @@ const htmlContent = `<!DOCTYPE html>
       document.getElementById('newPayAmount').focus();
     }
 
+    function openEditPaymentModal(paymentId) {
+      let foundPay = null;
+      globalProjectsData.forEach(p => {
+        (p.payments || []).forEach(pm => {
+          if (pm.id === paymentId) foundPay = pm;
+        });
+      });
+      if (!foundPay) return;
+
+      document.getElementById('editPayId').value = foundPay.id;
+      document.getElementById('editPaymentProjectSelect').value = foundPay.projectId;
+      document.getElementById('editPayAmount').value = foundPay.amount || 0;
+      document.getElementById('editPayJobType').value = foundPay.jobType || '';
+      document.getElementById('editPayNote').value = foundPay.note || '';
+      document.getElementById('editPaymentModal').style.display = 'flex';
+    }
+
+    function submitEditPayment() {
+      const id = parseInt(document.getElementById('editPayId').value);
+      const pId = parseInt(document.getElementById('editPaymentProjectSelect').value);
+      const amt = parseFloat(document.getElementById('editPayAmount').value) || 0;
+      if (!id || !pId || amt <= 0) { alert('يرجى إدخال مبلغ صحيح'); return; }
+
+      const payData = {
+        id: id,
+        projectId: pId,
+        amount: amt,
+        jobType: document.getElementById('editPayJobType').value.trim(),
+        note: document.getElementById('editPayNote').value.trim()
+      };
+
+      socket.emit('relay_to_phone', {
+        sessionId: currentSessionId,
+        action: 'update_payment_from_web',
+        data: payData
+      });
+
+      closeModal('editPaymentModal');
+    }
+
     function closeModal(id) {
       document.getElementById(id).style.display = 'none';
     }
 
-    // عند تغيير نوع العمل، نقترح السعر الافتراضي من دليل الأسعار
-    function onJobTypeChanged() {
-      const job = document.getElementById('newItemJobType').value;
+    function onJobTypeChanged(jobSelectId, priceInputId, calcFunc) {
+      const job = document.getElementById(jobSelectId).value;
       const found = globalPricesData.find(p => p.jobType === job);
       if (found && found.pricePerUnit > 0) {
-        document.getElementById('newItemPrice').value = found.pricePerUnit;
+        document.getElementById(priceInputId).value = found.pricePerUnit;
       }
-      calculateLiveItem();
+      if (calcFunc) calcFunc();
     }
 
-    // حساب الحصر الهندسي الصافي المباشر
     function calculateLiveItem() {
       const mode = document.getElementById('newItemCalcMode').value;
       const l = parseFloat(document.getElementById('newItemLength').value) || 0;
@@ -1144,19 +1533,15 @@ const htmlContent = `<!DOCTYPE html>
 
       let netMeters = 0;
       if (mode === 'WALLS') {
-        // حوائط: محيط الغرفة ((طول + عرض) * 2) * ارتفاع أو طول جدار * ارتفاع * عدد الجدران
         const perimeter = (w > 0) ? ((l + w) * 2) : (l * walls);
         const gross = perimeter * (h > 0 ? h : 1);
         netMeters = Math.max(0, gross - (dVoid + wVoid));
       } else if (mode === 'AREA') {
-        // مسطح أرضية أو سقف
         const gross = (l * (w > 0 ? w : 1)) * walls;
         netMeters = Math.max(0, gross - (dVoid + wVoid));
       } else if (mode === 'VOLUME') {
-        // خرسانات وحجوم
         netMeters = l * (w > 0 ? w : 1) * (h > 0 ? h : 1) * walls;
       } else if (mode === 'LENGTH') {
-        // طولي
         netMeters = l * walls;
       }
 
@@ -1167,7 +1552,6 @@ const htmlContent = `<!DOCTYPE html>
       document.getElementById('newItemCalcAmount').value = totalAmount.toLocaleString() + ' ر.س';
     }
 
-    // إرسال مشروع جديد للهاتف
     function submitNewProject() {
       const name = document.getElementById('newProjName').value.trim();
       if (!name) { alert('يرجى إدخال اسم المشروع'); return; }
@@ -1193,7 +1577,6 @@ const htmlContent = `<!DOCTYPE html>
       document.getElementById('newProjDesc').value = '';
     }
 
-    // إرسال بند حصر جديد للهاتف
     function submitNewItem() {
       const pId = parseInt(document.getElementById('modalItemProjectSelect').value);
       const title = document.getElementById('newItemTitle').value.trim();
@@ -1244,7 +1627,6 @@ const htmlContent = `<!DOCTYPE html>
       document.getElementById('newItemCalcAmount').value = '0 ر.س';
     }
 
-    // إرسال دفعة مالية جديدة للهاتف
     function submitNewPayment() {
       const pId = parseInt(document.getElementById('modalPaymentProjectSelect').value);
       const amt = parseFloat(document.getElementById('newPayAmount').value) || 0;
@@ -1269,45 +1651,60 @@ const htmlContent = `<!DOCTYPE html>
       document.getElementById('newPayNote').value = '';
     }
 
-    // حذف مشروع من الهاتف
-    function deleteProject(projectId) {
-      if (confirm('تحذير: هل أنت متأكد من حذف هذا المشروع وجميع بنوده ودفعاته من الهاتف نهائياً؟')) {
-        socket.emit('relay_to_phone', {
-          sessionId: currentSessionId,
-          action: 'delete_project_from_web',
-          data: projectId
-        });
-      }
+    // ==========================================
+    // إدارة الحذف مع التحقق من الرقم السري (PIN)
+    // ==========================================
+    function requestDeleteProject(projectId) {
+      pendingDeleteType = 'project';
+      pendingDeleteId = projectId;
+      document.getElementById('deleteConfirmPromptText').textContent = 'هل أنت متأكد من رغبتك في حذف هذا المشروع وجميع بنوده ودفعاته نهائياً من الهاتف؟';
+      document.getElementById('deletePasscodeInput').value = '';
+      document.getElementById('deleteConfirmModal').style.display = 'flex';
+      document.getElementById('deletePasscodeInput').focus();
     }
 
-    // حذف بند من الهاتف
-    function deleteItem(itemId) {
-      if (confirm('هل أنت متأكد من حذف هذا البند من الهاتف؟')) {
-        socket.emit('relay_to_phone', {
-          sessionId: currentSessionId,
-          action: 'delete_item_from_web',
-          data: itemId
-        });
-      }
+    function requestDeleteItem(itemId) {
+      pendingDeleteType = 'item';
+      pendingDeleteId = itemId;
+      document.getElementById('deleteConfirmPromptText').textContent = 'هل أنت متأكد من رغبتك في حذف هذا البند نهائياً من الهاتف؟';
+      document.getElementById('deletePasscodeInput').value = '';
+      document.getElementById('deleteConfirmModal').style.display = 'flex';
+      document.getElementById('deletePasscodeInput').focus();
     }
 
-    // حذف دفعة من الهاتف
-    function deletePayment(paymentId) {
-      if (confirm('هل أنت متأكد من حذف هذا السند المالي من الهاتف؟')) {
-        socket.emit('relay_to_phone', {
-          sessionId: currentSessionId,
-          action: 'delete_payment_from_web',
-          data: paymentId
-        });
-      }
+    function requestDeletePayment(paymentId) {
+      pendingDeleteType = 'payment';
+      pendingDeleteId = paymentId;
+      document.getElementById('deleteConfirmPromptText').textContent = 'هل أنت متأكد من رغبتك في حذف هذا السند المالي نهائياً من الهاتف؟';
+      document.getElementById('deletePasscodeInput').value = '';
+      document.getElementById('deleteConfirmModal').style.display = 'flex';
+      document.getElementById('deletePasscodeInput').focus();
     }
 
-    // طباعة الشاشة الحالية
+    function executeConfirmedDelete() {
+      const passcode = document.getElementById('deletePasscodeInput').value.trim();
+      if (!pendingDeleteId) return;
+
+      let action = '';
+      if (pendingDeleteType === 'project') action = 'delete_project_from_web';
+      if (pendingDeleteType === 'item') action = 'delete_item_from_web';
+      if (pendingDeleteType === 'payment') action = 'delete_payment_from_web';
+
+      socket.emit('relay_to_phone', {
+        sessionId: currentSessionId,
+        action: action,
+        data: { id: pendingDeleteId, passcode: passcode }
+      });
+
+      closeModal('deleteConfirmModal');
+      pendingDeleteId = null;
+      pendingDeleteType = '';
+    }
+
     function printCurrentView() {
       window.print();
     }
 
-    // تصدير ملف إكسل شامل لكل شيء في النظام
     function exportComprehensiveExcel() {
       if (!globalProjectsData || globalProjectsData.length === 0) {
         alert('لا توجد بيانات للتصدير!');
@@ -1316,7 +1713,6 @@ const htmlContent = `<!DOCTYPE html>
 
       const wb = XLSX.utils.book_new();
 
-      // ورقة بنود الحصر
       const itemsRows = [['المشروع', 'العميل', 'رقم الجوال', 'اسم البند / الغرفة', 'نوع العمل', 'طريقة الحساب', 'الطول', 'العرض', 'الارتفاع', 'خصم الأبواب', 'خصم النوافذ', 'الكمية الصافية', 'سعر المتر', 'المبلغ الإجمالي']];
       globalProjectsData.forEach(p => {
         (p.items || []).forEach(it => {
@@ -1342,7 +1738,6 @@ const htmlContent = `<!DOCTYPE html>
       wsItems['!dir'] = 'rtl';
       XLSX.utils.book_append_sheet(wb, wsItems, "حصر الكميات");
 
-      // ورقة الدفعات المالية
       const payRows = [['المشروع', 'العميل', 'المبلغ المقبوض', 'نوع العمل / المرحلة', 'الملاحظات', 'تاريخ الاستلام']];
       globalProjectsData.forEach(p => {
         (p.payments || []).forEach(pm => {
@@ -1426,7 +1821,7 @@ io.on('connection', (socket) => {
     io.to(sessionId).emit('authenticated', payload);
   });
 
-  // تمرير أوامر الإضافة والتعديل والحذف من شاشة الويب إلى الهاتف مباشرة
+  // تمرير أوامر الإضافة والتعديل والحذف والتنبيهات بين المتصفح والهاتف
   socket.on('relay_to_phone', ({ sessionId, action, data }) => {
     io.to(sessionId).emit(action, data);
   });

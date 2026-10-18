@@ -694,13 +694,21 @@ const htmlContent = `<!DOCTYPE html>
       socket = io();
 
       socket.on('connect', () => {
-        if (currentSessionId) socket.emit('join_session', currentSessionId);
+        if (currentSessionId) {
+          socket.emit('join_session', currentSessionId);
+          socket.emit('relay_to_phone', { sessionId: currentSessionId, action: 'request_sync', data: {} });
+        }
       });
 
       socket.on('authenticated', (data) => {
         clearInterval(countdownInterval);
         document.getElementById('authScreen').style.display = 'none';
         document.getElementById('dashboardScreen').style.display = 'flex';
+
+        try {
+          localStorage.setItem('metrix_session_id', currentSessionId);
+          localStorage.setItem('metrix_cached_data', JSON.stringify(data));
+        } catch(e) {}
 
         globalProjectsData = data.projects || [];
         globalPricesData = data.prices || [];
@@ -1356,6 +1364,10 @@ const htmlContent = `<!DOCTYPE html>
     }
 
     function logout() {
+      try {
+        localStorage.removeItem('metrix_session_id');
+        localStorage.removeItem('metrix_cached_data');
+      } catch(e) {}
       if (socket && currentSessionId) {
         socket.emit('terminate_session', currentSessionId);
       }
@@ -1366,7 +1378,36 @@ const htmlContent = `<!DOCTYPE html>
 
     window.onload = () => {
       initSocket();
-      initSession();
+      const savedSession = localStorage.getItem('metrix_session_id');
+      const savedData = localStorage.getItem('metrix_cached_data');
+
+      if (savedSession && savedData) {
+        try {
+          currentSessionId = savedSession;
+          const parsed = JSON.parse(savedData);
+          document.getElementById('authScreen').style.display = 'none';
+          document.getElementById('dashboardScreen').style.display = 'flex';
+
+          globalProjectsData = parsed.projects || [];
+          globalPricesData = parsed.prices || [];
+
+          populateAllProjectSelectors();
+          renderProjectsList();
+          renderItemsTable();
+          renderPaymentsTable();
+          renderQuotationView();
+          renderPricesTable();
+
+          if (socket && socket.connected) {
+            socket.emit('join_session', currentSessionId);
+            socket.emit('relay_to_phone', { sessionId: currentSessionId, action: 'request_sync', data: {} });
+          }
+        } catch (e) {
+          initSession();
+        }
+      } else {
+        initSession();
+      }
     };
   </script>
 </body>

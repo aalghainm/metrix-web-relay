@@ -1823,32 +1823,40 @@ const htmlContent = `<!DOCTYPE html>
         updateConnectionBadge(true);
 
         const incomingProjects = data.projects || [];
-        if (window._editedProjectSnapshot && (Date.now() - window._editedProjectSnapshot.timestamp < 15000)) {
+        if (window._editedProjectSnapshot && (Date.now() - window._editedProjectSnapshot.timestamp < 10000)) {
           const snap = window._editedProjectSnapshot;
-          window._editedProjectSnapshot = null;
           const editedProj = incomingProjects.find(p => Number(p.id) === Number(snap.id));
           if (editedProj) {
             const incomingItems = editedProj.items || [];
             const incomingPayments = editedProj.payments || [];
-            if (snap.items.length > 0 && incomingItems.length === 0) {
+            if (snap.items.length > 0 && incomingItems.length < snap.items.length) {
               editedProj.items = snap.items;
-              snap.items.forEach(item => {
-                socket.emit('relay_to_phone', {
-                  sessionId: currentSessionId,
-                  action: 'create_item_from_web',
-                  data: Object.assign({}, item, { projectId: editedProj.id })
+              if (!snap.restoredItemsSent) {
+                snap.restoredItemsSent = true;
+                snap.items.forEach(item => {
+                  socket.emit('relay_to_phone', {
+                    sessionId: currentSessionId,
+                    action: item.itemId ? 'update_item_from_web' : 'create_item_from_web',
+                    data: Object.assign({}, item, { projectId: editedProj.id })
+                  });
                 });
-              });
+              }
             }
-            if (snap.payments.length > 0 && incomingPayments.length === 0) {
+            if (snap.payments.length > 0 && incomingPayments.length < snap.payments.length) {
               editedProj.payments = snap.payments;
-              snap.payments.forEach(pay => {
-                socket.emit('relay_to_phone', {
-                  sessionId: currentSessionId,
-                  action: 'add_payment_from_web',
-                  data: Object.assign({}, pay, { projectId: editedProj.id })
+              if (!snap.restoredPaymentsSent) {
+                snap.restoredPaymentsSent = true;
+                snap.payments.forEach(pay => {
+                  socket.emit('relay_to_phone', {
+                    sessionId: currentSessionId,
+                    action: 'add_payment_from_web',
+                    data: Object.assign({}, pay, { projectId: editedProj.id })
+                  });
                 });
-              });
+              }
+            }
+            if (incomingItems.length >= snap.items.length && incomingPayments.length >= snap.payments.length) {
+              window._editedProjectSnapshot = null;
             }
           }
         }

@@ -1611,8 +1611,8 @@ const htmlContent = `<!DOCTYPE html>
       const jobFilter = document.getElementById('itemsJobTypeFilter');
       if (jobFilter) {
         const curJob = jobFilter.value;
-        const jobSet = new Set();
-        globalProjectsData.forEach(p => (p.items || []).forEach(it => { if (it.jobType) jobSet.add(it.jobType); }));
+        const jobSet = new Set(['PLASTER_IN', 'PLASTER_OUT', 'PAINT_IN', 'PAINT_OUT', 'TILES', 'DOORS', 'WINDOWS']);
+        globalProjectsData.forEach(p => (p.items || []).forEach(it => { if (it.jobType) jobSet.add(normalizeJobCode(it.jobType)); }));
         jobFilter.innerHTML = '<option value="ALL">جميع أنواع الأعمال</option>';
         jobSet.forEach(job => {
           const opt = document.createElement('option');
@@ -1622,6 +1622,24 @@ const htmlContent = `<!DOCTYPE html>
         });
         if (curJob) jobFilter.value = curJob;
       }
+    }
+
+    function normalizeJobCode(jobType) {
+      if (!jobType) return 'PLASTER_IN';
+      const t = String(jobType).trim();
+      const u = t.toUpperCase();
+      if (u === 'PLASTER_IN' || t === 'تلييس داخلي' || t === 'لياسة داخلية' || t === 'لياسة') return 'PLASTER_IN';
+      if (u === 'PLASTER_OUT' || t === 'تلييس خارجي' || t === 'لياسة خارجية') return 'PLASTER_OUT';
+      if (u === 'PAINT_IN' || t === 'دهانات داخلية' || t === 'دهان داخلي' || t === 'دهانات') return 'PAINT_IN';
+      if (u === 'PAINT_OUT' || t === 'دهانات خارجية' || t === 'دهان خارجي') return 'PAINT_OUT';
+      if (u === 'TILES' || u === 'TILE' || t === 'بلاط' || t.includes('سيراميك') || t.includes('رخام')) return 'TILES';
+      if (u === 'DOORS' || u === 'DOOR' || t === 'أبواب' || t === 'ابواب' || t.includes('باب')) return 'DOORS';
+      if (u === 'WINDOWS' || u === 'WINDOW' || t === 'نوافذ' || t.includes('شباك') || t.includes('شبابيك')) return 'WINDOWS';
+      if (t.includes('خارجي') && (t.includes('تلييس') || t.includes('لياسة'))) return 'PLASTER_OUT';
+      if (t.includes('تلييس') || t.includes('لياسة')) return 'PLASTER_IN';
+      if (t.includes('خارجي') && t.includes('دهان')) return 'PAINT_OUT';
+      if (t.includes('دهان')) return 'PAINT_IN';
+      return 'PLASTER_IN';
     }
 
     function getJobLabel(jobType) {
@@ -2168,12 +2186,25 @@ const htmlContent = `<!DOCTYPE html>
 
     function saveUnitPrice(jobType, inputId) {
       const newPrice = parseFloat(document.getElementById(inputId).value) || 0;
-      socket.emit('relay_to_phone', {
-        sessionId: currentSessionId,
-        action: 'save_price_from_web',
-        data: { jobType: jobType, pricePerUnit: newPrice }
-      });
-      alert('تم إرسال السعر الجديد للبند [' + jobType + '] إلى الهاتف بنجاح!');
+      const code = normalizeJobCode(jobType);
+      const existing = globalPricesData.find(p => normalizeJobCode(p.jobType) === code);
+      if (existing) {
+        existing.pricePerUnit = newPrice;
+      } else {
+        globalPricesData.push({ jobType: code, pricePerUnit: newPrice });
+      }
+      reRenderAll();
+
+      if (socket && socket.connected) {
+        socket.emit('relay_to_phone', {
+          sessionId: currentSessionId,
+          action: 'save_price_from_web',
+          data: { jobType: code, pricePerUnit: newPrice }
+        });
+        showToast('تم حفظ السعر الجديد للبند [' + getJobLabel(code) + '] في الهاتف');
+      } else {
+        showToast('تم حفظ السعر محلياً (تأكد من اتصال الهاتف)', false);
+      }
     }
 
     // ==========================================
@@ -2259,7 +2290,7 @@ const htmlContent = `<!DOCTYPE html>
       document.getElementById('editItemId').value = foundItem.itemId;
       document.getElementById('editItemProjectSelect').value = foundItem.projectId;
       document.getElementById('editItemTitle').value = foundItem.title || foundItem.itemName || '';
-      document.getElementById('editItemJobType').value = foundItem.jobType || 'لياسة';
+      document.getElementById('editItemJobType').value = normalizeJobCode(foundItem.jobType);
       document.getElementById('editItemCalcMode').value = foundItem.calcMode || 'WALLS';
       document.getElementById('editItemLength').value = foundItem.length || 0;
       document.getElementById('editItemWidth').value = foundItem.width || 0;
@@ -2372,15 +2403,16 @@ const htmlContent = `<!DOCTYPE html>
       const wVoid = parseFloat(document.getElementById('editItemWindowsVoid').value) || 0;
       const price = parseFloat(document.getElementById('editItemPrice').value) || 0;
       const meters = parseFloat(document.getElementById('editItemCalcMeters').value) || 0;
-      const totalAmount = meters * price;
+      const totalAmount = Math.round((meters * price) * 100) / 100;
+      const jobCode = normalizeJobCode(document.getElementById('editItemJobType').value);
 
       const itemData = {
         itemId: itemId,
         projectId: pId,
         itemName: title,
         title: title,
-        jobType: document.getElementById('editItemJobType').value,
-        calcMode: document.getElementById('editItemCalcMode').value,
+        jobType: jobCode,
+        calcMode: document.getElementById('editItemCalcMode').value || 'WALLS',
         length: l,
         width: w,
         height: h,
@@ -2394,14 +2426,26 @@ const htmlContent = `<!DOCTYPE html>
         windowsVoid: wVoid
       };
 
-      // تحديث فوري مباشر في واجهة المتصفح
+      // تحديث فوري مباشر في واجهة المتصفح (بما في ذلك لو تم نقل البند لمشروع آخر)
+      let moved = false;
       globalProjectsData.forEach(p => {
-        (p.items || []).forEach(it => {
-          if (it.itemId === itemId) {
-            Object.assign(it, itemData);
+        const idx = (p.items || []).findIndex(it => it.itemId === itemId);
+        if (idx !== -1) {
+          if (p.id === pId) {
+            Object.assign(p.items[idx], itemData);
+          } else {
+            p.items.splice(idx, 1);
+            moved = true;
           }
-        });
+        }
       });
+      if (moved) {
+        const destProj = globalProjectsData.find(p => p.id === pId);
+        if (destProj) {
+          destProj.items = destProj.items || [];
+          destProj.items.unshift(itemData);
+        }
+      }
       reRenderAll();
 
       if (socket && socket.connected) {
@@ -2459,13 +2503,27 @@ const htmlContent = `<!DOCTYPE html>
       };
 
       // تحديث فوري مباشر في واجهة المتصفح
+      let moved = false;
+      let existingDate = Date.now();
       globalProjectsData.forEach(p => {
-        (p.payments || []).forEach(pm => {
-          if (pm.id === id) {
-            Object.assign(pm, payData);
+        const idx = (p.payments || []).findIndex(pm => pm.id === id);
+        if (idx !== -1) {
+          existingDate = p.payments[idx].dateAdded || Date.now();
+          if (p.id === pId) {
+            Object.assign(p.payments[idx], payData);
+          } else {
+            p.payments.splice(idx, 1);
+            moved = true;
           }
-        });
+        }
       });
+      if (moved) {
+        const destProj = globalProjectsData.find(p => p.id === pId);
+        if (destProj) {
+          destProj.payments = destProj.payments || [];
+          destProj.payments.unshift(Object.assign({ dateAdded: existingDate }, payData));
+        }
+      }
       reRenderAll();
 
       if (socket && socket.connected) {
@@ -2488,14 +2546,14 @@ const htmlContent = `<!DOCTYPE html>
 
     function onJobTypeChanged(jobSelectId, priceInputId, calcFunc) {
       const job = document.getElementById(jobSelectId).value;
-      const found = globalPricesData.find(p => p.jobType === job);
+      const code = normalizeJobCode(job);
+      const label = getJobLabel(job);
+      const found = globalPricesData.find(p => p.jobType === code || p.jobType === label || normalizeJobCode(p.jobType) === code);
       if (found && found.pricePerUnit > 0) {
         document.getElementById(priceInputId).value = found.pricePerUnit;
       }
       if (calcFunc) calcFunc();
     }
-
-
 
     function submitNewProject() {
       const name = document.getElementById('newProjName').value.trim();
@@ -2509,15 +2567,30 @@ const htmlContent = `<!DOCTYPE html>
         description: document.getElementById('newProjDesc').value.trim()
       };
 
+      // تحديث فوري مباشر في واجهة المتصفح
+      const tempProj = {
+        id: Date.now(),
+        name: projData.name,
+        clientName: projData.clientName,
+        mobileNumber: projData.mobileNumber,
+        projectDate: projData.projectDate,
+        description: projData.description,
+        dateCreated: Date.now(),
+        items: [],
+        payments: []
+      };
+      globalProjectsData.unshift(tempProj);
+      reRenderAll();
+
       if (socket && socket.connected) {
         socket.emit('relay_to_phone', {
           sessionId: currentSessionId,
           action: 'create_project_from_web',
           data: projData
         });
-        showToast('جاري إنشاء المشروع في الهاتف...');
+        showToast('تم إنشاء المشروع وإرساله للهاتف بنجاح');
       } else {
-        showToast('تعذر الإرسال: غير متصل بالهاتف', false);
+        showToast('تمت الإضافة محلياً (تأكد من اتصال الهاتف)', false);
       }
 
       closeModal('newProjectModal');
@@ -2540,13 +2613,15 @@ const htmlContent = `<!DOCTYPE html>
       const wVoid = parseFloat(document.getElementById('newItemWindowsVoid').value) || 0;
       const price = parseFloat(document.getElementById('newItemPrice').value) || 0;
       const meters = parseFloat(document.getElementById('newItemCalcMeters').value) || 0;
-      const totalAmount = meters * price;
+      const totalAmount = Math.round((meters * price) * 100) / 100;
+      const jobCode = normalizeJobCode(document.getElementById('newItemJobType').value);
 
       const itemData = {
         projectId: pId,
         itemName: title,
-        jobType: document.getElementById('newItemJobType').value,
-        calcMode: document.getElementById('newItemCalcMode').value,
+        title: title,
+        jobType: jobCode,
+        calcMode: document.getElementById('newItemCalcMode').value || 'WALLS',
         length: l,
         width: w,
         height: h,
@@ -2560,15 +2635,23 @@ const htmlContent = `<!DOCTYPE html>
         windowsVoid: wVoid
       };
 
+      // تحديث فوري مباشر في واجهة المتصفح
+      const targetProj = globalProjectsData.find(p => p.id === pId);
+      if (targetProj) {
+        targetProj.items = targetProj.items || [];
+        targetProj.items.unshift(Object.assign({ itemId: Date.now(), dateAdded: Date.now() }, itemData));
+        reRenderAll();
+      }
+
       if (socket && socket.connected) {
         socket.emit('relay_to_phone', {
           sessionId: currentSessionId,
           action: 'create_item_from_web',
           data: itemData
         });
-        showToast('جاري إضافة البند في الهاتف...');
+        showToast('تمت إضافة البند وإرساله للهاتف بنجاح');
       } else {
-        showToast('تعذر الإرسال: غير متصل بالهاتف', false);
+        showToast('تمت الإضافة محلياً (تأكد من اتصال الهاتف)', false);
       }
 
       closeModal('newItemModal');
@@ -2594,15 +2677,23 @@ const htmlContent = `<!DOCTYPE html>
         note: document.getElementById('newPayNote').value.trim()
       };
 
+      // تحديث فوري مباشر في واجهة المتصفح
+      const targetProj = globalProjectsData.find(p => p.id === pId);
+      if (targetProj) {
+        targetProj.payments = targetProj.payments || [];
+        targetProj.payments.unshift(Object.assign({ id: Date.now(), dateAdded: Date.now() }, payData));
+        reRenderAll();
+      }
+
       if (socket && socket.connected) {
         socket.emit('relay_to_phone', {
           sessionId: currentSessionId,
           action: 'add_payment_from_web',
           data: payData
         });
-        showToast('جاري إضافة الدفعة في الهاتف...');
+        showToast('تم تسجيل الدفعة المالية وإرسالها للهاتف بنجاح');
       } else {
-        showToast('تعذر الإرسال: غير متصل بالهاتف', false);
+        showToast('تم التسجيل محلياً (تأكد من اتصال الهاتف)', false);
       }
 
       closeModal('newPaymentModal');
@@ -2645,16 +2736,38 @@ const htmlContent = `<!DOCTYPE html>
       const passcode = document.getElementById('deletePasscodeInput').value.trim();
       if (!pendingDeleteId) return;
 
-      let action = '';
-      if (pendingDeleteType === 'project') action = 'delete_project_from_web';
-      if (pendingDeleteType === 'item') action = 'delete_item_from_web';
-      if (pendingDeleteType === 'payment') action = 'delete_payment_from_web';
+      const delId = pendingDeleteId;
+      const delType = pendingDeleteType;
 
-      socket.emit('relay_to_phone', {
-        sessionId: currentSessionId,
-        action: action,
-        data: { id: pendingDeleteId, passcode: passcode }
-      });
+      let action = '';
+      if (delType === 'project') {
+        action = 'delete_project_from_web';
+        globalProjectsData = globalProjectsData.filter(p => p.id !== delId);
+      }
+      if (delType === 'item') {
+        action = 'delete_item_from_web';
+        globalProjectsData.forEach(p => {
+          p.items = (p.items || []).filter(it => it.itemId !== delId);
+        });
+      }
+      if (delType === 'payment') {
+        action = 'delete_payment_from_web';
+        globalProjectsData.forEach(p => {
+          p.payments = (p.payments || []).filter(pm => pm.id !== delId);
+        });
+      }
+      reRenderAll();
+
+      if (socket && socket.connected) {
+        socket.emit('relay_to_phone', {
+          sessionId: currentSessionId,
+          action: action,
+          data: { id: delId, passcode: passcode }
+        });
+        showToast('تم إرسال أمر الحذف إلى الهاتف');
+      } else {
+        showToast('تم الحذف محلياً (تأكد من اتصال الهاتف)', false);
+      }
 
       closeModal('deleteConfirmModal');
       pendingDeleteId = null;
@@ -2769,23 +2882,97 @@ app.get('*', (req, res) => {
   res.send(htmlContent);
 });
 
+const sessionStore = new Map();
+
+function getOrCreateSession(sessionId) {
+  if (!sessionStore.has(sessionId)) {
+    sessionStore.set(sessionId, {
+      payload: null,
+      pendingCommands: [],
+      phoneSockets: new Set()
+    });
+  }
+  return sessionStore.get(sessionId);
+}
+
 io.on('connection', (socket) => {
-  socket.on('join_session', (sessionId) => {
+  socket.on('join_session', (arg) => {
+    const sessionId = typeof arg === 'string' ? arg : (arg && arg.sessionId ? arg.sessionId : '');
+    if (!sessionId) return;
     socket.join(sessionId);
+    socket.data.sessionId = sessionId;
+    if (typeof arg === 'object' && arg && arg.role === 'phone') {
+      const s = getOrCreateSession(sessionId);
+      s.phoneSockets.add(socket.id);
+    }
+  });
+
+  socket.on('register_phone', (sessionId) => {
+    if (!sessionId) return;
+    socket.join(sessionId);
+    socket.data.sessionId = sessionId;
+    socket.data.isPhone = true;
+    const s = getOrCreateSession(sessionId);
+    s.phoneSockets.add(socket.id);
+
+    if (s.pendingCommands.length > 0) {
+      const cmds = s.pendingCommands.splice(0, s.pendingCommands.length);
+      cmds.forEach(cmd => {
+        socket.emit(cmd.action, cmd.data);
+      });
+    }
   });
 
   socket.on('send_payload', ({ sessionId, payload }) => {
+    if (!sessionId) return;
+    const s = getOrCreateSession(sessionId);
+    s.phoneSockets.add(socket.id);
+    if (s.pendingCommands.length > 0) {
+      const cmds = s.pendingCommands.splice(0, s.pendingCommands.length);
+      cmds.forEach(cmd => {
+        socket.emit(cmd.action, cmd.data);
+      });
+      return;
+    }
+    s.payload = payload;
     io.to(sessionId).emit('authenticated', payload);
   });
 
   // تمرير أوامر الإضافة والتعديل والحذف والتنبيهات بين المتصفح والهاتف
   socket.on('relay_to_phone', ({ sessionId, action, data }) => {
+    if (!sessionId || !action) return;
+    const s = getOrCreateSession(sessionId);
+
+    if (action === 'request_sync') {
+      if (s.phoneSockets.size > 0) {
+        io.to(sessionId).emit(action, data);
+      } else if (s.payload) {
+        socket.emit('authenticated', s.payload);
+      }
+      return;
+    }
+
+    if (action !== 'security_error' && s.phoneSockets.size === 0) {
+      s.pendingCommands.push({ action, data });
+      if (s.pendingCommands.length > 100) s.pendingCommands.shift();
+    }
+
     io.to(sessionId).emit(action, data);
   });
 
   socket.on('terminate_session', (sessionId) => {
+    if (!sessionId) return;
+    sessionStore.delete(sessionId);
     socket.to(sessionId).emit('session_terminated');
     socket.leave(sessionId);
+  });
+
+  socket.on('disconnect', () => {
+    const sessionId = socket.data.sessionId;
+    if (sessionId && sessionStore.has(sessionId)) {
+      const s = sessionStore.get(sessionId);
+      s.phoneSockets.delete(socket.id);
+    }
   });
 });
 

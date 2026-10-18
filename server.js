@@ -1934,8 +1934,8 @@ const htmlContent = `<!DOCTYPE html>
       }, 1000);
     }
 
-    // إدارة التبويبات
-    function switchTab(tabId) {
+    // إدارة التبويبات مع دعم الرجوع للخلف في المتصفح والتنقل السلس
+    function switchTab(tabId, pushHistory = true) {
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-tabs-wrapper .tab-pill').forEach(el => el.classList.remove('active'));
 
@@ -1954,6 +1954,13 @@ const htmlContent = `<!DOCTYPE html>
         renderActiveReport();
       }
       if (tabId === 'tabPrices') document.getElementById('btnTabPrices').classList.add('active');
+
+      if (pushHistory && window.history && window.history.pushState) {
+        const currentState = window.history.state;
+        if (!currentState || currentState.tab !== tabId) {
+          window.history.pushState({ tab: tabId, modal: null }, '', '#' + tabId);
+        }
+      }
     }
 
     // تبديل نوع التقرير
@@ -3730,6 +3737,45 @@ const htmlContent = `<!DOCTYPE html>
       } else {
         initSession();
       }
+
+      // تهيئة سجل التصفح الداخلي حتى لا يخرج زر الرجوع من الصفحة
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({ tab: 'tabProjects', modal: null }, '', '#tabProjects');
+      }
+
+      // اعتراض الرجوع للخلف في المتصفح والتنقل بين النوافذ والتبويبات بدلاً من إغلاق الصفحة
+      window.addEventListener('popstate', (e) => {
+        // 1. إذا كانت هناك نافذة منبثقة مفتوحة، نقوم بإغلاقها أولاً
+        const openModals = Array.from(document.querySelectorAll('.modal-overlay')).filter(m => m.style.display === 'flex');
+        if (openModals.length > 0) {
+          openModals.forEach(m => m.style.display = 'none');
+          // إعادة الحماية في السجل
+          if (window.history && window.history.pushState) {
+            const currentTab = document.querySelector('.tab-pane.active')?.id || 'tabProjects';
+            window.history.pushState({ tab: currentTab, modal: null }, '', '#' + currentTab);
+          }
+          return;
+        }
+
+        // 2. إذا انتقل المستخدم بين التبويبات عبر الرجوع
+        if (e.state && e.state.tab) {
+          switchTab(e.state.tab, false);
+        } else {
+          // إذا وصل لبداية السجل، نرجعه للتبويب الرئيسي للمشاريع ونمنع الخروج العرضي
+          switchTab('tabProjects', false);
+          if (window.history && window.history.pushState) {
+            window.history.pushState({ tab: 'tabProjects', modal: null }, '', '#tabProjects');
+          }
+        }
+      });
+
+      // تنبيه عند محاولة إغلاق الصفحة لمنع فقدان البيانات أو قطع الجلسة بدون قصد
+      window.addEventListener('beforeunload', (e) => {
+        if (document.getElementById('dashboardScreen').style.display === 'flex') {
+          e.preventDefault();
+          e.returnValue = '';
+        }
+      });
     };
   </script>
 </body>

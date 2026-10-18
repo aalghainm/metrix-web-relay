@@ -411,100 +411,164 @@ const htmlContent = `<!DOCTYPE html>
     .btn-action-delete { color: var(--rose); }
     .btn-action-delete:hover { background: var(--rose-light); }
 
-    /* بطاقة عدم وجود بيانات (Empty State) */
-    .empty-state-box {
-      padding: 4rem 2rem;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
-    }
-    .empty-illustration {
-      width: 90px;
-      height: 90px;
-      background: #f1f5f9;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #94a3b8;
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-    }
-
     /* تبويب التحليلات البيانية */
     .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
     .chart-panel-card { background: var(--surface); border-radius: var(--radius); padding: 1.5rem; border: 1px solid var(--border); box-shadow: var(--shadow); }
 
-    /* ========================================= */
-    /* 4. عرض الأسعار الرسمي المعتمد (QUOTATION) */
-    /* ========================================= */
-    .official-letterhead {
+    /* ========================================================== */
+    /* 4. تنسيق ملفات الـ PDF المتطابقة تماماً مع كود التطبيق      */
+    /* (ProjectReportHtml & QuotationReportHtml)                  */
+    /* ========================================================== */
+    .pdf-report-sheet {
       background: #ffffff;
-      max-width: 920px;
+      max-width: 900px;
       margin: 0 auto;
       width: 100%;
       border-radius: var(--radius);
       border: 1px solid var(--border);
       box-shadow: var(--shadow-lg);
-      padding: 3.5rem 3rem;
+      padding: 2rem;
       position: relative;
     }
-    .letterhead-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid #0f172a;
-      padding-bottom: 1.75rem;
-      margin-bottom: 2rem;
-    }
-    .org-brand { display: flex; align-items: center; gap: 1rem; }
-    .org-logo { width: 56px; height: 56px; border-radius: 12px; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
-    .org-info h1 { font-size: 1.6rem; font-weight: 900; color: #0f172a; }
-    .org-info p { font-size: 0.85rem; color: #64748b; font-weight: 600; }
-    
-    .quotation-parties-grid {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 1.5rem;
-      background: #f8fafc;
-      padding: 1.5rem;
-      border-radius: 0.85rem;
-      margin-bottom: 2rem;
-      border: 1px solid #e2e8f0;
-    }
-    .party-title { font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
-    .party-p { font-size: 0.86rem; color: #475569; line-height: 1.7; }
 
-    .quote-financial-summary {
-      width: 340px;
-      margin-right: auto;
-      margin-top: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
+    /* هيدر تقرير حصر المشروع (ProjectReportHtml) */
+    .app-report-header {
+      background: linear-gradient(180deg, #1E3A8A 0%, #172554 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 14px;
+      margin-bottom: 14px;
     }
-    .quote-sum-row { display: flex; justify-content: space-between; font-size: 0.95rem; padding: 0.4rem 0; border-bottom: 1px dashed #cbd5e1; }
-    .quote-sum-grand {
-      font-size: 1.25rem;
-      font-weight: 900;
-      color: var(--primary);
-      border-top: 2px solid #0f172a;
-      border-bottom: none;
-      padding-top: 0.75rem;
+    .app-report-header h1 { margin: 0; font-size: 22px; font-weight: 800; }
+    .app-report-header .sub { margin-top: 6px; opacity: .9; font-size: 13px; font-weight: 600; }
+    .app-report-header .chip {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+      margin-top: 10px;
+      font-size: 12px;
+      font-weight: 700;
     }
 
-    .quote-stamps-section {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2.5rem;
-      margin-top: 3.5rem;
-      padding-top: 2rem;
-      border-top: 1px solid #e2e8f0;
+    /* كروت المقاييس المالية المدمجة */
+    .app-report-kpi-card {
+      background: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 18px;
+    }
+    .app-report-kpi-row { display: flex; justify-content: space-between; gap: 12px; }
+    .app-report-metric {
+      flex: 1;
+      background: white;
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 12px;
       text-align: center;
     }
-    .stamp-box { border: 2px dashed #cbd5e1; border-radius: 0.75rem; padding: 1.5rem; color: #94a3b8; font-size: 0.85rem; font-weight: 700; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; }
+    .app-report-metric .k { color: #4B5563; font-size: 12px; font-weight: 700; }
+    .app-report-metric .v { font-size: 17px; font-weight: 800; margin-top: 4px; }
+    .app-report-metric .v.primary { color: #1E3A8A; }
+    .app-report-metric .v.accent { color: #F59E0B; }
+
+    /* جداول تقارير الـ PDF المطابقة تماماً لتطبيق الأندرويد */
+    table.app-pdf-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+    table.app-pdf-table th, table.app-pdf-table td {
+      border: 1px solid #E5E7EB;
+      padding: 9px;
+      font-size: 11px;
+      text-align: center;
+    }
+    table.app-pdf-table th {
+      background: #1E3A8A;
+      color: white;
+      font-weight: 700;
+    }
+    table.app-pdf-table .totalRow {
+      background: #FEF3C7;
+      font-weight: 700;
+    }
+    table.app-pdf-table .totalRow td {
+      border-top: 2px solid #F59E0B;
+    }
+
+    /* هيدر عرض السعر التقديري (QuotationReportHtml) */
+    .app-quo-banner {
+      background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%);
+      color: white;
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .app-quo-banner h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 1px; }
+    .app-quo-banner .badge {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .app-quo-info-grid {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .app-quo-info-card {
+      flex: 1;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .app-quo-info-card h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      font-weight: 800;
+      color: #1E3A8A;
+      border-bottom: 2px solid #E2E8F0;
+      padding-bottom: 4px;
+    }
+    .app-quo-info-row { font-size: 12px; margin-bottom: 4px; color: #334155; }
+    .app-quo-info-row b { color: #0F172A; }
+
+    .app-quo-signatures {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 45px;
+      padding: 0 20px;
+    }
+    .app-quo-sig-box {
+      text-align: center;
+      font-size: 12px;
+      color: #4B5563;
+      width: 170px;
+    }
+    .app-quo-sig-line {
+      border-top: 1px dashed #9CA3AF;
+      margin-top: 40px;
+      padding-top: 6px;
+      font-weight: 700;
+    }
+    .app-quo-footer-note {
+      margin-top: 35px;
+      text-align: center;
+      font-size: 11px;
+      color: #9CA3AF;
+      border-top: 1px solid #E2E8F0;
+      padding-top: 10px;
+    }
 
     /* ========================================= */
     /* 5. النوافذ المنبثقة التفاعلية (MODALS) */
@@ -574,20 +638,22 @@ const htmlContent = `<!DOCTYPE html>
     @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     @keyframes pingDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.2); } }
 
-    /* أنماط الطباعة الرسمية النظيفة (Print CSS) */
+    /* ========================================= */
+    /* 6. أنماط الطباعة الرسمية النظيفة (Print CSS) */
+    /* ========================================= */
     @media print {
-      body { background: #fff !important; }
-      .app-header, .toolbar-bar, .btn, .icon-action-btn, #authScreen, .nav-tabs-wrapper, .modal-overlay, .tab-pill { display: none !important; }
+      @page { size: A4; margin: 10mm; }
+      body { background: #ffffff !important; color: #111827 !important; margin: 0; padding: 0; font-family: Arial, sans-serif !important; }
+      .app-header, .toolbar-bar, .btn, .icon-action-btn, #authScreen, .nav-tabs-wrapper, .modal-overlay, .tab-pill, .report-nav-strip { display: none !important; }
       #dashboardScreen { display: block !important; }
-      .app-viewport { max-width: 100% !important; padding: 0 !important; }
+      .app-viewport { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
       .tab-pane { display: none !important; }
       .tab-pane.active { display: block !important; }
-      .official-letterhead { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; }
-      .table-container-card { border: 1px solid #000 !important; box-shadow: none !important; }
-      table.metrix-table th, table.metrix-table td { border: 1px solid #000 !important; color: #000 !important; }
-      .print-page-header { display: block !important; }
+      .pdf-report-sheet { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; }
+      table.app-pdf-table th { background: #1E3A8A !important; color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .app-report-header, .app-quo-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .totalRow { background: #FEF3C7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
-    .print-page-header { display: none; text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #000; padding-bottom: 1rem; }
   </style>
 </head>
 <body>
@@ -649,9 +715,9 @@ const htmlContent = `<!DOCTYPE html>
           </div>
           <div class="brand-text">
             <h2>Metrix Pro Desktop</h2>
-            <div class="status-badge">
-              <div class="pulse-dot"></div>
-              <span>متصل مباشر بالهاتف</span>
+            <div class="status-badge" id="headerStatusBadge">
+              <div class="pulse-dot" id="headerStatusDot"></div>
+              <span id="headerStatusText">متصل مباشر بالهاتف</span>
             </div>
           </div>
         </div>
@@ -670,8 +736,8 @@ const htmlContent = `<!DOCTYPE html>
           <button onclick="switchTab('tabAnalytics')" id="btnTabAnalytics" class="tab-pill">
             <i class="fa-solid fa-chart-pie"></i> التحليلات
           </button>
-          <button onclick="switchTab('tabQuotations')" id="btnTabQuotations" class="tab-pill">
-            <i class="fa-solid fa-file-signature"></i> عروض الأسعار
+          <button onclick="switchTab('tabReports')" id="btnTabReports" class="tab-pill">
+            <i class="fa-solid fa-file-pdf"></i> تقارير و PDF
           </button>
           <button onclick="switchTab('tabPrices')" id="btnTabPrices" class="tab-pill">
             <i class="fa-solid fa-sliders"></i> دليل الأسعار
@@ -894,103 +960,34 @@ const htmlContent = `<!DOCTYPE html>
       </section>
 
       <!-- ========================================== -->
-      <!-- 5. تبويب عروض الأسعار الرسمية (QUOTATIONS) -->
+      <!-- 5. تبويب التقارير وملفات الـ PDF المنسقة    -->
       <!-- ========================================== -->
-      <section id="tabQuotations" class="tab-pane">
+      <section id="tabReports" class="tab-pane">
         <div class="toolbar-bar">
           <div class="toolbar-inputs">
-            <label style="font-size:0.88rem; font-weight:700;"><i class="fa-solid fa-folder"></i> اختر المشروع:</label>
-            <select id="quoteProjectSelect" onchange="renderQuotationView()" class="custom-select"></select>
+            <label style="font-size:0.88rem; font-weight:700;"><i class="fa-solid fa-folder"></i> المشروع:</label>
+            <select id="reportProjectSelect" onchange="renderActiveReport()" class="custom-select"></select>
+
+            <!-- التبديل بين نوعي التقرير المطابقين تماماً للتطبيق -->
+            <div class="report-nav-strip" style="display:flex; background:#f1f5f9; padding:0.25rem; border-radius:0.65rem; gap:0.25rem; margin-right:0.5rem;">
+              <button onclick="setReportType('projectReport')" id="btnReportTypeProject" class="tab-pill active" style="padding:0.4rem 0.9rem; font-size:0.82rem;">
+                <i class="fa-solid fa-file-lines"></i> تقرير حصر كميات المشروع
+              </button>
+              <button onclick="setReportType('quotationReport')" id="btnReportTypeQuo" class="tab-pill" style="padding:0.4rem 0.9rem; font-size:0.82rem;">
+                <i class="fa-solid fa-file-contract"></i> عرض سعر تقديري رسمي
+              </button>
+            </div>
           </div>
+
           <div style="display:flex; gap:0.75rem; align-items:center;">
-            <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.88rem; font-weight:700; cursor:pointer;">
-              <input type="checkbox" id="quoteVatCheckbox" onchange="renderQuotationView()" checked />
-              تضمين ضريبة القيمة المضافة (15%)
-            </label>
             <button onclick="window.print()" class="btn btn-primary">
-              <i class="fa-solid fa-print"></i> طباعة عرض السعر المعتمد PDF
+              <i class="fa-solid fa-print"></i> طباعة كـ PDF (A4)
             </button>
           </div>
         </div>
 
-        <div id="quotationSheet" class="official-letterhead">
-          <div class="letterhead-top">
-            <div class="org-brand">
-              <div class="org-logo"><i class="fa-solid fa-helmet-safety"></i></div>
-              <div class="org-info">
-                <h1>عرض سعر أعمال مقاولة وحصر كميات</h1>
-                <p>تطبيق Metrix للهندسة وحصر الكميات الذكي</p>
-              </div>
-            </div>
-            <div style="text-align: left;">
-              <div style="font-size: 0.85rem; color: #64748b; font-weight: 700;">رقم العرض: <span id="quoteNumber" style="color:#0f172a;">#QUO-2026</span></div>
-              <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">التاريخ: <span id="quoteDate" style="font-weight:700; color:#0f172a;"></span></div>
-            </div>
-          </div>
-
-          <div class="quotation-parties-grid">
-            <div>
-              <div class="party-title"><i class="fa-solid fa-user-tie" style="color:var(--primary);"></i> بيانات العميل والموقع</div>
-              <p class="party-p"><b>المشروع:</b> <span id="quoteProjName">-</span></p>
-              <p class="party-p"><b>السيد / السادة:</b> <span id="quoteClientName">-</span></p>
-              <p class="party-p"><b>رقم الاتصال:</b> <span id="quoteClientMobile">-</span></p>
-            </div>
-            <div>
-              <div class="party-title"><i class="fa-solid fa-scale-balanced" style="color:var(--primary);"></i> شروط وأحكام العرض</div>
-              <p class="party-p">• جميع الكميات هندسية صافية بعد تطبيق خصومات الفتحات والفراغات.</p>
-              <p class="party-p">• الدفعات تسدد بحسب نسب الإنجاز وسندات القبض الموقعة.</p>
-              <p class="party-p">• هذا العرض ساري لمدة 30 يوماً من تاريخ صدوره.</p>
-            </div>
-          </div>
-
-          <div style="border: 1px solid var(--border); border-radius: 0.75rem; overflow: hidden; margin-bottom: 1.5rem;">
-            <table class="metrix-table">
-              <thead>
-                <tr>
-                  <th style="width: 40px;">#</th>
-                  <th>بيان الأعمال والبنود</th>
-                  <th>نوع العمل</th>
-                  <th>الكمية المقدرة</th>
-                  <th>سعر الوحدة</th>
-                  <th>المبلغ الإجمالي</th>
-                </tr>
-              </thead>
-              <tbody id="quoteItemsBody"></tbody>
-            </table>
-          </div>
-
-          <div class="quote-financial-summary">
-            <div class="quote-sum-row">
-              <span style="color:#64748b;">المجموع الفرعي:</span>
-              <span id="quoteSubtotal" style="font-weight:700;">0 ر.س</span>
-            </div>
-            <div class="quote-sum-row">
-              <span style="color:#64748b;">ضريبة القيمة المضافة (15%):</span>
-              <span id="quoteVatAmount" style="font-weight:700;">0 ر.س</span>
-            </div>
-            <div class="quote-sum-row quote-sum-grand">
-              <span>المبلغ الإجمالي النهائي:</span>
-              <span id="quoteGrandTotal">0 ر.س</span>
-            </div>
-          </div>
-
-          <div class="quote-stamps-section">
-            <div>
-              <p style="font-weight:800; font-size:0.95rem; margin-bottom:0.75rem;">الطرف الأول (المقاول / المنفذ)</p>
-              <div class="stamp-box">
-                <i class="fa-solid fa-stamp" style="font-size:1.8rem; color:#cbd5e1;"></i>
-                <span>الاسم والختم والتوقيع المعتمد</span>
-              </div>
-            </div>
-            <div>
-              <p style="font-weight:800; font-size:0.95rem; margin-bottom:0.75rem;">الطرف الثاني (العميل / المالك)</p>
-              <div class="stamp-box">
-                <i class="fa-solid fa-pen-nib" style="font-size:1.8rem; color:#cbd5e1;"></i>
-                <span>الموافقة والاعتماد</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- ورقة التقرير المنسقة بنمط الـ PDF الأصلي في تطبيق Metrix -->
+        <div id="pdfReportViewer" class="pdf-report-sheet"></div>
       </section>
 
       <!-- ========================================== -->
@@ -1407,27 +1404,92 @@ const htmlContent = `<!DOCTYPE html>
     let countdownInterval;
     let globalProjectsData = [];
     let globalPricesData = [];
-    let pendingDeleteType = ''; // 'project', 'item', 'payment'
+    let pendingDeleteType = '';
     let pendingDeleteId = null;
+
+    let activeReportType = 'projectReport'; // 'projectReport' or 'quotationReport'
 
     let pieChartInstance = null;
     let barChartInstance = null;
+
+    // إشعار فوري (Toast)
+    function showToast(msg, isSuccess = true) {
+      let toast = document.getElementById('metrixToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'metrixToast';
+        toast.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); padding:0.75rem 1.5rem; border-radius:9999px; font-weight:700; font-size:0.9rem; z-index:99999; box-shadow:0 10px 25px rgba(0,0,0,0.2); transition:all 0.3s ease; display:flex; align-items:center; gap:0.5rem; pointer-events:none;';
+        document.body.appendChild(toast);
+      }
+      toast.style.background = isSuccess ? '#059669' : '#dc2626';
+      toast.style.color = '#ffffff';
+      toast.innerHTML = (isSuccess ? '<i class="fa-solid fa-circle-check"></i> ' : '<i class="fa-solid fa-triangle-exclamation"></i> ') + msg;
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateX(-50%) translateY(0)';
+      clearTimeout(toast.timeout);
+      toast.timeout = setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(10px)';
+      }, 3500);
+    }
+
+    function updateConnectionBadge(connected) {
+      const badge = document.getElementById('headerStatusBadge');
+      const dot = document.getElementById('headerStatusDot');
+      const text = document.getElementById('headerStatusText');
+      if (!badge || !dot || !text) return;
+      if (connected) {
+        badge.style.background = '#ecfdf5';
+        badge.style.color = '#059669';
+        badge.style.borderColor = '#a7f3d0';
+        dot.style.background = '#10b981';
+        text.textContent = 'متصل مباشر بالهاتف';
+      } else {
+        badge.style.background = '#fef2f2';
+        badge.style.color = '#dc2626';
+        badge.style.borderColor = '#fecaca';
+        dot.style.background = '#ef4444';
+        text.textContent = 'غير متصل بالهاتف';
+      }
+    }
+
+    function reRenderAll() {
+      try {
+        localStorage.setItem('metrix_cached_data', JSON.stringify({
+          projects: globalProjectsData,
+          prices: globalPricesData
+        }));
+      } catch(e) {}
+      populateAllProjectSelectors();
+      renderProjectsList();
+      renderItemsTable();
+      renderPaymentsTable();
+      renderActiveReport();
+      renderPricesTable();
+      renderAnalyticsCharts();
+    }
 
     // الاتصال بالخادم السحابي
     function initSocket() {
       socket = io();
 
       socket.on('connect', () => {
+        updateConnectionBadge(true);
         if (currentSessionId) {
           socket.emit('join_session', currentSessionId);
           socket.emit('relay_to_phone', { sessionId: currentSessionId, action: 'request_sync', data: {} });
         }
       });
 
+      socket.on('disconnect', () => {
+        updateConnectionBadge(false);
+      });
+
       socket.on('authenticated', (data) => {
         clearInterval(countdownInterval);
         document.getElementById('authScreen').style.display = 'none';
         document.getElementById('dashboardScreen').style.display = 'flex';
+        updateConnectionBadge(true);
 
         try {
           localStorage.setItem('metrix_session_id', currentSessionId);
@@ -1437,13 +1499,7 @@ const htmlContent = `<!DOCTYPE html>
         globalProjectsData = data.projects || [];
         globalPricesData = data.prices || [];
 
-        populateAllProjectSelectors();
-        renderProjectsList();
-        renderItemsTable();
-        renderPaymentsTable();
-        renderQuotationView();
-        renderPricesTable();
-        renderAnalyticsCharts();
+        reRenderAll();
       });
 
       socket.on('security_error', (data) => {
@@ -1505,8 +1561,24 @@ const htmlContent = `<!DOCTYPE html>
         document.getElementById('btnTabAnalytics').classList.add('active');
         renderAnalyticsCharts();
       }
-      if (tabId === 'tabQuotations') document.getElementById('btnTabQuotations').classList.add('active');
+      if (tabId === 'tabReports') {
+        document.getElementById('btnTabReports').classList.add('active');
+        renderActiveReport();
+      }
       if (tabId === 'tabPrices') document.getElementById('btnTabPrices').classList.add('active');
+    }
+
+    // تبديل نوع التقرير
+    function setReportType(type) {
+      activeReportType = type;
+      if (type === 'projectReport') {
+        document.getElementById('btnReportTypeProject').classList.add('active');
+        document.getElementById('btnReportTypeQuo').classList.remove('active');
+      } else {
+        document.getElementById('btnReportTypeQuo').classList.add('active');
+        document.getElementById('btnReportTypeProject').classList.remove('active');
+      }
+      renderActiveReport();
     }
 
     // تعبئة قوائم المشاريع المنسدلة
@@ -1514,7 +1586,7 @@ const htmlContent = `<!DOCTYPE html>
       const selects = [
         document.getElementById('itemsProjectFilter'),
         document.getElementById('paymentProjectFilter'),
-        document.getElementById('quoteProjectSelect'),
+        document.getElementById('reportProjectSelect'),
         document.getElementById('modalItemProjectSelect'),
         document.getElementById('modalPaymentProjectSelect'),
         document.getElementById('editItemProjectSelect'),
@@ -1556,7 +1628,6 @@ const htmlContent = `<!DOCTYPE html>
       }
     }
 
-    // فئة CSS لنوع العمل
     function getJobBadgeClass(jobType) {
       if (!jobType) return 'job-other';
       if (jobType.includes('لياسة')) return 'job-plaster';
@@ -1792,7 +1863,6 @@ const htmlContent = `<!DOCTYPE html>
 
       const colors = ['#4f46e5', '#059669', '#d97706', '#0284c7', '#7e22ce', '#c2410c', '#e11d48', '#64748b'];
 
-      // Pie Chart
       const pieCtx = document.getElementById('jobTypesPieChart');
       if (pieCtx) {
         if (pieChartInstance) pieChartInstance.destroy();
@@ -1817,7 +1887,6 @@ const htmlContent = `<!DOCTYPE html>
         });
       }
 
-      // Bar Chart
       const barCtx = document.getElementById('jobTypesBarChart');
       if (barCtx) {
         if (barChartInstance) barChartInstance.destroy();
@@ -1846,52 +1915,199 @@ const htmlContent = `<!DOCTYPE html>
       }
     }
 
-    // ==========================================
-    // 5. عرض وتوليد عروض الأسعار (QUOTATIONS)
-    // ==========================================
-    function renderQuotationView() {
-      const pId = document.getElementById('quoteProjectSelect').value;
+    // ==========================================================
+    // 5. عرض تقارير الـ PDF المطابقة تماماً لكود تطبيق Metrix
+    // (ProjectReportHtml.kt & QuotationReportHtml.kt)
+    // ==========================================================
+    function renderActiveReport() {
+      const viewer = document.getElementById('pdfReportViewer');
+      const pId = document.getElementById('reportProjectSelect').value;
       const proj = globalProjectsData.find(p => String(p.id) === String(pId)) || globalProjectsData[0];
 
       if (!proj) {
-        document.getElementById('quoteProjName').textContent = 'لا توجد مشاريع';
-        document.getElementById('quoteItemsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;">يرجى إنشاء مشروع أولاً</td></tr>';
+        viewer.innerHTML = '<div style="text-align:center; padding:3rem; color:#94a3b8;">يرجى إضافة مشروع أولاً لعرض التقرير المنسق</div>';
         return;
       }
 
-      document.getElementById('quoteDate').textContent = new Date().toLocaleDateString('ar-SA', { dateStyle: 'full' });
-      document.getElementById('quoteProjName').textContent = proj.name || '-';
-      document.getElementById('quoteClientName').textContent = proj.clientName || 'عميلنا العزيز';
-      document.getElementById('quoteClientMobile').textContent = proj.mobileNumber || '-';
+      const items = proj.items || [];
+      const payments = proj.payments || [];
+      const totalAmount = items.reduce((s, it) => s + (Number(it.totalAmount) || 0), 0);
+      const totalPaid = payments.reduce((s, pm) => s + (Number(pm.amount) || 0), 0);
+      const remaining = Math.max(0, totalAmount - totalPaid);
+      const dateStr = new Date().toISOString().split('T')[0];
 
-      const tbody = document.getElementById('quoteItemsBody');
-      tbody.innerHTML = '';
+      if (activeReportType === 'projectReport') {
+        // ==========================================================
+        // تقرير حصر كميات المشروع (طِبق الأصل من ProjectReportHtml.kt)
+        // ==========================================================
+        const grouped = {};
+        const totalsByJob = {};
 
-      let subtotal = 0;
-      (proj.items || []).forEach((it, idx) => {
-        const qty = Number(it.totalMeters || it.quantity || 0);
-        const price = Number(it.pricePerMeter || 0);
-        const amount = Number(it.totalAmount || (qty * price));
-        subtotal += amount;
+        items.forEach(it => {
+          const j = it.jobType || 'أخرى';
+          if (!grouped[j]) {
+            grouped[j] = [];
+            totalsByJob[j] = { totalMeters: 0, totalAmount: 0 };
+          }
+          const m = Number(it.totalMeters || it.quantity || 0);
+          const a = Number(it.totalAmount || 0);
+          totalsByJob[j].totalMeters += m;
+          totalsByJob[j].totalAmount += a;
+          grouped[j].push(it);
+        });
 
-        const tr = document.createElement('tr');
-        tr.innerHTML =
-          '<td>' + (idx + 1) + '</td>' +
-          '<td style="font-weight:700;">' + (it.title || it.itemName || '-') + '</td>' +
-          '<td>' + (it.jobType || '-') + '</td>' +
-          '<td style="font-family:monospace; font-weight:700;">' + qty.toLocaleString() + '</td>' +
-          '<td>' + price.toLocaleString() + ' ر.س</td>' +
-          '<td style="font-family:monospace; font-weight:900; color:var(--emerald);">' + amount.toLocaleString() + ' ر.س</td>';
-        tbody.appendChild(tr);
-      });
+        let jobSummaryRows = '';
+        let jobIdx = 1;
+        for (const j in totalsByJob) {
+          jobSummaryRows += '<tr>' +
+            '<td style="width: 8%;">' + (jobIdx++) + '</td>' +
+            '<td style="font-weight:700;">' + j + '</td>' +
+            '<td>' + totalsByJob[j].totalMeters.toFixed(2) + '</td>' +
+            '<td style="font-weight:700;">' + totalsByJob[j].totalAmount.toLocaleString() + ' ر.س</td>' +
+            '</tr>';
+        }
 
-      const includeVat = document.getElementById('quoteVatCheckbox').checked;
-      const vatAmount = includeVat ? (subtotal * 0.15) : 0;
-      const grandTotal = subtotal + vatAmount;
+        let detailedSections = '';
+        for (const j in grouped) {
+          let itemRows = '';
+          let subtotal = 0;
+          grouped[j].forEach((it, idx) => {
+            const amt = Number(it.totalAmount || 0);
+            subtotal += amt;
+            const m = Number(it.totalMeters || it.quantity || 0);
+            itemRows += '<tr>' +
+              '<td style="width: 8%;">' + (idx + 1) + '</td>' +
+              '<td style="font-weight:600;">' + (it.title || it.itemName || '-') + '</td>' +
+              '<td>' + m.toFixed(2) + '</td>' +
+              '<td>' + amt.toLocaleString() + ' ر.س</td>' +
+              '</tr>';
+          });
 
-      document.getElementById('quoteSubtotal').textContent = subtotal.toLocaleString() + ' ر.س';
-      document.getElementById('quoteVatAmount').textContent = vatAmount.toLocaleString() + ' ر.س';
-      document.getElementById('quoteGrandTotal').textContent = grandTotal.toLocaleString() + ' ر.س';
+          detailedSections += '<h2 style="margin: 20px 0 10px; font-size: 15px; font-weight: 800; color: #111827;">تفاصيل البنود: ' + j + '</h2>' +
+            '<table class="app-pdf-table">' +
+              '<thead><tr><th style="width: 8%;">#</th><th>البند</th><th>الكمية</th><th>الإجمالي (ر.س)</th></tr></thead>' +
+              '<tbody>' +
+                itemRows +
+                '<tr class="totalRow"><td colspan="2">مجموع ' + j + '</td><td style="color:#6B7280;">—</td><td>' + subtotal.toLocaleString() + ' ر.س</td></tr>' +
+              '</tbody>' +
+            '</table>';
+        }
+
+        viewer.innerHTML =
+          '<div class="app-report-header">' +
+            '<h1>تقرير حصر كميات المشروع</h1>' +
+            '<div class="sub"><b>' + (proj.name || 'مشروع بدون اسم') + '</b></div>' +
+            (proj.clientName ? ('<div class="sub">العميل: <b>' + proj.clientName + '</b></div>') : '') +
+            '<div class="sub">التاريخ: <b>' + dateStr + '</b></div>' +
+            '<div class="chip">Metrix</div>' +
+          '</div>' +
+
+          '<div class="app-report-kpi-card">' +
+            '<div class="app-report-kpi-row">' +
+              '<div class="app-report-metric">' +
+                '<div class="k">إجمالي التكاليف</div>' +
+                '<div class="v primary">' + totalAmount.toLocaleString() + ' ر.س</div>' +
+              '</div>' +
+              '<div class="app-report-metric">' +
+                '<div class="k">المدفوع</div>' +
+                '<div class="v" style="color:var(--emerald);">' + totalPaid.toLocaleString() + ' ر.س</div>' +
+              '</div>' +
+              '<div class="app-report-metric">' +
+                '<div class="k">المتبقي</div>' +
+                '<div class="v accent">' + remaining.toLocaleString() + ' ر.س</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<h2 style="margin: 18px 0 10px; font-size: 15px; font-weight: 800; color: #111827;">توزيع التكاليف حسب نوع العمل</h2>' +
+          '<table class="app-pdf-table">' +
+            '<thead><tr><th style="width: 8%;">#</th><th>نوع العمل</th><th>الكمية</th><th>الإجمالي (ر.س)</th></tr></thead>' +
+            '<tbody>' +
+              jobSummaryRows +
+              '<tr class="totalRow"><td colspan="2">الإجمالي</td><td style="color:#6B7280;">—</td><td>' + totalAmount.toLocaleString() + ' ر.س</td></tr>' +
+            '</tbody>' +
+          '</table>' +
+
+          detailedSections;
+
+      } else {
+        // ==========================================================
+        // عرض سعر تقديري رسمي (طِبق الأصل من QuotationReportHtml.kt)
+        // ==========================================================
+        let totalMeters = 0;
+        let itemRows = '';
+
+        items.forEach((it, idx) => {
+          const m = Number(it.totalMeters || it.quantity || 0);
+          const p = Number(it.pricePerMeter || 0);
+          const amt = Number(it.totalAmount || (m * p));
+          totalMeters += m;
+
+          itemRows += '<tr>' +
+            '<td style="width: 8%;">' + (idx + 1) + '</td>' +
+            '<td style="text-align: right; padding-right: 15px; font-weight: 600;">' + (it.title || it.itemName || '-') + '</td>' +
+            '<td>' + m.toFixed(2) + ' م²</td>' +
+            '<td>' + p.toLocaleString() + '</td>' +
+            '<td><b>' + amt.toLocaleString() + '</b></td>' +
+            '</tr>';
+        });
+
+        viewer.innerHTML =
+          '<div class="app-quo-banner">' +
+            '<h1>عرض سعر تقديري</h1>' +
+            '<span class="badge">ميتركس المعماري للحسابات الذكية</span>' +
+          '</div>' +
+
+          '<div class="app-quo-info-grid">' +
+            '<div class="app-quo-info-card">' +
+              '<h3>بيانات مقدم العرض (المقاول)</h3>' +
+              '<div class="app-quo-info-row"><b>مؤسسة / مقاول معتمد</b></div>' +
+              '<div class="app-quo-info-row">العنوان: <b>المملكة العربية السعودية</b></div>' +
+              '<div class="app-quo-info-row">رقم الجوال: <b>' + (proj.mobileNumber || '—') + '</b></div>' +
+            '</div>' +
+            '<div class="app-quo-info-card">' +
+              '<h3>بيانات العميل</h3>' +
+              '<div class="app-quo-info-row"><b>' + (proj.clientName || 'عميلنا العزيز') + '</b></div>' +
+              '<div class="app-quo-info-row">المشروع: <b>' + (proj.name || '—') + '</b></div>' +
+              '<div class="app-quo-info-row">تاريخ العرض: <b>' + dateStr + '</b></div>' +
+            '</div>' +
+          '</div>' +
+
+          '<h3 style="font-size: 14px; font-weight: 800; color: #1E3A8A; margin-bottom: 6px;">تفاصيل بنود العرض</h3>' +
+          '<table class="app-pdf-table">' +
+            '<thead>' +
+              '<tr>' +
+                '<th style="width: 8%;">#</th>' +
+                '<th style="text-align: right; padding-right: 15px;">اسم البند</th>' +
+                '<th style="width: 20%;">كمية الأمتار</th>' +
+                '<th style="width: 20%;">سعر المتر (ر.س)</th>' +
+                '<th style="width: 22%;">الإجمالي (ر.س)</th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody>' +
+              itemRows +
+              '<tr class="totalRow">' +
+                '<td colspan="2">إجمالي التكاليف</td>' +
+                '<td>' + totalMeters.toFixed(2) + ' م²</td>' +
+                '<td>—</td>' +
+                '<td style="color: #B45309; font-size: 12px; font-weight: 800;">' + totalAmount.toLocaleString() + ' ر.س</td>' +
+              '</tr>' +
+            '</tbody>' +
+          '</table>' +
+
+          '<div class="app-quo-signatures">' +
+            '<div class="app-quo-sig-box">' +
+              '<div class="app-quo-sig-line">توقيع مقدم العرض</div>' +
+            '</div>' +
+            '<div class="app-quo-sig-box">' +
+              '<div class="app-quo-sig-line">توقيع واعتماد العميل</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="app-quo-footer-note">' +
+            'هذا العرض تقديري وصالح لمدة 30 يوماً من تاريخ إصداره. تم الإنشاء بواسطة تطبيق ميتركس المعماري.' +
+          '</div>';
+      }
     }
 
     // ==========================================
@@ -1967,11 +2183,27 @@ const htmlContent = `<!DOCTYPE html>
         description: document.getElementById('editProjDesc').value.trim()
       };
 
-      socket.emit('relay_to_phone', {
-        sessionId: currentSessionId,
-        action: 'update_project_from_web',
-        data: projData
-      });
+      // تحديث فوري مباشر في واجهة المتصفح
+      const target = globalProjectsData.find(p => p.id === id);
+      if (target) {
+        target.name = projData.name;
+        target.clientName = projData.clientName;
+        target.mobileNumber = projData.mobileNumber;
+        target.projectDate = projData.projectDate;
+        target.description = projData.description;
+        reRenderAll();
+      }
+
+      if (socket && socket.connected) {
+        socket.emit('relay_to_phone', {
+          sessionId: currentSessionId,
+          action: 'update_project_from_web',
+          data: projData
+        });
+        showToast('تم حفظ تعديل المشروع وإرساله للهاتف');
+      } else {
+        showToast('تم الحفظ محلياً (تأكد من اتصال الهاتف بالإنترنت)', false);
+      }
 
       closeModal('editProjectModal');
     }
@@ -2065,6 +2297,7 @@ const htmlContent = `<!DOCTYPE html>
         itemId: itemId,
         projectId: pId,
         itemName: title,
+        title: title,
         jobType: document.getElementById('editItemJobType').value,
         calcMode: document.getElementById('editItemCalcMode').value,
         length: l,
@@ -2080,11 +2313,26 @@ const htmlContent = `<!DOCTYPE html>
         windowsVoid: wVoid
       };
 
-      socket.emit('relay_to_phone', {
-        sessionId: currentSessionId,
-        action: 'update_item_from_web',
-        data: itemData
+      // تحديث فوري مباشر في واجهة المتصفح
+      globalProjectsData.forEach(p => {
+        (p.items || []).forEach(it => {
+          if (it.itemId === itemId) {
+            Object.assign(it, itemData);
+          }
+        });
       });
+      reRenderAll();
+
+      if (socket && socket.connected) {
+        socket.emit('relay_to_phone', {
+          sessionId: currentSessionId,
+          action: 'update_item_from_web',
+          data: itemData
+        });
+        showToast('تم حفظ تعديل البند وإرساله للهاتف');
+      } else {
+        showToast('تم الحفظ محلياً (تأكد من اتصال الهاتف بالإنترنت)', false);
+      }
 
       closeModal('editItemModal');
     }
@@ -2129,11 +2377,26 @@ const htmlContent = `<!DOCTYPE html>
         note: document.getElementById('editPayNote').value.trim()
       };
 
-      socket.emit('relay_to_phone', {
-        sessionId: currentSessionId,
-        action: 'update_payment_from_web',
-        data: payData
+      // تحديث فوري مباشر في واجهة المتصفح
+      globalProjectsData.forEach(p => {
+        (p.payments || []).forEach(pm => {
+          if (pm.id === id) {
+            Object.assign(pm, payData);
+          }
+        });
       });
+      reRenderAll();
+
+      if (socket && socket.connected) {
+        socket.emit('relay_to_phone', {
+          sessionId: currentSessionId,
+          action: 'update_payment_from_web',
+          data: payData
+        });
+        showToast('تم حفظ تعديل الدفعة وإرسالها للهاتف');
+      } else {
+        showToast('تم الحفظ محلياً (تأكد من اتصال الهاتف بالإنترنت)', false);
+      }
 
       closeModal('editPaymentModal');
     }
@@ -2194,11 +2457,16 @@ const htmlContent = `<!DOCTYPE html>
         description: document.getElementById('newProjDesc').value.trim()
       };
 
-      socket.emit('relay_to_phone', {
-        sessionId: currentSessionId,
-        action: 'create_project_from_web',
-        data: projData
-      });
+      if (socket && socket.connected) {
+        socket.emit('relay_to_phone', {
+          sessionId: currentSessionId,
+          action: 'create_project_from_web',
+          data: projData
+        });
+        showToast('جاري إنشاء المشروع في الهاتف...');
+      } else {
+        showToast('تعذر الإرسال: غير متصل بالهاتف', false);
+      }
 
       closeModal('newProjectModal');
       document.getElementById('newProjName').value = '';
@@ -2240,11 +2508,16 @@ const htmlContent = `<!DOCTYPE html>
         windowsVoid: wVoid
       };
 
-      socket.emit('relay_to_phone', {
-        sessionId: currentSessionId,
-        action: 'create_item_from_web',
-        data: itemData
-      });
+      if (socket && socket.connected) {
+        socket.emit('relay_to_phone', {
+          sessionId: currentSessionId,
+          action: 'create_item_from_web',
+          data: itemData
+        });
+        showToast('جاري إضافة البند في الهاتف...');
+      } else {
+        showToast('تعذر الإرسال: غير متصل بالهاتف', false);
+      }
 
       closeModal('newItemModal');
       document.getElementById('newItemTitle').value = '';
@@ -2269,11 +2542,16 @@ const htmlContent = `<!DOCTYPE html>
         note: document.getElementById('newPayNote').value.trim()
       };
 
-      socket.emit('relay_to_phone', {
-        sessionId: currentSessionId,
-        action: 'add_payment_from_web',
-        data: payData
-      });
+      if (socket && socket.connected) {
+        socket.emit('relay_to_phone', {
+          sessionId: currentSessionId,
+          action: 'add_payment_from_web',
+          data: payData
+        });
+        showToast('جاري إضافة الدفعة في الهاتف...');
+      } else {
+        showToast('تعذر الإرسال: غير متصل بالهاتف', false);
+      }
 
       closeModal('newPaymentModal');
       document.getElementById('newPayAmount').value = '';
@@ -2416,7 +2694,7 @@ const htmlContent = `<!DOCTYPE html>
           renderProjectsList();
           renderItemsTable();
           renderPaymentsTable();
-          renderQuotationView();
+          renderActiveReport();
           renderPricesTable();
           renderAnalyticsCharts();
 

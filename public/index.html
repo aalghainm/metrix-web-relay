@@ -1281,30 +1281,24 @@
       <!-- 7. تبويب عروض الأسعار (QUOTATIONS TAB) -->
       <!-- ========================================== -->
       <section id="tabQuotations" class="tab-pane">
-        <div class="table-container-card">
-          <div class="table-card-top">
-            <div class="table-card-title">
-              <i class="fa-solid fa-file-signature" style="color:var(--primary);"></i>
-              <span>عروض الأسعار المحفوظة والمعتمدة</span>
-            </div>
-            <div style="display:flex; gap:0.5rem; align-items:center;">
-              <button onclick="requestAppSync()" class="btn btn-secondary" style="padding:0.45rem 0.85rem; font-size:0.85rem;" title="تحديث ومزامنة البيانات مع الهاتف فوراً">
-                <i class="fa-solid fa-arrows-rotate"></i> تحديث من الهاتف
-              </button>
-              <button onclick="openNewQuotationModal()" class="btn btn-primary" style="padding:0.45rem 1rem; font-size:0.85rem;">
-                <i class="fa-solid fa-plus"></i> إنشاء عرض سعر جديد
-              </button>
+        <div class="toolbar-bar">
+          <div class="toolbar-inputs">
+            <div class="input-icon-group">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="quotationsSearchInput" oninput="renderQuotationsList()" placeholder="ابحث باسم العرض، العميل، الهاتف، المشروع..." class="custom-input" style="min-width:320px;" />
             </div>
           </div>
-          <div style="padding:1.5rem;">
-            <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.25rem; line-height:1.6;">
-              يمكنك هنا إدارة عروض أسعار التشطيبات، طباعتها بتنسيق رسمي، واعتماد الأسعار لتطبيقها مباشرة على بنود المشروع وقوالب الأسعار بالرقم السري.
-            </p>
-            <div id="quotationsCardsContainer" class="grid-projects" style="grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap:1.25rem;">
-              <!-- بطاقات عروض الأسعار تُرسم برمجياً -->
-            </div>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <button onclick="requestAppSync()" class="btn btn-secondary" title="تحديث ومزامنة البيانات مع الهاتف فوراً">
+              <i class="fa-solid fa-arrows-rotate"></i> تحديث من الهاتف
+            </button>
+            <button onclick="openNewQuotationModal()" class="btn btn-primary">
+              <i class="fa-solid fa-plus"></i> إنشاء عرض سعر جديد
+            </button>
           </div>
         </div>
+
+        <div id="quotationsCardsContainer" class="projects-masonry"></div>
       </section>
 
     </main>
@@ -3205,19 +3199,23 @@
       const container = document.getElementById('quotationsCardsContainer');
       if (!container) return;
 
+      const qSearch = (document.getElementById('quotationsSearchInput')?.value || '').trim().toLowerCase();
+
       if (!globalQuotationsData || globalQuotationsData.length === 0) {
         container.innerHTML = `
-          <div style="grid-column: 1/-1; text-align:center; padding:3rem 1rem; background:var(--surface); border:1px dashed var(--border); border-radius:var(--radius);">
-            <div style="font-size:2.5rem; color:var(--text-muted); margin-bottom:0.75rem;"><i class="fa-solid fa-file-signature"></i></div>
-            <h4 style="font-weight:800; color:var(--text); margin-bottom:0.5rem;">لا توجد عروض أسعار محفوظة حتى الآن</h4>
-            <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.25rem;">يمكنك إنشاء عرض سعر جديد بنقرة زر وتصديره ومزامنته مع الهاتف.</p>
-            <button onclick="openNewQuotationModal()" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إنشاء عرض سعر جديد</button>
+          <div class="empty-state-box" style="grid-column: 1 / -1;">
+            <div class="empty-illustration"><i class="fa-solid fa-file-signature"></i></div>
+            <h3 style="font-size:1.15rem; font-weight:800; color:#475569;">لا توجد عروض أسعار محفوظة</h3>
+            <p style="font-size:0.88rem; color:#94a3b8;">يمكنك إنشاء عرض سعر تقديري بنقرة زر وتصديره ومزامنته مع الهاتف</p>
+            <button onclick="openNewQuotationModal()" class="btn btn-primary" style="margin-top:0.5rem;"><i class="fa-solid fa-plus"></i> إنشاء عرض سعر جديد</button>
           </div>
         `;
         return;
       }
 
       let html = '';
+      let matchedCount = 0;
+
       globalQuotationsData.forEach(q => {
         const items = q.items || [];
         const totalSum = items.reduce((sum, it) => {
@@ -3226,41 +3224,33 @@
           return sum + (m * p);
         }, 0);
         const totalMeters = items.reduce((sum, it) => sum + (parseFloat(it.metersText) || 0), 0);
-
         const linkedProj = q.linkedProjectId ? globalProjectsData.find(p => Number(p.id) === Number(q.linkedProjectId)) : null;
 
-        let itemsPreviewHtml = '';
-        items.forEach(it => {
-          const m = parseFloat(it.metersText) || 0;
-          const p = parseFloat(it.pricePerMeterText) || 0;
-          const sub = m * p;
-          itemsPreviewHtml += `
-            <div style="background:var(--bg); border:1px solid var(--border); border-radius:0.5rem; padding:0.45rem 0.65rem; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center;">
-              <div>
-                <span style="font-weight:700; font-size:0.83rem; color:var(--text);"><i class="fa-solid fa-circle" style="font-size:6px; color:var(--primary); vertical-align:middle; margin-left:4px;"></i>${it.name || 'بند غير مسمى'}</span>
-              </div>
-              <div style="display:flex; gap:0.35rem; align-items:center; font-size:0.75rem; font-family:monospace;">
-                <span style="background:var(--primary-light); color:var(--primary); padding:2px 6px; border-radius:4px; font-weight:700;">${m.toFixed(1)} م²</span>
-                <span style="background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px;">× ${p.toFixed(1)}</span>
-                <span style="background:var(--emerald-light); color:var(--emerald); padding:2px 6px; border-radius:4px; font-weight:800;">= ${Math.round(sub).toLocaleString('en-US')} ر.س</span>
-              </div>
-            </div>
-          `;
-        });
+        // فلترة البحث
+        const searchStr = ((q.title || '') + ' ' + (q.clientName || '') + ' ' + (q.contractorName || '') + ' ' + (q.clientPhone || '') + ' ' + (linkedProj ? linkedProj.name : '')).toLowerCase();
+        if (qSearch && !searchStr.includes(qSearch)) return;
+        matchedCount++;
+
+        // عرض ملخص أنيق للأقسام / البنود في سطر مضغوط
+        const badgesSummary = items.slice(0, 3).map(it => {
+          const itM = parseFloat(it.metersText) || 0;
+          return `<span style="background:#f1f5f9; color:#334155; padding:2px 7px; border-radius:6px; font-size:0.75rem; font-weight:700;">${it.name || 'بند'} (${itM.toFixed(1)} م²)</span>`;
+        }).join(' ');
+        const moreCount = items.length > 3 ? `<span style="font-size:0.72rem; color:#64748b; font-weight:700;">+${items.length - 3} بنود أخرى</span>` : '';
 
         html += `
           <div class="project-item-card" style="border-top: 4px solid ${q.isApproved ? 'var(--emerald)' : 'var(--primary)'};">
             <div>
               <div class="proj-card-header">
                 <div class="proj-title-area">
-                  <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                    <h3 style="margin-bottom:0;">${q.title || 'عرض سعر'}</h3>
+                  <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+                    <h3 style="margin-bottom:0;">${q.title || 'عرض أسعار الأمتار'}</h3>
                     ${q.isApproved ? `
-                      <span style="background:var(--emerald-light); color:var(--emerald); border:1px solid #a7f3d0; padding:2px 8px; border-radius:9999px; font-size:0.72rem; font-weight:800; display:inline-flex; align-items:center; gap:3px;">
+                      <span style="background:var(--emerald-light); color:var(--emerald); border:1px solid #a7f3d0; padding:1px 7px; border-radius:9999px; font-size:0.7rem; font-weight:800; display:inline-flex; align-items:center; gap:3px;">
                         <i class="fa-solid fa-circle-check"></i> معتمد
                       </span>
                     ` : `
-                      <span style="background:var(--bg); color:var(--text-muted); border:1px solid var(--border); padding:2px 8px; border-radius:9999px; font-size:0.72rem; font-weight:700;">
+                      <span style="background:var(--bg); color:var(--text-muted); border:1px solid var(--border); padding:1px 7px; border-radius:9999px; font-size:0.7rem; font-weight:700;">
                         مسودة
                       </span>
                     `}
@@ -3275,32 +3265,33 @@
               </div>
 
               ${linkedProj ? `
-                <div style="margin-top:0.6rem; padding:0.35rem 0.65rem; background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; font-size:0.78rem; color:#1e40af; display:flex; align-items:center; gap:0.4rem;">
-                  <i class="fa-solid fa-link"></i>
-                  <span>مرتبط بمشروع: <b>${linkedProj.name}</b></span>
+                <div style="margin-top:0.5rem; padding:0.3rem 0.6rem; background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; font-size:0.76rem; color:#1e40af; display:flex; align-items:center; gap:0.35rem;">
+                  <i class="fa-solid fa-link" style="font-size:0.7rem;"></i>
+                  <span>مشروع: <b>${linkedProj.name}</b></span>
                 </div>
               ` : ''}
 
-              <div class="proj-financial-bar" style="margin-top:0.85rem;">
+              <div class="proj-financial-bar" style="margin-top:0.75rem;">
                 <div class="proj-fin-metrics">
                   <span>إجمالي الأمتار: <b>${totalMeters.toFixed(1)} م²</b></span>
                   <span>قيمة العرض: <b style="color:var(--emerald); font-size:1.05rem;">${Math.round(totalSum).toLocaleString('en-US')} ر.س</b></span>
                 </div>
-                <div class="progress-track">
+                <div class="progress-track" style="margin:0.4rem 0;">
                   <div class="progress-fill" style="width: ${q.isApproved ? '100%' : '50%'}; background:${q.isApproved ? 'var(--emerald)' : 'var(--primary)'};"></div>
                 </div>
-                <div class="proj-fin-metrics" style="color:#64748b; font-size:0.78rem;">
-                  <span>عدد البنود: <b>${items.length} بند</b></span>
-                  <span>الحالة: <b style="color:${q.isApproved ? 'var(--emerald)' : 'var(--text-muted)'};">${q.isApproved ? 'معتمد ومطبق' : 'مسودة قيد المراجعة'}</b></span>
+                <div class="proj-fin-metrics" style="color:#64748b; font-size:0.76rem;">
+                  <span>عدد الأقسام: <b>${items.length} قسم</b></span>
+                  <span>الحالة: <b style="color:${q.isApproved ? 'var(--emerald)' : 'var(--text-muted)'};">${q.isApproved ? 'معتمد ومطبق' : 'قيد المراجعة'}</b></span>
                 </div>
               </div>
 
-              <div style="max-height:140px; overflow-y:auto; margin-top:0.85rem; padding-left:2px;">
-                ${itemsPreviewHtml || '<div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:1rem;">لا توجد بنود مضافة</div>'}
+              <div style="margin-top:0.6rem; display:flex; flex-wrap:wrap; gap:0.35rem; align-items:center;">
+                ${badgesSummary || '<span style="font-size:0.75rem; color:#94a3b8;">لا توجد بنود مضافة</span>'}
+                ${moreCount}
               </div>
             </div>
 
-            <div class="proj-card-footer" style="margin-top:1rem;">
+            <div class="proj-card-footer" style="margin-top:0.85rem; padding-top:0.75rem;">
               <div class="proj-action-group" style="flex-wrap:wrap;">
                 <button onclick="openApproveQuotationModal('${q.id}')" class="btn" style="background:${q.isApproved ? 'var(--emerald)' : 'var(--emerald-light)'}; color:${q.isApproved ? '#fff' : 'var(--emerald)'}; border:1px solid #a7f3d0; padding:0.35rem 0.65rem; font-size:0.78rem;" title="اعتماد وتطبيق السعر على المشروع">
                   <i class="fa-solid fa-circle-check"></i> ${q.isApproved ? 'مُعتمد' : 'اعتماد'}
@@ -3317,6 +3308,17 @@
           </div>
         `;
       });
+
+      if (matchedCount === 0 && globalQuotationsData.length > 0) {
+        container.innerHTML = `
+          <div class="empty-state-box" style="grid-column: 1 / -1;">
+            <div class="empty-illustration"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <h3 style="font-size:1.15rem; font-weight:800; color:#475569;">لا توجد عروض أسعار مطابقة للبحث</h3>
+            <p style="font-size:0.88rem; color:#94a3b8;">جرب البحث بكلمات أخرى أو امسح شريط البحث</p>
+          </div>
+        `;
+        return;
+      }
 
       container.innerHTML = html;
     }

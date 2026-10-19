@@ -9,7 +9,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="/socket.io/socket.io.js"></script>
   <script src="/qrcode.min.js"></script>
-  <script>if (typeof QRCode === 'undefined') { document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>'); }</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -2039,7 +2040,19 @@
       const qrText = JSON.stringify({ type: 'METRIX_AUTH', sessionId: currentSessionId });
 
       try {
-        if (typeof window.QRCode === 'function') {
+        if (typeof window.qrcode === 'function') {
+          // مكتبة qrcode-generator فائقة الاستقرار والتي تنتج SVG نقي 100% بدون وسائط خارجية
+          const qr = window.qrcode(0, 'M');
+          qr.addData(qrText);
+          qr.make();
+          qrContainer.innerHTML = qr.createSvgTag({ cellSize: 6, margin: 4, scalable: true });
+          const svgEl = qrContainer.querySelector('svg');
+          if (svgEl) {
+            svgEl.style.width = '210px';
+            svgEl.style.height = '210px';
+            svgEl.style.borderRadius = '0.75rem';
+          }
+        } else if (typeof window.QRCode === 'function') {
           new window.QRCode(qrContainer, {
             text: qrText,
             width: 210,
@@ -2071,6 +2084,16 @@
 
     function renderFallbackQR(container, text) {
       container.innerHTML = '';
+      try {
+        if (typeof window.qrcode === 'function') {
+          const qr = window.qrcode(0, 'M');
+          qr.addData(text);
+          qr.make();
+          container.innerHTML = qr.createTableTag(5, 0);
+          return;
+        }
+      } catch(e) {}
+
       const encoded = encodeURIComponent(text);
       const img = document.createElement('img');
       img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=210x210&data=' + encoded;

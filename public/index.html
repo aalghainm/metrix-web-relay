@@ -1866,6 +1866,187 @@
     </div>
   </div>
 
+  <!-- نافذة شاشة تفاصيل القسم والتحليل المالي (JobTypeItemsScreen المتطابقة 100% مع الجوال) -->
+  <div id="sectionDetailsModal" class="modal-overlay">
+    <div id="secDetailDialogContainer" class="modal-dialog" style="max-width: 860px; width: 95%; border-radius: 1.25rem; overflow:hidden; transition: max-width 0.25s ease, height 0.25s ease;">
+      <!-- الهيدر بنفس تصميم MetrixWaveHeader في الجوال -->
+      <div style="background: linear-gradient(180deg, #1e3a8a 0%, var(--primary) 100%); color: #fff; padding: 1.1rem 1.25rem; display: flex; align-items: center; justify-content: space-between;">
+        <button onclick="backFromSectionDetailsToProject()" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem;" title="رجوع لتفاصيل المشروع">
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        <div style="text-align:center; flex:1; padding: 0 10px;">
+          <h3 id="secDetailHeaderTitle" style="margin:0; font-size:1.25rem; font-weight:800; color:#fff;">تلييس داخلي</h3>
+          <div style="font-size:0.8rem; opacity:0.9; margin-top:3px;">بنود هذا النوع داخل المشروع</div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button id="btnToggleMaximizeSecModal" onclick="toggleMaximizeSectionModal()" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.92rem;" title="تكبير / استعادة العرض">
+            <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+          </button>
+          <button onclick="quickExportSectionPdf()" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.95rem;" title="تصدير PDF للقسم">
+            <i class="fa-solid fa-file-pdf"></i>
+          </button>
+          <button onclick="closeModal('sectionDetailsModal')" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem;" title="إغلاق">
+            &times;
+          </button>
+        </div>
+      </div>
+
+      <div id="secDetailDialogBody" class="modal-dialog-body" style="max-height: 82vh; overflow-y: auto; padding: 1.15rem; background: #f8fafc;">
+        <input type="hidden" id="secDetailActiveProjectId" />
+        <input type="hidden" id="secDetailActiveJobCode" />
+
+        <!-- مفتاح التبديل Segmented Control: [ قائمة البنود | التحليل المالي ] (مطابق 100% للجوال) -->
+        <div style="display: flex; background: #e2e8f0; border-radius: 12px; padding: 4px; margin-bottom: 1rem; gap: 4px;">
+          <div id="tabBtnSecItems" onclick="switchSectionTab('items')" 
+               style="flex: 1; text-align: center; padding: 8px 12px; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: all 0.2s ease; background: var(--primary); color: #fff;">
+            قائمة البنود
+          </div>
+          <div id="tabBtnSecFinancial" onclick="switchSectionTab('financial')" 
+               style="flex: 1; text-align: center; padding: 8px 12px; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: all 0.2s ease; background: transparent; color: #475569;">
+            التحليل المالي
+          </div>
+        </div>
+
+        <!-- 1. محتوى تبويب: قائمة البنود -->
+        <div id="secTabContentItems">
+          <!-- ملخص القسم: إجمالي الكمية والتكلفة -->
+          <div style="background: rgba(79, 70, 229, 0.04); border: 1px solid rgba(79, 70, 229, 0.12); border-radius: 12px; padding: 10px 14px; margin-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.85rem; font-weight: 800; color: var(--primary);">ملخص القسم</div>
+              <div id="secSummaryQtyText" style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">إجمالي الكمية: 0.00 م²</div>
+            </div>
+            <div style="text-align: left;">
+              <div style="font-size: 0.72rem; color: #64748b;">إجمالي التكلفة</div>
+              <div id="secSummaryCostText" style="font-size: 1.15rem; font-weight: 900; color: #059669; font-family: monospace;">0 ر.س</div>
+            </div>
+          </div>
+
+          <!-- جدول البنود التفصيلي -->
+          <div id="secItemsListContainer" style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; overflow-x:auto;">
+            <!-- يُبنى برمجياً -->
+          </div>
+
+          <!-- زر إضافة بند جديد في القسم -->
+          <div style="margin-top: 0.85rem; text-align: left;">
+            <button onclick="openNewItemForCurrentSection()" class="btn btn-primary" style="padding: 0.5rem 1rem; font-weight: 800; font-size: 0.85rem;">
+              <i class="fa-solid fa-plus"></i> إضافة بند جديد لهذا القسم
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. محتوى تبويب: التحليل المالي (مطابق 100% للشاشة المرفقة) -->
+        <div id="secTabContentFinancial" style="display: none;">
+          <!-- 1. شبكة الكروت الأربعة (إجمالي التكلفة | المدفوع | نسبة الإنجاز | المتبقي) -->
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px;">
+            <!-- كرت إجمالي التكلفة -->
+            <div style="background: rgba(79, 70, 229, 0.05); border: 1px solid rgba(79, 70, 229, 0.12); border-radius: 16px; padding: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 0.82rem; font-weight: 800; color: var(--primary);">إجمالي التكلفة</span>
+                <span style="font-size: 1.1rem;">💵</span>
+              </div>
+              <div id="finCardTotalCost" style="font-size: 1.1rem; font-weight: 900; color: #0f172a; font-family: monospace;">0.00 ر.س</div>
+            </div>
+
+            <!-- كرت المدفوع -->
+            <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 16px; padding: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 0.82rem; font-weight: 800; color: #059669;">المدفوع</span>
+                <span style="font-size: 1.1rem;">✅</span>
+              </div>
+              <div id="finCardPaid" style="font-size: 1.1rem; font-weight: 900; color: #0f172a; font-family: monospace;">0.00 ر.س</div>
+            </div>
+
+            <!-- كرت نسبة الإنجاز -->
+            <div style="background: rgba(14, 165, 233, 0.06); border: 1px solid rgba(14, 165, 233, 0.15); border-radius: 16px; padding: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 0.82rem; font-weight: 800; color: #0284c7;">نسبة الإنجاز</span>
+                <span style="font-size: 1.1rem;">📈</span>
+              </div>
+              <div id="finCardCompletion" style="font-size: 1.1rem; font-weight: 900; color: #0f172a; font-family: monospace;">0.0%</div>
+            </div>
+
+            <!-- كرت المتبقي -->
+            <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 16px; padding: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 0.82rem; font-weight: 800; color: #dc2626;">المتبقي</span>
+                <span style="font-size: 1.1rem;">⏳</span>
+              </div>
+              <div id="finCardRemaining" style="font-size: 1.1rem; font-weight: 900; color: #0f172a; font-family: monospace;">0.00 ر.س</div>
+            </div>
+          </div>
+
+          <!-- 2. كرت شريط تقدم نسبة الإنجاز المالي -->
+          <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 0.95rem; font-weight: 800; color: #1e293b;">نسبة الإنجاز المالي</span>
+              <span id="finProgressPercentText" style="font-size: 1.15rem; font-weight: 900; color: var(--primary);">0.0%</span>
+            </div>
+            <!-- شريط التقدم -->
+            <div style="width: 100%; height: 8px; background: rgba(79, 70, 229, 0.15); border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+              <div id="finProgressBarFill" style="height: 100%; background: var(--primary); width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700;">
+              <span id="finProgressPaidText" style="color: #059669;">المدفوع: 0.00 ر.س</span>
+              <span id="finProgressRemText" style="color: #dc2626;">المتبقي: 0.00 ر.س</span>
+            </div>
+          </div>
+
+          <!-- 3. كرت المخطط الدائري لتوزيع المدفوعات (Paid vs Remaining) -->
+          <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+            <div style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-bottom: 12px;">توزيع المدفوعات</div>
+            <div style="display: flex; align-items: center; justify-content: space-around; flex-wrap: wrap; gap: 15px;">
+              <div style="position: relative; width: 140px; height: 140px;">
+                <canvas id="sectionFinancialDonutChart" width="140" height="140"></canvas>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px; min-width: 170px;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="width: 12px; height: 12px; background: #10b981; border-radius: 3px; display: inline-block;"></span>
+                    <span style="font-size: 0.85rem; font-weight: 800; color: #1e293b;">المدفوع</span>
+                  </div>
+                  <div id="finLegendPaidText" style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">0.00 ر.س (0.0%)</div>
+                </div>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="width: 12px; height: 12px; background: #f97316; border-radius: 3px; display: inline-block;"></span>
+                    <span style="font-size: 0.85rem; font-weight: 800; color: #1e293b;">المتبقي</span>
+                  </div>
+                  <div id="finLegendRemText" style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">0.00 ر.س (100.0%)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. كرت تسجيل دفعة جديدة للقسم مباشرة وإرسالها للهاتف عبر relay -->
+          <div style="background: rgba(14, 165, 233, 0.04); border: 1px solid rgba(14, 165, 233, 0.15); border-radius: 16px; padding: 16px; margin-bottom: 12px;">
+            <div style="font-size: 0.88rem; font-weight: 800; color: #0284c7; margin-bottom: 8px;">
+              <i class="fa-solid fa-plus-circle"></i> إضافة دفعة جديدة لهذا القسم (تُحفظ وترسل للهاتف مباشرة)
+            </div>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <input type="number" step="0.01" id="finQuickAmount" placeholder="المبلغ (ر.س) *" 
+                     style="flex: 1; padding: 0.55rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 800; font-size: 0.9rem;" />
+              <button onclick="submitQuickSectionPayment()" class="btn btn-primary" style="padding: 0.55rem 1.25rem; font-weight: 800; font-size: 0.85rem; border-radius: 10px;">
+                حفظ الدفعة
+              </button>
+            </div>
+            <input type="text" id="finQuickNote" placeholder="ملاحظات السند / المرحلة (اختياري)..." 
+                   style="width: 100%; padding: 0.45rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.82rem;" />
+          </div>
+
+          <!-- 5. كرت الدفعات المسجلة لهذا القسم -->
+          <div id="finRecordedPaymentsCard" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px;">
+            <div style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-bottom: 10px;">
+              <i class="fa-solid fa-receipt" style="color: #059669; margin-left: 4px;"></i> الدفعات المسجلة لهذا القسم
+            </div>
+            <div id="finRecordedPaymentsList">
+              <!-- يُبنى برمجياً -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- نافذة اعتماد السعر بالرقم السري واختيار المشروع -->
   <div id="approveQuotationModal" class="modal-overlay">
     <div class="modal-dialog" style="max-width: 480px;">
@@ -2697,28 +2878,22 @@
         secCard.onmouseenter = () => secCard.style.borderColor = sec.color;
         secCard.onmouseleave = () => secCard.style.borderColor = '#e2e8f0';
         
-        // عند النقر على كرت القسم يتم طي أو فتح الجدول بحرية وسلاسة
+        // عند النقر على كرت القسم يتم فتح شاشة تفاصيل القسم والتحليل المالي المستقلة (JobTypeItemsScreen)
         secCard.onclick = (e) => {
-          if (hasItems) {
-            toggleSectionItemsTable(sec.code);
-          } else {
-            // إن لم تكن هناك بنود، نفتح نافذة إضافة بند لهذا القسم
-            closeModal('projectDetailsModal');
-            document.getElementById('modalItemProjectSelect').value = String(p.id);
-            document.getElementById('newItemJobType').value = sec.code;
-            document.getElementById('newItemModal').style.display = 'flex';
-          }
+          openSectionDetailsScreen(p.id, sec.code, 'items');
         };
 
-        const toggleChevronHtml = hasItems ? `
-          <button type="button" onclick="event.stopPropagation(); toggleSectionItemsTable('${sec.code}')" style="background:none; border:none; color:#64748b; cursor:pointer; padding:2px 4px; font-size:0.9rem;" title="طي / فتح الجدول">
-            <i id="secChevron_${sec.code}" class="fa-solid fa-chevron-up" style="transition:transform 0.2s ease;"></i>
+        const toggleChevronHtml = `
+          <button type="button" onclick="event.stopPropagation(); openSectionDetailsScreen(${p.id}, '${sec.code}', 'financial');" 
+                  class="btn btn-sky" style="padding: 0.35rem 0.65rem; font-size: 0.74rem; font-weight: 800; border-radius: 8px; display: flex; align-items: center; gap: 4px;" 
+                  title="فتح شاشة التحليل المالي للقسم">
+            <i class="fa-solid fa-chart-pie"></i> التحليل المالي
           </button>
-        ` : '';
+        `;
 
         secCard.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <!-- اليسار: شارة السعر وعلامة الصح أو زر البدء + سهم الطي والفتح -->
+            <!-- اليسار: شارة السعر وعلامة الصح أو زر البدء + زر التحليل المالي -->
             <div style="display:flex; align-items:center; gap:0.5rem; order:1;">
               ${statusBadgeHtml}
               ${toggleChevronHtml}
@@ -2735,8 +2910,6 @@
               </div>
             </div>
           </div>
-          ${secPaymentsSublistHtml}
-          ${secItemsSublistHtml}
         `;
         container.appendChild(secCard);
       });
@@ -2744,29 +2917,335 @@
       document.getElementById('projectDetailsModal').style.display = 'flex';
     }
 
-    // إضافة دفعة سريعة لقسم معين
-    function quickAddPaymentForSection(projectId, sectionTitle) {
+    // =========================================================================
+    // شاشة تفاصيل القسم والتحليل المالي (JobTypeItemsScreen المتطابقة مع الجوال)
+    // =========================================================================
+    let sectionDonutChartInstance = null;
+    let isSectionModalMaximized = false;
+
+    function openSectionDetailsScreen(projectId, jobCode, defaultTab = 'items') {
+      const p = globalProjectsData.find(item => Number(item.id) === Number(projectId));
+      if (!p) return;
+
+      const secMeta = PROJECT_SECTIONS_META.find(s => s.code === jobCode) || {
+        code: jobCode,
+        title: getJobLabel(jobCode),
+        desc: 'بنود هذا النوع داخل المشروع'
+      };
+
+      document.getElementById('secDetailActiveProjectId').value = p.id;
+      document.getElementById('secDetailActiveJobCode').value = secMeta.code;
+      document.getElementById('secDetailHeaderTitle').textContent = secMeta.title;
+
+      // إخفاء نافذة تفاصيل المشروع الرئيسية وإظهار نافذة تفاصيل القسم
       closeModal('projectDetailsModal');
-      openPaymentModal();
-      const pSelect = document.getElementById('newPayProjectSelect');
-      if (pSelect) pSelect.value = String(projectId);
-      const noteInput = document.getElementById('newPaymentNotes');
-      if (noteInput) {
-        noteInput.value = `دفعة عن أعمال ${sectionTitle}`;
+      document.getElementById('sectionDetailsModal').style.display = 'flex';
+
+      // عرض التبويب المطلوب (قائمة البنود أو التحليل المالي)
+      switchSectionTab(defaultTab);
+    }
+
+    function backFromSectionDetailsToProject() {
+      const pId = document.getElementById('secDetailActiveProjectId').value;
+      closeModal('sectionDetailsModal');
+      if (pId) {
+        openProjectDetailsModal(pId);
       }
     }
 
-    // وظيفة طي وفتح جدول القسم المستقل بسلاسة
-    function toggleSectionItemsTable(code) {
-      const tbl = document.getElementById('secItemsTable_' + code);
-      const chv = document.getElementById('secChevron_' + code);
-      if (!tbl) return;
-      if (tbl.style.display === 'none') {
-        tbl.style.display = 'block';
-        if (chv) chv.className = 'fa-solid fa-chevron-up';
+    function switchSectionTab(tab) {
+      const btnItems = document.getElementById('tabBtnSecItems');
+      const btnFin = document.getElementById('tabBtnSecFinancial');
+      const contentItems = document.getElementById('secTabContentItems');
+      const contentFin = document.getElementById('secTabContentFinancial');
+
+      if (tab === 'items') {
+        btnItems.style.background = 'var(--primary)';
+        btnItems.style.color = '#fff';
+        btnFin.style.background = 'transparent';
+        btnFin.style.color = '#475569';
+        contentItems.style.display = 'block';
+        contentFin.style.display = 'none';
+        renderSectionItemsTab();
       } else {
-        tbl.style.display = 'none';
-        if (chv) chv.className = 'fa-solid fa-chevron-down';
+        btnItems.style.background = 'transparent';
+        btnItems.style.color = '#475569';
+        btnFin.style.background = 'var(--primary)';
+        btnFin.style.color = '#fff';
+        contentItems.style.display = 'none';
+        contentFin.style.display = 'block';
+        renderSectionFinancialTab();
+      }
+    }
+
+    function renderSectionItemsTab() {
+      const pId = document.getElementById('secDetailActiveProjectId').value;
+      const jobCode = document.getElementById('secDetailActiveJobCode').value;
+      const p = globalProjectsData.find(item => Number(item.id) === Number(pId));
+      if (!p) return;
+
+      const secMeta = PROJECT_SECTIONS_META.find(s => s.code === jobCode);
+      const items = (p.items || []).filter(it => normalizeJobCode(it.jobType) === jobCode);
+      const totalQty = items.reduce((sum, it) => sum + (Number(it.totalMeters || it.quantity) || 0), 0);
+      const totalCost = items.reduce((sum, it) => sum + (Number(it.totalAmount) || 0), 0);
+      const isDoorsOrWindows = (jobCode === 'DOORS' || jobCode === 'WINDOWS');
+      const unit = isDoorsOrWindows ? 'قطعة' : 'م²';
+
+      document.getElementById('secSummaryQtyText').textContent = `إجمالي الكمية: ${totalQty.toFixed(2)} ${unit}`;
+      document.getElementById('secSummaryCostText').textContent = `${Math.round(totalCost).toLocaleString('en-US')} ر.س`;
+
+      const listContainer = document.getElementById('secItemsListContainer');
+      if (items.length === 0) {
+        listContainer.innerHTML = `
+          <div style="padding: 2.5rem 1rem; text-align: center; color: #94a3b8;">
+            <i class="fa-solid fa-folder-open" style="font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.5;"></i>
+            <div style="font-weight: 800; font-size: 1.05rem; color: #475569;">لا توجد بنود في هذا القسم بعد</div>
+            <div style="font-size: 0.85rem; margin-top: 4px;">اضغط على "إضافة بند جديد" للبدء بحساب الكميات</div>
+          </div>
+        `;
+        return;
+      }
+
+      const rowsHtml = items.map((it, idx) => {
+        const dim = (it.length || 0) + ' × ' + (it.width || 0) + ' × ' + (it.height || 0);
+        const voidTotal = (Number(it.doorsVoid) || 0) + (Number(it.windowsVoid) || 0) + (Number(it.voidArea) || 0);
+        const meters = Number(it.totalMeters || it.quantity || 0);
+        let price = Number(it.pricePerMeter || 0);
+        let amount = Number(it.totalAmount || 0);
+        if (price === 0 && amount > 0 && meters > 0) {
+          price = amount / meters;
+        } else if (amount === 0 && price > 0 && meters > 0) {
+          amount = meters * price;
+        }
+
+        return `
+          <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background='transparent'">
+            <td style="text-align:center; font-weight:800; color:#475569; padding:10px 6px;">${idx + 1}</td>
+            <td style="font-weight:700; color:#1e293b; padding:10px 8px;">${it.title || it.itemName || '—'}</td>
+            <td style="text-align:center; font-family:Arial, sans-serif; color:#64748b; font-size:0.83rem; direction:ltr; padding:10px 6px;">${dim}</td>
+            <td style="text-align:center; font-weight:700; color:#dc2626; font-size:0.82rem; direction:ltr; padding:10px 6px;">${voidTotal > 0 ? ('-' + voidTotal.toFixed(2) + ' م2') : '-'}</td>
+            <td style="text-align:center; font-weight:900; color:#4f46e5; font-family:Arial, sans-serif; font-size:0.95rem; padding:10px 6px;">${meters.toFixed(3)}</td>
+            <td style="text-align:center; font-weight:700; color:#475569; font-size:0.85rem; padding:10px 6px;">${price > 0 ? (price.toFixed(0) + ' ر.س') : '-'}</td>
+            <td style="text-align:center; font-weight:900; color:#059669; font-family:Arial, sans-serif; font-size:0.95rem; padding:10px 6px;">${amount.toFixed(2)} ر.س</td>
+            <td style="text-align:center; padding:10px 6px; white-space:nowrap;">
+              <button onclick="event.stopPropagation(); closeModal('sectionDetailsModal'); openEditItemModal(${it.itemId})" class="icon-action-btn btn-action-edit" title="تعديل البند"><i class="fa-solid fa-pen"></i></button>
+              <button onclick="event.stopPropagation(); closeModal('sectionDetailsModal'); requestDeleteItem(${it.itemId})" class="icon-action-btn btn-action-delete" title="حذف البند"><i class="fa-solid fa-trash-can"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      listContainer.innerHTML = `
+        <table style="width:100%; border-collapse:collapse; font-size:0.83rem; text-align:right;">
+          <thead>
+            <tr style="background:#f8fafc; border-bottom:1px solid #e2e8f0; color:#475569; font-size:0.78rem;">
+              <th style="padding:10px 6px; text-align:center; width:35px;">#</th>
+              <th style="padding:10px 8px;">اسم البند / الغرفة</th>
+              <th style="padding:10px 6px; text-align:center;">الأبعاد (ط × ع × ار)</th>
+              <th style="padding:10px 6px; text-align:center;">الفراغات المخصومة</th>
+              <th style="padding:10px 6px; text-align:center;">الكمية الصافية</th>
+              <th style="padding:10px 6px; text-align:center;">سعر المتر</th>
+              <th style="padding:10px 6px; text-align:center;">المبلغ الإجمالي</th>
+              <th style="padding:10px 6px; text-align:center; width:70px;">إجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderSectionFinancialTab() {
+      const pId = document.getElementById('secDetailActiveProjectId').value;
+      const jobCode = document.getElementById('secDetailActiveJobCode').value;
+      const p = globalProjectsData.find(item => Number(item.id) === Number(pId));
+      if (!p) return;
+
+      const secMeta = PROJECT_SECTIONS_META.find(s => s.code === jobCode) || { title: jobCode };
+      const items = (p.items || []).filter(it => normalizeJobCode(it.jobType) === jobCode);
+      const sectionTotalAmount = items.reduce((sum, it) => sum + (Number(it.totalAmount) || 0), 0);
+
+      // فلترة دفعات هذا القسم تحديداً (مطابق 100% لخادم المزامنة وقاعدة بيانات الجوال)
+      const payments = (p.payments || []).filter(pm => {
+        const pmJob = String(pm.jobType || '').trim();
+        return pmJob === jobCode || pmJob === secMeta.title || normalizeJobCode(pmJob) === jobCode || pmJob.includes(secMeta.title);
+      });
+
+      const sectionPaid = payments.reduce((sum, pm) => sum + (Number(pm.amount) || 0), 0);
+      const sectionRemaining = Math.max(0, sectionTotalAmount - sectionPaid);
+      const sectionCompletionPercent = sectionTotalAmount > 0 ? (sectionPaid / sectionTotalAmount) * 100 : 0;
+      const paidPercentFormatted = sectionCompletionPercent.toFixed(1);
+      const remPercentFormatted = (100 - sectionCompletionPercent).toFixed(1);
+
+      // تحديث شبكة الكروت الأربعة
+      document.getElementById('finCardTotalCost').textContent = `${sectionTotalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س`;
+      document.getElementById('finCardPaid').textContent = `${sectionPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س`;
+      document.getElementById('finCardCompletion').textContent = `${paidPercentFormatted}%`;
+      document.getElementById('finCardRemaining').textContent = `${sectionRemaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س`;
+
+      // تحديث شريط تقدم نسبة الإنجاز المالي
+      document.getElementById('finProgressPercentText').textContent = `${paidPercentFormatted}%`;
+      document.getElementById('finProgressBarFill').style.width = `${Math.min(100, Math.max(0, sectionCompletionPercent))}%`;
+      document.getElementById('finProgressPaidText').textContent = `المدفوع: ${sectionPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س`;
+      document.getElementById('finProgressRemText').textContent = `المتبقي: ${sectionRemaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س`;
+
+      // تحديث نصوص الـ Legend للمخطط
+      document.getElementById('finLegendPaidText').textContent = `${sectionPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س (${paidPercentFormatted}%)`;
+      document.getElementById('finLegendRemText').textContent = `${sectionRemaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س (${remPercentFormatted}%)`;
+
+      // رسم المخطط الدائري Donut Chart (مثل PieChart في JobTypeItemsScreen.kt)
+      const canvas = document.getElementById('sectionFinancialDonutChart');
+      if (canvas) {
+        if (sectionDonutChartInstance) sectionDonutChartInstance.destroy();
+        const chartData = (sectionTotalAmount === 0) ? [0, 1] : [sectionPaid, sectionRemaining];
+        sectionDonutChartInstance = new Chart(canvas, {
+          type: 'doughnut',
+          data: {
+            labels: ['المدفوع', 'المتبقي'],
+            datasets: [{
+              data: chartData,
+              backgroundColor: ['#10b981', '#f97316'],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: false,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return context.label + ': ' + Number(context.raw).toLocaleString('en-US') + ' ر.س';
+                  }
+                }
+              }
+            },
+            cutout: '70%'
+          }
+        });
+      }
+
+      // عرض قائمة الدفعات المسجلة لهذا القسم
+      const listDiv = document.getElementById('finRecordedPaymentsList');
+      if (payments.length === 0) {
+        listDiv.innerHTML = `
+          <div style="padding: 1.5rem 0.5rem; text-align: center; color: #94a3b8; font-size: 0.88rem;">
+            <i class="fa-solid fa-receipt" style="font-size: 1.75rem; opacity: 0.5; margin-bottom: 6px;"></i>
+            <div>لا توجد سندات دفع مسجلة لهذا القسم حتى الآن</div>
+          </div>
+        `;
+      } else {
+        listDiv.innerHTML = payments.map((pm, pIdx) => {
+          return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 6px; border-bottom: 1px solid #f1f5f9;">
+              <div>
+                <div style="font-weight: 900; font-size: 1rem; color: var(--primary); font-family: monospace;">
+                  ${Number(pm.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س
+                </div>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">
+                  ${pm.note || 'سند قبض معتمد'} ${pm.dateAdded ? `(${formatDateEn(pm.dateAdded)})` : ''}
+                </div>
+              </div>
+              <div style="display: flex; gap: 4px;">
+                <button onclick="openEditPaymentModal(${pm.id}); closeModal('sectionDetailsModal');" class="icon-action-btn btn-action-edit" title="تعديل"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="requestDeletePayment(${pm.id}); closeModal('sectionDetailsModal');" class="icon-action-btn btn-action-delete" title="حذف"><i class="fa-solid fa-trash-can"></i></button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // حفظ دفعة سريعة للقسم وإرسالها للهاتف مباشرة عبر socket relay
+    function submitQuickSectionPayment() {
+      const pId = parseInt(document.getElementById('secDetailActiveProjectId').value);
+      const jobCode = document.getElementById('secDetailActiveJobCode').value;
+      const amtInput = document.getElementById('finQuickAmount');
+      const noteInput = document.getElementById('finQuickNote');
+      const amt = parseFloat(amtInput.value) || 0;
+
+      if (!pId || amt <= 0) {
+        alert('يرجى إدخال مبلغ صحيح للدفعة');
+        return;
+      }
+
+      const secMeta = PROJECT_SECTIONS_META.find(s => s.code === jobCode) || { title: jobCode };
+      const payData = {
+        projectId: pId,
+        amount: amt,
+        jobType: secMeta.title, // نوع العمل للقسم (مثل: تلييس داخلي) لربطه 100% مع الجوال
+        note: (noteInput.value || '').trim() || `دفعة عن أعمال ${secMeta.title}`
+      };
+
+      // تحديث محلي فوري
+      const targetProj = globalProjectsData.find(p => p.id === pId);
+      if (targetProj) {
+        targetProj.payments = targetProj.payments || [];
+        targetProj.payments.unshift(Object.assign({ id: Date.now(), dateAdded: Date.now() }, payData));
+        reRenderAll();
+      }
+
+      // إرسال للهاتف عبر relay
+      if (socket && socket.connected) {
+        socket.emit('relay_to_phone', {
+          sessionId: currentSessionId,
+          action: 'add_payment_from_web',
+          data: payData
+        });
+        showToast('تم حفظ الدفعة وإرسالها للهاتف بنجاح');
+      } else {
+        showToast('تم التسجيل محلياً (تأكد من اتصال الهاتف)', false);
+      }
+
+      amtInput.value = '';
+      noteInput.value = '';
+      renderSectionFinancialTab();
+    }
+
+    function openNewItemForCurrentSection() {
+      const pId = document.getElementById('secDetailActiveProjectId').value;
+      const jobCode = document.getElementById('secDetailActiveJobCode').value;
+      closeModal('sectionDetailsModal');
+      document.getElementById('modalItemProjectSelect').value = String(pId);
+      document.getElementById('newItemJobType').value = jobCode;
+      document.getElementById('newItemModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('newItemTitle').focus(), 150);
+    }
+
+    function quickExportSectionPdf() {
+      const pId = document.getElementById('secDetailActiveProjectId').value;
+      const jobCode = document.getElementById('secDetailActiveJobCode').value;
+      closeModal('sectionDetailsModal');
+      const repSel = document.getElementById('reportProjectSelect');
+      if (repSel) repSel.value = String(pId);
+      const repType = document.getElementById('reportTypeSelect');
+      if (repType) repType.value = jobCode;
+      switchTab('tabReports');
+      renderModernNativeReport();
+    }
+
+    function toggleMaximizeSectionModal() {
+      const dialog = document.getElementById('secDetailDialogContainer');
+      const body = document.getElementById('secDetailDialogBody');
+      const btn = document.getElementById('btnToggleMaximizeSecModal');
+      if (!dialog) return;
+
+      isSectionModalMaximized = !isSectionModalMaximized;
+      if (isSectionModalMaximized) {
+        dialog.style.maxWidth = '98vw';
+        dialog.style.width = '98vw';
+        dialog.style.height = '95vh';
+        if (body) body.style.maxHeight = 'calc(95vh - 75px)';
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-down-left-and-up-right-to-center"></i>';
+      } else {
+        dialog.style.maxWidth = '860px';
+        dialog.style.width = '95%';
+        dialog.style.height = '';
+        if (body) body.style.maxHeight = '82vh';
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-up-right-and-down-left-from-center"></i>';
       }
     }
 

@@ -2413,8 +2413,13 @@
           const dim = (it.length || 0) + ' × ' + (it.width || 0) + ' × ' + (it.height || 0);
           const voidTotal = (Number(it.doorsVoid) || 0) + (Number(it.windowsVoid) || 0) + (Number(it.voidArea) || 0);
           const meters = Number(it.totalMeters || it.quantity || 0);
-          const price = Number(it.pricePerMeter || 0);
-          const amount = Number(it.totalAmount || 0);
+          let price = Number(it.pricePerMeter || 0);
+          let amount = Number(it.totalAmount || 0);
+          if (price === 0 && amount > 0 && meters > 0) {
+            price = amount / meters;
+          } else if (amount === 0 && price > 0 && meters > 0) {
+            amount = meters * price;
+          }
           const badgeCls = getJobBadgeClass(it.jobType);
           const displayJobName = getJobLabel(it.jobType);
 
@@ -2426,8 +2431,8 @@
             '<td style="font-family:monospace; color:#64748b;" dir="ltr">' + dim + '</td>' +
             '<td style="color:var(--rose); font-weight:700;">' + (voidTotal > 0 ? ('-' + voidTotal + ' م2') : '-') + '</td>' +
             '<td style="font-weight:900; color:var(--primary); font-family:monospace; font-size:1rem;">' + meters.toLocaleString() + '</td>' +
-            '<td style="color:#64748b;">' + (price > 0 ? (price.toLocaleString() + ' ر.س') : '-') + '</td>' +
-            '<td style="font-weight:900; color:var(--emerald); font-family:monospace; font-size:1.05rem;">' + amount.toLocaleString() + ' ر.س</td>' +
+            '<td style="color:#64748b; font-weight:700;">' + (price > 0 ? (price.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}) + ' ر.س') : '-') + '</td>' +
+            '<td style="font-weight:900; color:var(--emerald); font-family:monospace; font-size:1.05rem;">' + (amount > 0 ? (amount.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}) + ' ر.س') : '-') + '</td>' +
             '<td style="text-align:center; white-space:nowrap;">' +
               '<button onclick="openEditItemModal(' + it.itemId + ')" class="icon-action-btn btn-action-edit" title="تعديل البند"><i class="fa-solid fa-pen"></i></button>' +
               '<button onclick="requestDeleteItem(' + it.itemId + ')" class="icon-action-btn btn-action-delete" title="حذف من الهاتف"><i class="fa-solid fa-trash-can"></i></button>' +
@@ -2710,8 +2715,13 @@
           const w = Math.max(0, Number(it.width) || 0);
           const q = Math.max(1, Number(it.quantity) || Number(it.wallCount) || 1);
           const totalVal = computePdfTotalArea(code, it);
-          const price = Math.max(0, Number(it.pricePerMeter) || 0);
-          const cost = totalVal * price;
+          let price = Math.max(0, Number(it.pricePerMeter) || 0);
+          let cost = Math.max(0, Number(it.totalAmount) || 0);
+          if (price === 0 && cost > 0 && totalVal > 0) {
+            price = cost / totalVal;
+          } else if (cost === 0 && price > 0 && totalVal > 0) {
+            cost = totalVal * price;
+          }
 
           rowsHtml +=
             '<tr>' +
@@ -2777,8 +2787,13 @@
           const wall = (mode === 'SURFACE') ? 0.0 : computePdfWallArea(it);
           const floorOrCeil = (mode === 'WALLS') ? 0.0 : computePdfCeilingArea(it);
           const totalArea = computePdfTotalArea(code, it);
-          const price = Math.max(0, Number(it.pricePerMeter) || 0);
-          const cost = totalArea * price;
+          let price = Math.max(0, Number(it.pricePerMeter) || 0);
+          let cost = Math.max(0, Number(it.totalAmount) || 0);
+          if (price === 0 && cost > 0 && totalArea > 0) {
+            price = cost / totalArea;
+          } else if (cost === 0 && price > 0 && totalArea > 0) {
+            cost = totalArea * price;
+          }
 
           // تظليل الخلايا غير النشطة باللون الرمادي #E2E8F0 وعلامة "-" تماماً مثل التطبيق (السطور 1039-1062)
           const isSurfaceOnly = (mode === 'SURFACE');

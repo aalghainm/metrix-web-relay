@@ -1006,9 +1006,6 @@
           <button onclick="switchTab('tabReports')" id="btnTabReports" class="tab-pill">
             <i class="fa-solid fa-file-pdf"></i> تقارير و PDF
           </button>
-          <button onclick="switchTab('tabPrices')" id="btnTabPrices" class="tab-pill">
-            <i class="fa-solid fa-sliders"></i> دليل الأسعار
-          </button>
           <button onclick="switchTab('tabQuotations')" id="btnTabQuotations" class="tab-pill">
             <i class="fa-solid fa-file-signature"></i> عروض الأسعار
           </button>
@@ -1278,38 +1275,7 @@
         <div id="pdfReportViewer" class="pdf-report-sheet"></div>
       </section>
 
-      <!-- ========================================== -->
-      <!-- 6. تبويب دليل وتعديل الأسعار (PRICES TAB) -->
-      <!-- ========================================== -->
-      <section id="tabPrices" class="tab-pane">
-        <div class="table-container-card">
-          <div class="table-card-top">
-            <div class="table-card-title">
-              <i class="fa-solid fa-sliders" style="color:var(--primary);"></i>
-              <span>دليل أسعار بنود الأعمال والتشطيبات الافتراضية</span>
-            </div>
-            <span class="status-badge"><i class="fa-solid fa-cloud-arrow-up"></i> محفوظ ومزامن بالهاتف</span>
-          </div>
-          <div style="padding:1.5rem;">
-            <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.5rem; line-height:1.6;">
-              يمكنك هنا ضبط أسعار المتر الافتراضية لكل بند. عند تحديث أي سعر، سيتم حفظه فوراً في قاعدة بيانات الهاتف واستخدامه تلقائياً عند إضافة بنود حصر جديدة.
-            </p>
-            <div style="overflow-x:auto;">
-              <table class="metrix-table">
-                <thead>
-                  <tr>
-                    <th>نوع العمل / البند</th>
-                    <th>السعر الحالي للمتر (ر.س)</th>
-                    <th>تعديل السعر الجديد</th>
-                    <th style="text-align:center;">إجراء الحفظ</th>
-                  </tr>
-                </thead>
-                <tbody id="pricesTableBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       <!-- ========================================== -->
       <!-- 7. تبويب عروض الأسعار (QUOTATIONS TAB) -->
@@ -1322,6 +1288,9 @@
               <span>عروض الأسعار المحفوظة والمعتمدة</span>
             </div>
             <div style="display:flex; gap:0.5rem; align-items:center;">
+              <button onclick="requestAppSync()" class="btn btn-secondary" style="padding:0.45rem 0.85rem; font-size:0.85rem;" title="تحديث ومزامنة البيانات مع الهاتف فوراً">
+                <i class="fa-solid fa-arrows-rotate"></i> تحديث من الهاتف
+              </button>
               <button onclick="openNewQuotationModal()" class="btn btn-primary" style="padding:0.45rem 1rem; font-size:0.85rem;">
                 <i class="fa-solid fa-plus"></i> إنشاء عرض سعر جديد
               </button>
@@ -1921,9 +1890,19 @@
       renderItemsTable();
       renderPaymentsTable();
       renderActiveReport();
-      renderPricesTable();
       renderQuotationsList();
       renderAnalyticsCharts();
+    }
+
+    function requestAppSync(showFeedback = true) {
+      if (socket && socket.connected && currentSessionId) {
+        socket.emit('relay_to_phone', { sessionId: currentSessionId, action: 'request_sync', data: {} });
+        if (showFeedback) {
+          showToast('جاري طلب مزامنة أحدث البيانات من الهاتف...');
+        }
+      } else if (showFeedback) {
+        showToast('الهاتف غير متصل حالياً، يرجى مسح رمز الباركود بالهاتف', false);
+      }
     }
 
     // الاتصال بالخادم السحابي
@@ -2147,10 +2126,10 @@
         document.getElementById('btnTabReports').classList.add('active');
         renderActiveReport();
       }
-      if (tabId === 'tabPrices') document.getElementById('btnTabPrices').classList.add('active');
       if (tabId === 'tabQuotations') {
         document.getElementById('btnTabQuotations').classList.add('active');
         renderQuotationsList();
+        requestAppSync(false);
       }
 
       if (pushHistory && window.history && window.history.pushState) {
@@ -3144,66 +3123,6 @@
         }
         window.print();
       });
-    }
-
-    // ==========================================
-    // 6. عرض وتعديل دليل الأسعار (PRICES GUIDE)
-    // ==========================================
-    function renderPricesTable() {
-      const defaultJobs = [
-        { code: 'PLASTER_IN', label: 'تلييس داخلي' },
-        { code: 'PLASTER_OUT', label: 'تلييس خارجي' },
-        { code: 'PAINT_IN', label: 'دهانات داخلية' },
-        { code: 'PAINT_OUT', label: 'دهانات خارجية' },
-        { code: 'TILES', label: 'بلاط' },
-        { code: 'DOORS', label: 'أبواب' },
-        { code: 'WINDOWS', label: 'نوافذ' }
-      ];
-
-      const priceMap = {};
-      globalPricesData.forEach(p => { 
-        priceMap[p.jobType] = p.pricePerUnit;
-        priceMap[getJobLabel(p.jobType)] = p.pricePerUnit;
-      });
-
-      const tbody = document.getElementById('pricesTableBody');
-      tbody.innerHTML = '';
-
-      defaultJobs.forEach(jobItem => {
-        const curPrice = priceMap[jobItem.code] !== undefined ? priceMap[jobItem.code] : (priceMap[jobItem.label] !== undefined ? priceMap[jobItem.label] : 0);
-        const inputId = 'price_input_' + encodeURIComponent(jobItem.code);
-
-        const tr = document.createElement('tr');
-        tr.innerHTML =
-          '<td style="font-weight:800; font-size:0.95rem;">' + jobItem.label + '</td>' +
-          '<td style="font-weight:900; color:var(--primary); font-size:1.1rem; font-family:monospace;">' + curPrice.toLocaleString() + ' ر.س</td>' +
-          '<td><input type="number" step="0.5" id="' + inputId + '" value="' + curPrice + '" class="custom-input" style="width:140px; padding:0.4rem 0.75rem;" /></td>' +
-          '<td style="text-align:center;"><button onclick="saveUnitPrice(\'' + jobItem.code + '\', \'' + inputId + '\')" class="btn btn-primary" style="padding:0.35rem 0.95rem;"><i class="fa-solid fa-floppy-disk"></i> حفظ في الهاتف</button></td>';
-        tbody.appendChild(tr);
-      });
-    }
-
-    function saveUnitPrice(jobType, inputId) {
-      const newPrice = parseFloat(document.getElementById(inputId).value) || 0;
-      const code = normalizeJobCode(jobType);
-      const existing = globalPricesData.find(p => normalizeJobCode(p.jobType) === code);
-      if (existing) {
-        existing.pricePerUnit = newPrice;
-      } else {
-        globalPricesData.push({ jobType: code, pricePerUnit: newPrice });
-      }
-      reRenderAll();
-
-      if (socket && socket.connected) {
-        socket.emit('relay_to_phone', {
-          sessionId: currentSessionId,
-          action: 'save_price_from_web',
-          data: { jobType: code, pricePerUnit: newPrice }
-        });
-        showToast('تم حفظ السعر الجديد للبند [' + getJobLabel(code) + '] في الهاتف');
-      } else {
-        showToast('تم حفظ السعر محلياً (تأكد من اتصال الهاتف)', false);
-      }
     }
 
     // ==========================================
@@ -4441,7 +4360,6 @@
           renderItemsTable();
           renderPaymentsTable();
           renderActiveReport();
-          renderPricesTable();
           renderQuotationsList();
           renderAnalyticsCharts();
 

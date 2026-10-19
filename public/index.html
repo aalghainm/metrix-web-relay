@@ -1688,9 +1688,17 @@
       </div>
       <div class="modal-dialog-body" style="max-height:75vh; overflow-y:auto;">
         <input type="hidden" id="qEditId" value="" />
-        <div class="form-field">
-          <label><i class="fa-solid fa-heading"></i> مسمى / عنوان عرض السعر *</label>
-          <input type="text" id="qTitle" placeholder="مثال: عرض سعر تشطيب فيلا حي النرجس" />
+        <div class="grid-2col">
+          <div class="form-field">
+            <label><i class="fa-solid fa-heading"></i> مسمى / عنوان عرض السعر *</label>
+            <input type="text" id="qTitle" placeholder="مثال: عرض سعر تشطيب فيلا حي النرجس" />
+          </div>
+          <div class="form-field">
+            <label><i class="fa-solid fa-folder-tree" style="color:var(--primary);"></i> ربط بمشروع لجلب الأمتار تلقائياً</label>
+            <select id="qLinkedProjectSelect" onchange="onQuotationProjectSelected(this.value)">
+              <option value="0">-- بدون ربط بمشروع (تسعير حر) --</option>
+            </select>
+          </div>
         </div>
         <div class="grid-2col">
           <div class="form-field">
@@ -1713,11 +1721,16 @@
           </div>
         </div>
 
-        <div style="margin: 1.25rem 0 0.5rem 0; display:flex; justify-content:space-between; align-items:center;">
+        <div style="margin: 1.25rem 0 0.5rem 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
           <h4 style="font-size:0.95rem; font-weight:800; color:var(--text);"><i class="fa-solid fa-list-check" style="color:var(--primary);"></i> بنود التسعير</h4>
-          <button type="button" onclick="addQuotationItemRow()" class="btn btn-outline" style="padding:0.3rem 0.75rem; font-size:0.8rem;">
-            <i class="fa-solid fa-plus"></i> إضافة بند
-          </button>
+          <div style="display:flex; gap:0.4rem;">
+            <button type="button" onclick="importAllItemsFromLinkedProject()" id="btnImportFromProj" class="btn btn-sky" style="padding:0.3rem 0.65rem; font-size:0.78rem; display:none;">
+              <i class="fa-solid fa-cloud-arrow-down"></i> جلب كل بنود المشروع
+            </button>
+            <button type="button" onclick="addQuotationItemRow()" class="btn btn-outline" style="padding:0.3rem 0.75rem; font-size:0.8rem;">
+              <i class="fa-solid fa-plus"></i> إضافة بند
+            </button>
+          </div>
         </div>
 
         <div style="background:var(--bg); border:1px solid var(--border); border-radius:0.75rem; padding:0.75rem;">
@@ -3167,85 +3180,173 @@
           const p = parseFloat(it.pricePerMeterText) || 0;
           return sum + (m * p);
         }, 0);
+        const totalMeters = items.reduce((sum, it) => sum + (parseFloat(it.metersText) || 0), 0);
+
+        const linkedProj = q.linkedProjectId ? globalProjectsData.find(p => Number(p.id) === Number(q.linkedProjectId)) : null;
 
         let itemsPreviewHtml = '';
         items.forEach(it => {
           const m = parseFloat(it.metersText) || 0;
           const p = parseFloat(it.pricePerMeterText) || 0;
+          const sub = m * p;
           itemsPreviewHtml += `
-            <div style="background:var(--bg); border:1px solid var(--border); border-radius:0.5rem; padding:0.5rem 0.75rem; margin-bottom:0.5rem;">
-              <div style="font-weight:700; font-size:0.85rem; color:var(--text); margin-bottom:0.35rem;">
-                <i class="fa-solid fa-circle" style="font-size:6px; color:var(--primary); vertical-align:middle;"></i> ${it.name || 'بند غير مسمى'}
+            <div style="background:var(--bg); border:1px solid var(--border); border-radius:0.5rem; padding:0.45rem 0.65rem; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <span style="font-weight:700; font-size:0.83rem; color:var(--text);"><i class="fa-solid fa-circle" style="font-size:6px; color:var(--primary); vertical-align:middle; margin-left:4px;"></i>${it.name || 'بند غير مسمى'}</span>
               </div>
-              <div style="display:flex; justify-content:space-between; font-size:0.78rem;">
-                <span style="background:var(--primary-light); color:var(--primary); padding:2px 8px; border-radius:4px; font-weight:700;">المساحة: ${m.toFixed(2)} م²</span>
-                <span style="background:var(--emerald-light); color:var(--emerald); padding:2px 8px; border-radius:4px; font-weight:700;">السعر: ${p.toFixed(2)} ر.س</span>
+              <div style="display:flex; gap:0.35rem; align-items:center; font-size:0.75rem; font-family:monospace;">
+                <span style="background:var(--primary-light); color:var(--primary); padding:2px 6px; border-radius:4px; font-weight:700;">${m.toFixed(1)} م²</span>
+                <span style="background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px;">× ${p.toFixed(1)}</span>
+                <span style="background:var(--emerald-light); color:var(--emerald); padding:2px 6px; border-radius:4px; font-weight:800;">= ${Math.round(sub).toLocaleString('en-US')} ر.س</span>
               </div>
             </div>
           `;
         });
 
         html += `
-          <div class="project-card" style="display:flex; flex-direction:column; justify-content:space-between; border-top: 4px solid ${q.isApproved ? 'var(--emerald)' : 'var(--primary)'};">
+          <div class="project-item-card" style="border-top: 4px solid ${q.isApproved ? 'var(--emerald)' : 'var(--primary)'};">
             <div>
-              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
-                <div>
-                  <h3 style="font-size:1.05rem; font-weight:900; color:var(--text); margin-bottom:0.25rem;">${q.title || 'عرض سعر'}</h3>
-                  <span style="font-size:0.78rem; color:var(--text-muted);"><i class="fa-solid fa-calendar-days"></i> ${q.date || '—'}</span>
+              <div class="proj-card-header">
+                <div class="proj-title-area">
+                  <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                    <h3 style="margin-bottom:0;">${q.title || 'عرض سعر'}</h3>
+                    ${q.isApproved ? `
+                      <span style="background:var(--emerald-light); color:var(--emerald); border:1px solid #a7f3d0; padding:2px 8px; border-radius:9999px; font-size:0.72rem; font-weight:800; display:inline-flex; align-items:center; gap:3px;">
+                        <i class="fa-solid fa-circle-check"></i> معتمد
+                      </span>
+                    ` : `
+                      <span style="background:var(--bg); color:var(--text-muted); border:1px solid var(--border); padding:2px 8px; border-radius:9999px; font-size:0.72rem; font-weight:700;">
+                        مسودة
+                      </span>
+                    `}
+                  </div>
+                  <div class="proj-client-row">
+                    <i class="fa-solid fa-user-circle"></i> ${q.clientName || 'عميل عام'}
+                    ${q.clientPhone ? ` <span style="color:#cbd5e1;">|</span> <i class="fa-solid fa-phone"></i> <span dir="ltr">${toEnglishDigits(q.clientPhone)}</span>` : ''}
+                    ${q.contractorName ? ` <span style="color:#cbd5e1;">|</span> <i class="fa-solid fa-building"></i> ${q.contractorName}` : ''}
+                  </div>
                 </div>
-                ${q.isApproved ? `
-                  <span style="background:var(--emerald-light); color:var(--emerald); border:1px solid #a7f3d0; padding:3px 10px; border-radius:9999px; font-size:0.75rem; font-weight:800; display:inline-flex; align-items:center; gap:4px;">
-                    <i class="fa-solid fa-circle-check"></i> معتمد
-                  </span>
-                ` : `
-                  <span style="background:var(--bg); color:var(--text-muted); border:1px solid var(--border); padding:3px 10px; border-radius:9999px; font-size:0.75rem; font-weight:700;">
-                    مسودة
-                  </span>
-                `}
+                <span class="proj-date-chip"><i class="fa-regular fa-calendar"></i> <span dir="ltr">${toEnglishDigits(q.date || 'بدون تاريخ')}</span></span>
               </div>
 
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.75rem; font-size:0.8rem;">
-                <div style="background:var(--bg); padding:0.4rem 0.6rem; border-radius:0.4rem;">
-                  <span style="color:var(--text-muted); display:block; font-size:0.72rem;">العميل:</span>
-                  <span style="font-weight:700;">${q.clientName || '—'}</span>
+              ${linkedProj ? `
+                <div style="margin-top:0.6rem; padding:0.35rem 0.65rem; background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.5rem; font-size:0.78rem; color:#1e40af; display:flex; align-items:center; gap:0.4rem;">
+                  <i class="fa-solid fa-link"></i>
+                  <span>مرتبط بمشروع: <b>${linkedProj.name}</b></span>
                 </div>
-                <div style="background:var(--bg); padding:0.4rem 0.6rem; border-radius:0.4rem;">
-                  <span style="color:var(--text-muted); display:block; font-size:0.72rem;">المقاول:</span>
-                  <span style="font-weight:700;">${q.contractorName || '—'}</span>
+              ` : ''}
+
+              <div class="proj-financial-bar" style="margin-top:0.85rem;">
+                <div class="proj-fin-metrics">
+                  <span>إجمالي الأمتار: <b>${totalMeters.toFixed(1)} م²</b></span>
+                  <span>قيمة العرض: <b style="color:var(--emerald); font-size:1.05rem;">${Math.round(totalSum).toLocaleString('en-US')} ر.س</b></span>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill" style="width: ${q.isApproved ? '100%' : '50%'}; background:${q.isApproved ? 'var(--emerald)' : 'var(--primary)'};"></div>
+                </div>
+                <div class="proj-fin-metrics" style="color:#64748b; font-size:0.78rem;">
+                  <span>عدد البنود: <b>${items.length} بند</b></span>
+                  <span>الحالة: <b style="color:${q.isApproved ? 'var(--emerald)' : 'var(--text-muted)'};">${q.isApproved ? 'معتمد ومطبق' : 'مسودة قيد المراجعة'}</b></span>
                 </div>
               </div>
 
-              <div style="max-height:160px; overflow-y:auto; margin-bottom:0.75rem; padding-left:2px;">
-                ${itemsPreviewHtml || '<div style="font-size:0.8rem; color:var(--text-muted); text-align:center;">لا توجد بنود مضافة</div>'}
+              <div style="max-height:140px; overflow-y:auto; margin-top:0.85rem; padding-left:2px;">
+                ${itemsPreviewHtml || '<div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:1rem;">لا توجد بنود مضافة</div>'}
               </div>
             </div>
 
-            <div>
-              <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0; border-top:1px solid var(--border); margin-bottom:0.75rem;">
-                <span style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">إجمالي العرض:</span>
-                <span style="font-size:1.15rem; font-weight:900; color:var(--emerald);">${Math.round(totalSum).toLocaleString('en-US')} ر.س</span>
-              </div>
-
-              <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:0.4rem;">
-                <button onclick="openApproveQuotationModal('${q.id}')" class="btn" style="background:${q.isApproved ? 'var(--emerald)' : 'var(--emerald-light)'}; color:${q.isApproved ? '#fff' : 'var(--emerald)'}; border:1px solid #a7f3d0; padding:0.4rem 0.2rem; font-size:0.75rem;" title="اعتماد وتطبيق السعر على المشروع">
-                  <i class="fa-solid fa-circle-check"></i> اعتماد
+            <div class="proj-card-footer" style="margin-top:1rem;">
+              <div class="proj-action-group" style="flex-wrap:wrap;">
+                <button onclick="openApproveQuotationModal('${q.id}')" class="btn" style="background:${q.isApproved ? 'var(--emerald)' : 'var(--emerald-light)'}; color:${q.isApproved ? '#fff' : 'var(--emerald)'}; border:1px solid #a7f3d0; padding:0.35rem 0.65rem; font-size:0.78rem;" title="اعتماد وتطبيق السعر على المشروع">
+                  <i class="fa-solid fa-circle-check"></i> ${q.isApproved ? 'مُعتمد' : 'اعتماد'}
                 </button>
-                <button onclick="printQuotationWeb('${q.id}')" class="btn btn-outline" style="padding:0.4rem 0.2rem; font-size:0.75rem;" title="طباعة عرض السعر">
-                  <i class="fa-solid fa-print"></i> طباعة
+                <button onclick="printQuotationWeb('${q.id}')" class="btn btn-sky" style="padding:0.35rem 0.65rem; font-size:0.78rem;" title="طباعة عرض السعر">
+                  <i class="fa-solid fa-print"></i> PDF
                 </button>
-                <button onclick="openEditQuotationModal('${q.id}')" class="btn btn-outline" style="padding:0.4rem 0.2rem; font-size:0.75rem;" title="تعديل العرض">
-                  <i class="fa-solid fa-pen-to-square"></i> تعديل
-                </button>
-                <button onclick="promptDeleteQuotation('${q.id}')" class="btn btn-danger-light" style="padding:0.4rem 0.2rem; font-size:0.75rem;" title="حذف العرض">
-                  <i class="fa-solid fa-trash-can"></i> حذف
+                <button onclick="openEditQuotationModal('${q.id}')" class="btn btn-outline" style="padding:0.35rem 0.65rem; font-size:0.78rem;" title="تعديل العرض">
+                  <i class="fa-solid fa-pen"></i> تعديل
                 </button>
               </div>
+              <button onclick="promptDeleteQuotation('${q.id}')" class="icon-action-btn btn-action-delete" title="حذف العرض نهائياً"><i class="fa-solid fa-trash-can"></i></button>
             </div>
           </div>
         `;
       });
 
       container.innerHTML = html;
+    }
+
+    function populateQuotationProjectsSelect(selectedId = 0) {
+      const sel = document.getElementById('qLinkedProjectSelect');
+      if (!sel) return;
+      sel.innerHTML = '<option value="0">-- بدون ربط بمشروع (تسعير حر) --</option>';
+      globalProjectsData.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.name} (${p.clientName || 'بدون عميل'})`;
+        if (Number(p.id) === Number(selectedId)) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+
+    function onQuotationProjectSelected(projectId) {
+      const pId = parseInt(projectId) || 0;
+      const btnImport = document.getElementById('btnImportFromProj');
+      const proj = globalProjectsData.find(p => Number(p.id) === Number(pId));
+      if (btnImport) {
+        btnImport.style.display = (proj && proj.items && proj.items.length > 0) ? 'inline-block' : 'none';
+      }
+
+      if (proj) {
+        if (!document.getElementById('qClientName').value.trim() && proj.clientName) {
+          document.getElementById('qClientName').value = proj.clientName;
+        }
+        if (!document.getElementById('qClientPhone').value.trim() && proj.mobileNumber) {
+          document.getElementById('qClientPhone').value = proj.mobileNumber;
+        }
+        if (document.getElementById('qTitle').value === 'عرض سعر جديد') {
+          document.getElementById('qTitle').value = 'عرض سعر - ' + proj.name;
+        }
+      }
+
+      // تحديث قوائم اختيار البنود داخل أسطر الجدول لتعرض بنود المشروع المختار
+      updateAllQuotationRowSelectors(pId);
+    }
+
+    function importAllItemsFromLinkedProject() {
+      const pId = parseInt(document.getElementById('qLinkedProjectSelect').value) || 0;
+      const proj = globalProjectsData.find(p => Number(p.id) === Number(pId));
+      if (!proj || !proj.items || proj.items.length === 0) {
+        alert('لا توجد بنود حصر في هذا المشروع!');
+        return;
+      }
+
+      // تجميع أمتار بنود المشروع حسب نوع العمل
+      const summaryByJob = {};
+      proj.items.forEach(it => {
+        const key = it.jobType || 'PLASTER_IN';
+        const label = getJobLabel(key);
+        const meters = Number(it.totalMeters || it.quantity || 0);
+        let price = Number(it.pricePerMeter || 0);
+        if (price === 0 && Number(it.totalAmount) > 0 && meters > 0) {
+          price = Number(it.totalAmount) / meters;
+        }
+        if (!summaryByJob[label]) {
+          summaryByJob[label] = { label: label, jobType: key, meters: 0, price: price };
+        }
+        summaryByJob[label].meters += meters;
+        if (price > 0 && summaryByJob[label].price === 0) {
+          summaryByJob[label].price = price;
+        }
+      });
+
+      const tbody = document.getElementById('qItemsTableBody');
+      tbody.innerHTML = '';
+      Object.values(summaryByJob).forEach(item => {
+        addQuotationItemRow(item.label, item.meters.toFixed(2), item.price.toFixed(2));
+      });
+      calculateQuotationModalTotal();
+      showToast('تم جلب بنود وأمتار مشروع [' + proj.name + '] بنجاح');
     }
 
     function openNewQuotationModal() {
@@ -3256,6 +3357,9 @@
       document.getElementById('qClientPhone').value = '';
       document.getElementById('qContractorName').value = '';
       document.getElementById('qContractorPhone').value = '';
+      populateQuotationProjectsSelect(0);
+      onQuotationProjectSelected(0);
+
       document.getElementById('qItemsTableBody').innerHTML = '';
       addQuotationItemRow('تلييس داخلي', '100', '25');
       calculateQuotationModalTotal();
@@ -3274,6 +3378,10 @@
       document.getElementById('qClientPhone').value = q.clientPhone || '';
       document.getElementById('qContractorName').value = q.contractorName || '';
       document.getElementById('qContractorPhone').value = q.contractorPhone || '';
+
+      const linkedId = q.linkedProjectId || 0;
+      populateQuotationProjectsSelect(linkedId);
+      onQuotationProjectSelected(linkedId);
 
       const tbody = document.getElementById('qItemsTableBody');
       tbody.innerHTML = '';
@@ -3295,8 +3403,29 @@
       const rowId = id || ('it_' + Math.random().toString(36).substring(2, 9));
       const tr = document.createElement('tr');
       tr.dataset.itemId = rowId;
+
+      const pId = parseInt(document.getElementById('qLinkedProjectSelect')?.value) || 0;
+      const proj = globalProjectsData.find(p => Number(p.id) === Number(pId));
+
+      let quickSelectHtml = '';
+      if (proj && proj.items && proj.items.length > 0) {
+        quickSelectHtml = `<select class="q-item-quick-select" onchange="onQuotationItemQuickSelect(this)" style="width:100%; margin-top:4px; padding:0.25rem 0.4rem; font-size:0.75rem; border:1px dashed var(--border); border-radius:0.35rem; background:var(--surface); color:var(--primary);">
+          <option value="">⚡ اختر من بنود المشروع لجلب أمتاره</option>`;
+        proj.items.forEach(it => {
+          const itName = it.title || it.itemName || getJobLabel(it.jobType);
+          const itM = Number(it.totalMeters || it.quantity || 0);
+          let itP = Number(it.pricePerMeter || 0);
+          if (itP === 0 && Number(it.totalAmount) > 0 && itM > 0) itP = Number(it.totalAmount) / itM;
+          quickSelectHtml += `<option value="${itName}" data-meters="${itM.toFixed(2)}" data-price="${itP.toFixed(2)}">${itName} (${itM.toFixed(1)} م²) - ${getJobLabel(it.jobType)}</option>`;
+        });
+        quickSelectHtml += `</select>`;
+      }
+
       tr.innerHTML = `
-        <td><input type="text" class="q-item-name" value="${name}" placeholder="اسم البند (مثال: دهان داخلي)" style="width:100%; padding:0.35rem 0.5rem; border:1px solid var(--border); border-radius:0.4rem; font-size:0.85rem;" /></td>
+        <td>
+          <input type="text" class="q-item-name" value="${name}" placeholder="اسم البند (مثال: لياسة داخلية)" style="width:100%; padding:0.35rem 0.5rem; border:1px solid var(--border); border-radius:0.4rem; font-size:0.85rem;" />
+          <div class="q-item-quick-container">${quickSelectHtml}</div>
+        </td>
         <td><input type="number" step="0.01" class="q-item-meters" value="${meters}" oninput="calculateQuotationModalTotal()" style="width:100%; padding:0.35rem 0.5rem; border:1px solid var(--border); border-radius:0.4rem; font-size:0.85rem; text-align:center;" /></td>
         <td><input type="number" step="0.01" class="q-item-price" value="${price}" oninput="calculateQuotationModalTotal()" style="width:100%; padding:0.35rem 0.5rem; border:1px solid var(--border); border-radius:0.4rem; font-size:0.85rem; text-align:center;" /></td>
         <td class="q-item-subtotal" style="font-weight:700; color:var(--emerald); text-align:center;">0.00</td>
@@ -3304,6 +3433,47 @@
       `;
       tbody.appendChild(tr);
       calculateQuotationModalTotal();
+    }
+
+    function onQuotationItemQuickSelect(selectEl) {
+      const opt = selectEl.options[selectEl.selectedIndex];
+      if (!opt || !opt.value) return;
+      const tr = selectEl.closest('tr');
+      if (!tr) return;
+
+      const nameInput = tr.querySelector('.q-item-name');
+      const metersInput = tr.querySelector('.q-item-meters');
+      const priceInput = tr.querySelector('.q-item-price');
+
+      if (nameInput) nameInput.value = opt.value;
+      if (metersInput && opt.dataset.meters) metersInput.value = opt.dataset.meters;
+      if (priceInput && opt.dataset.price && parseFloat(opt.dataset.price) > 0) priceInput.value = opt.dataset.price;
+
+      calculateQuotationModalTotal();
+      showToast('تم جلب أمتار البند [' + opt.value + ']');
+    }
+
+    function updateAllQuotationRowSelectors(projectId) {
+      const proj = globalProjectsData.find(p => Number(p.id) === Number(projectId));
+      document.querySelectorAll('#qItemsTableBody tr').forEach(tr => {
+        const container = tr.querySelector('.q-item-quick-container');
+        if (!container) return;
+        if (proj && proj.items && proj.items.length > 0) {
+          let html = `<select class="q-item-quick-select" onchange="onQuotationItemQuickSelect(this)" style="width:100%; margin-top:4px; padding:0.25rem 0.4rem; font-size:0.75rem; border:1px dashed var(--border); border-radius:0.35rem; background:var(--surface); color:var(--primary);">
+            <option value="">⚡ اختر من بنود المشروع لجلب أمتاره</option>`;
+          proj.items.forEach(it => {
+            const itName = it.title || it.itemName || getJobLabel(it.jobType);
+            const itM = Number(it.totalMeters || it.quantity || 0);
+            let itP = Number(it.pricePerMeter || 0);
+            if (itP === 0 && Number(it.totalAmount) > 0 && itM > 0) itP = Number(it.totalAmount) / itM;
+            html += `<option value="${itName}" data-meters="${itM.toFixed(2)}" data-price="${itP.toFixed(2)}">${itName} (${itM.toFixed(1)} م²) - ${getJobLabel(it.jobType)}</option>`;
+          });
+          html += `</select>`;
+          container.innerHTML = html;
+        } else {
+          container.innerHTML = '';
+        }
+      });
     }
 
     function calculateQuotationModalTotal() {
@@ -3345,7 +3515,7 @@
         }
       });
 
-      const existing = globalQuotationsData.find(item => item.id === qId);
+      const linkedProjVal = parseInt(document.getElementById('qLinkedProjectSelect')?.value) || 0;
       const newQuo = {
         id: qId,
         title: title,
@@ -3356,7 +3526,7 @@
         contractorPhone: document.getElementById('qContractorPhone').value.trim(),
         date: existing ? (existing.date || formatDateEn(new Date())) : formatDateEn(new Date()),
         items: items,
-        linkedProjectId: existing ? (existing.linkedProjectId || 0) : 0,
+        linkedProjectId: linkedProjVal > 0 ? linkedProjVal : (existing ? (existing.linkedProjectId || 0) : 0),
         isApproved: existing ? (existing.isApproved || false) : false
       };
 

@@ -1798,29 +1798,33 @@
     </div>
   </div>
 
-  <!-- نافذة تفاصيل المشروع المتطابقة 100% مع شاشة الجوال (ProjectDetailsScreen) -->
+  <!-- نافذة تفاصيل المشروع المتطابقة 100% مع شاشة الجوال مع حرية التكبير والتقليص -->
   <div id="projectDetailsModal" class="modal-overlay">
-    <div class="modal-dialog" style="max-width: 760px; border-radius: 1.25rem; overflow:hidden;">
+    <div id="pDetailDialogContainer" class="modal-dialog" style="max-width: 900px; width: 95%; border-radius: 1.25rem; overflow:hidden; transition: max-width 0.25s ease, height 0.25s ease;">
       <!-- الهيدر الكحلي الفاخر مثل الجوال (topGradient: MetrixNavyDark -> primary) -->
       <div style="background: linear-gradient(180deg, #1e3a8a 0%, var(--primary) 100%); color: #fff; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between;">
-        <button onclick="closeModal('projectDetailsModal')" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+        <button onclick="closeModal('projectDetailsModal')" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem;" title="رجوع">
           <i class="fa-solid fa-arrow-right"></i>
         </button>
         <div style="text-align:center; flex:1; padding: 0 10px;">
-          <h3 id="pDetailHeaderTitle" style="margin:0; font-size:1.15rem; font-weight:800; color:#fff;">تفاصيل المشروع</h3>
-          <div id="pDetailHeaderClient" style="font-size:0.78rem; opacity:0.85; margin-top:2px;">-</div>
+          <h3 id="pDetailHeaderTitle" style="margin:0; font-size:1.2rem; font-weight:800; color:#fff;">تفاصيل المشروع</h3>
+          <div id="pDetailHeaderClient" style="font-size:0.8rem; opacity:0.9; margin-top:2px;">-</div>
         </div>
         <div style="display:flex; gap:6px;">
+          <!-- زر تكبير / تصغير عرض النافذة بالكامل لحرية الرؤية -->
+          <button id="btnToggleMaximizeModal" onclick="toggleMaximizeProjectDetailsModal()" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.92rem;" title="تكبير / استعادة العرض">
+            <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+          </button>
           <button onclick="quickExportModalPdf()" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.95rem;" title="تصدير PDF">
             <i class="fa-solid fa-file-pdf"></i>
           </button>
-          <button onclick="closeModal('projectDetailsModal')" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+          <button onclick="closeModal('projectDetailsModal')" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem;" title="إغلاق">
             &times;
           </button>
         </div>
       </div>
 
-      <div class="modal-dialog-body" style="max-height: 80vh; overflow-y: auto; padding: 1.15rem; background: #f8fafc;">
+      <div id="pDetailDialogBody" class="modal-dialog-body" style="max-height: 82vh; overflow-y: auto; padding: 1.15rem; background: #f8fafc;">
         <input type="hidden" id="pDetailActiveId" />
 
         <!-- بطاقة إجمالي الميزانية والنسبة الدائرية العائمة (تطابق الجوال 100%) -->
@@ -2593,7 +2597,7 @@
           }).join('');
 
           secItemsSublistHtml = `
-            <div style="margin-top:0.9rem; padding-top:0.85rem; border-top:1px dashed #e2e8f0;" onclick="event.stopPropagation();">
+            <div id="secItemsTable_${sec.code}" class="sec-items-table-wrapper" style="margin-top:0.9rem; padding-top:0.85rem; border-top:1px dashed #e2e8f0; display:${hasItems ? 'block' : 'none'};" onclick="event.stopPropagation();">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
                 <span style="font-size:0.85rem; font-weight:800; color:#334155;">جدول حصر بنود قسم ${sec.title} (${secItems.length} بند):</span>
                 <span style="font-size:0.88rem; font-weight:900; color:#4f46e5; font-family:Arial, sans-serif;" dir="ltr">إجمالي الأمتار: ${secMeters.toFixed(3)} م²</span>
@@ -2623,25 +2627,39 @@
         }
 
         const secCard = document.createElement('div');
+        secCard.className = 'pdetail-section-card';
         secCard.style.cssText = 'background:#fff; border:1px solid #e2e8f0; border-radius:1.15rem; padding:1.15rem 1.25rem; box-shadow:0 2px 8px rgba(0,0,0,0.03); transition:all 0.15s ease; cursor:pointer;';
         secCard.onmouseenter = () => secCard.style.borderColor = sec.color;
         secCard.onmouseleave = () => secCard.style.borderColor = '#e2e8f0';
-        secCard.onclick = () => {
-          closeModal('projectDetailsModal');
-          document.getElementById('itemsProjectFilter').value = String(p.id);
-          document.getElementById('itemsJobTypeFilter').value = sec.code;
-          switchTab('tabItems');
-          renderItemsTable();
+        
+        // عند النقر على كرت القسم يتم طي أو فتح الجدول بحرية وسلاسة
+        secCard.onclick = (e) => {
+          if (hasItems) {
+            toggleSectionItemsTable(sec.code);
+          } else {
+            // إن لم تكن هناك بنود، نفتح نافذة إضافة بند لهذا القسم
+            closeModal('projectDetailsModal');
+            document.getElementById('modalItemProjectSelect').value = String(p.id);
+            document.getElementById('newItemJobType').value = sec.code;
+            document.getElementById('newItemModal').style.display = 'flex';
+          }
         };
+
+        const toggleChevronHtml = hasItems ? `
+          <button type="button" onclick="event.stopPropagation(); toggleSectionItemsTable('${sec.code}')" style="background:none; border:none; color:#64748b; cursor:pointer; padding:2px 4px; font-size:0.9rem;" title="طي / فتح الجدول">
+            <i id="secChevron_${sec.code}" class="fa-solid fa-chevron-up" style="transition:transform 0.2s ease;"></i>
+          </button>
+        ` : '';
 
         secCard.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <!-- اليسار (LTR/Right-facing): شارة السعر وعلامة الصح الخضراء أو زر البدء -->
+            <!-- اليسار: شارة السعر وعلامة الصح أو زر البدء + سهم الطي والفتح -->
             <div style="display:flex; align-items:center; gap:0.5rem; order:1;">
               ${statusBadgeHtml}
+              ${toggleChevronHtml}
             </div>
 
-            <!-- اليمين (RTL): النصوص والعنوان وأيقونة القسم بالخلفية الفاتحة المطابقة للصورة تماماً -->
+            <!-- اليمين: النصوص والعنوان وأيقونة القسم -->
             <div style="display:flex; align-items:center; gap:0.75rem; order:2;">
               <div style="text-align:right;">
                 <div style="font-weight:900; font-size:1.05rem; color:#0f172a;">${sec.title}</div>
@@ -2658,6 +2676,50 @@
       });
 
       document.getElementById('projectDetailsModal').style.display = 'flex';
+    }
+
+    // وظيفة طي وفتح جدول القسم المستقل بسلاسة
+    function toggleSectionItemsTable(code) {
+      const tbl = document.getElementById('secItemsTable_' + code);
+      const chv = document.getElementById('secChevron_' + code);
+      if (!tbl) return;
+      if (tbl.style.display === 'none') {
+        tbl.style.display = 'block';
+        if (chv) chv.className = 'fa-solid fa-chevron-up';
+      } else {
+        tbl.style.display = 'none';
+        if (chv) chv.className = 'fa-solid fa-chevron-down';
+      }
+    }
+
+    // وظيفة تكبير واستعادة حجم نافذة تفاصيل المشروع لحرية المشاهدة
+    let isProjectDetailsMaximized = false;
+    function toggleMaximizeProjectDetailsModal() {
+      const dialog = document.getElementById('pDetailDialogContainer');
+      const body = document.getElementById('pDetailDialogBody');
+      const btn = document.getElementById('btnToggleMaximizeModal');
+      if (!dialog) return;
+
+      isProjectDetailsMaximized = !isProjectDetailsMaximized;
+      if (isProjectDetailsMaximized) {
+        dialog.style.maxWidth = '98vw';
+        dialog.style.width = '98vw';
+        dialog.style.height = '95vh';
+        if (body) body.style.maxHeight = 'calc(95vh - 75px)';
+        if (btn) {
+          btn.innerHTML = '<i class="fa-solid fa-down-left-and-up-right-to-center"></i>';
+          btn.title = 'استعادة الحجم الأصلي';
+        }
+      } else {
+        dialog.style.maxWidth = '900px';
+        dialog.style.width = '95%';
+        dialog.style.height = '';
+        if (body) body.style.maxHeight = '82vh';
+        if (btn) {
+          btn.innerHTML = '<i class="fa-solid fa-up-right-and-down-left-from-center"></i>';
+          btn.title = 'تكبير العرض';
+        }
+      }
     }
 
     function openNewItemForCurrentProject() {

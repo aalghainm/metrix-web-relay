@@ -2642,15 +2642,23 @@
               '</div>' +
             '</div>' +
           '</div>' +
-          '<div class="proj-card-footer" onclick="event.stopPropagation();">' +
-            '<div class="proj-action-group" style="flex-wrap:wrap;">' +
-              '<button onclick="openProjectDetailsModal(' + p.id + ')" class="btn btn-primary" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-layer-group"></i> تفاصيل الأقسام</button>' +
-              '<button onclick="filterByProjectAndOpenItems(' + p.id + ')" class="btn btn-sky" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-ruler"></i> البنود (' + items.length + ')</button>' +
-              '<button onclick="filterByProjectAndOpenPayments(' + p.id + ')" class="btn btn-amber" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-file-invoice"></i> الدفعات</button>' +
-              '<button onclick="openProjectReportPreview(' + p.id + ')" class="btn btn-outline" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-file-pdf"></i> PDF</button>' +
-              '<button onclick="openEditProjectModal(' + p.id + ')" class="btn btn-outline" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-pen"></i> تعديل</button>' +
+          '<div class="proj-card-footer" onclick="event.stopPropagation();" style="border-top:1px solid #f1f5f9; padding-top:0.85rem; display:flex; flex-direction:column; gap:0.6rem;">' +
+            '<!-- الصف الأول: الإجراءات الرئيسية الملونة -->' +
+            '<div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem;">' +
+              '<button onclick="openProjectDetailsModal(' + p.id + ')" class="btn btn-primary" style="padding:0.45rem 0.3rem; font-size:0.76rem; font-weight:800; justify-content:center; white-space:nowrap;"><i class="fa-solid fa-layer-group"></i> تفاصيل الأقسام</button>' +
+              '<button onclick="filterByProjectAndOpenItems(' + p.id + ')" class="btn btn-sky" style="padding:0.45rem 0.3rem; font-size:0.76rem; font-weight:800; justify-content:center; white-space:nowrap;"><i class="fa-solid fa-ruler-combined"></i> البنود (' + items.length + ')</button>' +
+              '<button onclick="filterByProjectAndOpenPayments(' + p.id + ')" class="btn btn-amber" style="padding:0.45rem 0.3rem; font-size:0.76rem; font-weight:800; justify-content:center; white-space:nowrap;"><i class="fa-solid fa-file-invoice-dollar"></i> الدفعات</button>' +
             '</div>' +
-            '<button onclick="requestDeleteProject(' + p.id + ')" class="icon-action-btn btn-action-delete" title="حذف المشروع نهائياً"><i class="fa-solid fa-trash-can"></i></button>' +
+            '<!-- الصف الثاني: الإجراءات المساعدة المرتبة (تعديل - طباعة PDF - حذف) -->' +
+            '<div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; padding-top:0.25rem;">' +
+              '<div style="display:flex; gap:0.4rem; flex:1;">' +
+                '<button onclick="openEditProjectModal(' + p.id + ')" class="btn btn-outline" style="flex:1; padding:0.35rem 0.6rem; font-size:0.75rem; font-weight:700; justify-content:center;"><i class="fa-solid fa-pen"></i> تعديل</button>' +
+                '<button onclick="openProjectReportPreview(' + p.id + ')" class="btn btn-outline" style="flex:1; padding:0.35rem 0.6rem; font-size:0.75rem; font-weight:700; justify-content:center; color:var(--primary);"><i class="fa-solid fa-file-pdf"></i> PDF</button>' +
+              '</div>' +
+              '<button onclick="requestDeleteProject(' + p.id + ')" class="btn" style="padding:0.35rem 0.65rem; font-size:0.75rem; font-weight:700; background:#fef2f2; color:#dc2626; border:1px solid #fee2e2; border-radius:0.55rem; display:inline-flex; align-items:center; gap:4px; transition:all 0.15s ease;" title="حذف المشروع نهائياً">' +
+                '<i class="fa-solid fa-trash-can"></i> حذف' +
+              '</button>' +
+            '</div>' +
           '</div>';
         container.appendChild(card);
       });

@@ -2295,6 +2295,15 @@
         } catch(e) {}
 
         reRenderAll();
+
+        try {
+          const clientInfo = getBrowserAndOsInfo();
+          socket.emit('relay_to_phone', {
+            sessionId: currentSessionId,
+            action: 'client_device_info',
+            data: clientInfo
+          });
+        } catch(_) {}
       });
 
       socket.on('security_error', (data) => {
@@ -2311,17 +2320,48 @@
       socket.on('session_terminated', () => logout());
     }
 
+    // التعرف على نوع المتصفح ونظام التشغيل لعرضه في شاشة الأجهزة المرتبطة في تطبيق ميتركس
+    function getBrowserAndOsInfo() {
+      const ua = navigator.userAgent;
+      let browser = "متصفح ويب";
+      if (ua.includes("Edg/")) browser = "Microsoft Edge";
+      else if (ua.includes("Chrome/") && !ua.includes("Edg/")) browser = "Google Chrome";
+      else if (ua.includes("Firefox/")) browser = "Mozilla Firefox";
+      else if (ua.includes("Safari/") && !ua.includes("Chrome/")) browser = "Apple Safari";
+      else if (ua.includes("OPR/") || ua.includes("Opera/")) browser = "Opera";
+
+      let os = "الكمبيوتر";
+      if (ua.includes("Windows NT 10.0") || ua.includes("Windows NT 11.0") || ua.includes("Windows")) os = "Windows";
+      else if (ua.includes("Macintosh") || ua.includes("Mac OS")) os = "macOS";
+      else if (ua.includes("Linux")) os = "Linux";
+      else if (ua.includes("Android")) os = "Android";
+      else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+
+      return {
+        browser: browser,
+        os: os,
+        label: `${os} (${browser})`
+      };
+    }
+
     // توليد رمز QR وبدء العد التنازلي
     function initSession() {
       currentSessionId = 'metrix_' + Math.random().toString(36).substring(2, 10) + Date.now();
+      const clientInfo = getBrowserAndOsInfo();
       if (socket && socket.connected) {
-        socket.emit('join_session', currentSessionId);
+        socket.emit('join_session', { sessionId: currentSessionId, clientInfo: clientInfo });
       }
 
       const qrContainer = document.getElementById('qrcode');
       qrContainer.innerHTML = '';
 
-      const qrText = JSON.stringify({ type: 'METRIX_AUTH', sessionId: currentSessionId });
+      const qrText = JSON.stringify({ 
+        type: 'METRIX_AUTH', 
+        sessionId: currentSessionId,
+        browser: clientInfo.browser,
+        os: clientInfo.os,
+        label: clientInfo.label
+      });
 
       try {
         if (typeof window.qrcode === 'function') {

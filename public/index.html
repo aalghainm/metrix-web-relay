@@ -8,8 +8,8 @@
   <!-- مكتبات الخطوط والأيقونات والرسوم البيانية -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="/socket.io/socket.io.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="/qrcode.min.js"></script>
+  <script>if (typeof QRCode === 'undefined') { document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>'); }</script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -2039,7 +2039,15 @@
       const qrText = JSON.stringify({ type: 'METRIX_AUTH', sessionId: currentSessionId });
 
       try {
-        if (window.QRCode && typeof window.QRCode.toCanvas === 'function') {
+        if (typeof window.QRCode === 'function') {
+          new window.QRCode(qrContainer, {
+            text: qrText,
+            width: 210,
+            height: 210,
+            colorDark: "#0f172a",
+            colorLight: "#ffffff"
+          });
+        } else if (window.QRCode && typeof window.QRCode.toCanvas === 'function') {
           const canvas = document.createElement('canvas');
           window.QRCode.toCanvas(canvas, qrText, { width: 210, margin: 1 }, function (error) {
             if (error) {
@@ -2048,14 +2056,6 @@
             } else {
               qrContainer.appendChild(canvas);
             }
-          });
-        } else if (typeof window.QRCode === 'function') {
-          new window.QRCode(qrContainer, {
-            text: qrText,
-            width: 210,
-            height: 210,
-            colorDark: "#0f172a",
-            colorLight: "#ffffff"
           });
         } else {
           renderFallbackQR(qrContainer, qrText);
@@ -2079,6 +2079,9 @@
       img.alt = 'QR Code';
       img.style.display = 'block';
       img.style.borderRadius = '0.75rem';
+      img.onerror = function() {
+        container.innerHTML = '<div style="font-size:0.8rem;color:#ef4444;text-align:center;padding:1rem;">يرجى إعادة تحميل الصفحة لتوليد الرمز</div>';
+      };
       container.appendChild(img);
     }
 

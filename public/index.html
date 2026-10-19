@@ -2217,7 +2217,9 @@
       socket.on('connect', () => {
         updateConnectionBadge(true);
         if (currentSessionId) {
-          socket.emit('join_session', currentSessionId);
+          const clientInfo = getBrowserAndOsInfo();
+          socket.emit('join_session', { sessionId: currentSessionId, clientInfo: clientInfo });
+          socket.emit('relay_to_phone', { sessionId: currentSessionId, action: 'client_device_info', data: clientInfo });
           socket.emit('relay_to_phone', { sessionId: currentSessionId, action: 'request_sync', data: {} });
         }
       });
@@ -2324,11 +2326,26 @@
     function getBrowserAndOsInfo() {
       const ua = navigator.userAgent;
       let browser = "متصفح ويب";
-      if (ua.includes("Edg/")) browser = "Microsoft Edge";
-      else if (ua.includes("Chrome/") && !ua.includes("Edg/")) browser = "Google Chrome";
-      else if (ua.includes("Firefox/")) browser = "Mozilla Firefox";
-      else if (ua.includes("Safari/") && !ua.includes("Chrome/")) browser = "Apple Safari";
-      else if (ua.includes("OPR/") || ua.includes("Opera/")) browser = "Opera";
+      let browserCode = "WEB";
+      if (ua.includes("Edg/")) {
+        browser = "Microsoft Edge";
+        browserCode = "EDGE";
+      } else if (ua.includes("OPR/") || ua.includes("Opera/")) {
+        browser = "Opera";
+        browserCode = "OPERA";
+      } else if (ua.includes("Brave") || (navigator.brave && typeof navigator.brave.isBrave === 'function')) {
+        browser = "Brave Browser";
+        browserCode = "BRAVE";
+      } else if (ua.includes("Chrome/") && !ua.includes("Edg/")) {
+        browser = "Google Chrome";
+        browserCode = "CHROME";
+      } else if (ua.includes("Firefox/")) {
+        browser = "Mozilla Firefox";
+        browserCode = "FIREFOX";
+      } else if (ua.includes("Safari/") && !ua.includes("Chrome/")) {
+        browser = "Apple Safari";
+        browserCode = "SAFARI";
+      }
 
       let os = "الكمبيوتر";
       if (ua.includes("Windows NT 10.0") || ua.includes("Windows NT 11.0") || ua.includes("Windows")) os = "Windows";
@@ -2339,8 +2356,9 @@
 
       return {
         browser: browser,
+        browserCode: browserCode,
         os: os,
-        label: `${os} (${browser})`
+        label: `${browser} (${os})`
       };
     }
 
@@ -2359,6 +2377,7 @@
         type: 'METRIX_AUTH', 
         sessionId: currentSessionId,
         browser: clientInfo.browser,
+        browserCode: clientInfo.browserCode,
         os: clientInfo.os,
         label: clientInfo.label
       });

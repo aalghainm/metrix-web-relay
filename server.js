@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
@@ -19,12 +19,52 @@ app.get('*', (req, res) => {
 
 const sessionStore = new Map();
 
+function parseUserAgentInfo(uaString) {
+  const ua = String(uaString || '');
+  let browser = 'متصفح ويب';
+  let browserCode = 'WEB';
+  if (ua.includes('Edg/')) {
+    browser = 'Microsoft Edge';
+    browserCode = 'EDGE';
+  } else if (ua.includes('OPR/') || ua.includes('Opera/')) {
+    browser = 'Opera';
+    browserCode = 'OPERA';
+  } else if (ua.includes('Brave')) {
+    browser = 'Brave Browser';
+    browserCode = 'BRAVE';
+  } else if (ua.includes('Chrome/') && !ua.includes('Edg/')) {
+    browser = 'Google Chrome';
+    browserCode = 'CHROME';
+  } else if (ua.includes('Firefox/')) {
+    browser = 'Mozilla Firefox';
+    browserCode = 'FIREFOX';
+  } else if (ua.includes('Safari/') && !ua.includes('Chrome/')) {
+    browser = 'Apple Safari';
+    browserCode = 'SAFARI';
+  }
+
+  let os = 'الكمبيوتر';
+  if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Macintosh') || ua.includes('Mac OS')) os = 'macOS';
+  else if (ua.includes('Linux') && !ua.includes('Android')) os = 'Linux';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+
+  return {
+    browser,
+    browserCode,
+    os,
+    label: `${browser} (${os})`
+  };
+}
+
 function getOrCreateSession(sessionId) {
   if (!sessionStore.has(sessionId)) {
     sessionStore.set(sessionId, {
       payload: null,
       pendingCommands: [],
-      phoneSockets: new Set()
+      phoneSockets: new Set(),
+      clientInfo: null
     });
   }
   return sessionStore.get(sessionId);
@@ -36,9 +76,23 @@ io.on('connection', (socket) => {
     if (!sessionId) return;
     socket.join(sessionId);
     socket.data.sessionId = sessionId;
+    const s = getOrCreateSession(sessionId);
+
     if (typeof arg === 'object' && arg && arg.role === 'phone') {
-      const s = getOrCreateSession(sessionId);
       s.phoneSockets.add(socket.id);
+    } else {
+      const ua = (socket.handshake && socket.handshake.headers) ? socket.handshake.headers['user-agent'] : '';
+      const detected = parseUserAgentInfo(ua);
+      s.clientInfo = (typeof arg === 'object' && arg && arg.clientInfo) ? Object.assign({}, detected, arg.clientInfo) : detected;
+    }
+  });
+
+  socket.on('register_phone', (sessionId) => {
+    if (!sessionId) return;
+    const s = getOrCreateSession(sessionId);
+    s.phoneSockets.add(socket.id);
+    if (s.clientInfo) {
+      socket.emit('client_device_info', Object.assign({ sessionId }, s.clientInfo));
     }
   });
 
@@ -46,6 +100,9 @@ io.on('connection', (socket) => {
     if (!sessionId) return;
     const s = getOrCreateSession(sessionId);
     s.phoneSockets.add(socket.id);
+    if (s.clientInfo) {
+      socket.emit('client_device_info', Object.assign({ sessionId }, s.clientInfo));
+    }
     if (s.pendingCommands.length > 0) {
       const cmds = s.pendingCommands.splice(0, s.pendingCommands.length);
       cmds.forEach(cmd => {
@@ -81,7 +138,7 @@ io.on('connection', (socket) => {
   socket.on('terminate_session', (sessionId) => {
     if (!sessionId) return;
     sessionStore.delete(sessionId);
-    socket.to(sessionId).emit('session_terminated');
+    io.to(sessionId).emit('session_terminated', { sessionId });
     socket.leave(sessionId);
   });
 

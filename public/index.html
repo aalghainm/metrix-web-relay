@@ -3910,14 +3910,18 @@
         totalAmount += tot;
         rowsHtml += `
           <tr>
-            <td style="text-align:center; padding:8px; border:1px solid #cbd5e1;">${idx + 1}</td>
-            <td style="padding:8px; font-weight:700; border:1px solid #cbd5e1;">${it.name || '—'}</td>
-            <td style="text-align:center; padding:8px; border:1px solid #cbd5e1;">${m.toFixed(2)} م²</td>
-            <td style="text-align:center; padding:8px; border:1px solid #cbd5e1;">${p.toFixed(2)} ر.س</td>
-            <td style="text-align:center; padding:8px; font-weight:800; color:#059669; border:1px solid #cbd5e1;">${tot.toFixed(2)} ر.س</td>
+            <td>${idx + 1}</td>
+            <td style="font-weight:700; text-align:right; padding-right:12px;">${it.name || '—'}</td>
+            <td style="font-weight:700; font-family:Arial, sans-serif;">${m.toFixed(2)} م²</td>
+            <td style="font-family:Arial, sans-serif;">${p.toFixed(2)}</td>
+            <td style="font-weight:800; color:#059669; font-family:Arial, sans-serif;">${Math.round(tot).toLocaleString('en-US')}</td>
           </tr>
         `;
       });
+
+      const linkedProj = q.linkedProjectId ? globalProjectsData.find(p => Number(p.id) === Number(q.linkedProjectId)) : null;
+      const dateStr = q.date || new Date().toISOString().split('T')[0];
+      const totalText = Math.round(totalAmount).toLocaleString('en-US') + ' ريال';
 
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
@@ -3930,85 +3934,356 @@
         <html lang="ar" dir="rtl">
         <head>
           <meta charset="UTF-8">
-          <title>${q.title || 'عرض سعر'}</title>
+          <title>${q.title || 'عرض أسعار الأمتار'}</title>
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
-            body { font-family: 'Cairo', sans-serif; padding: 25px; color: #0f172a; margin: 0; }
-            .header-box { border-bottom: 2px solid #4f46e5; padding-bottom: 15px; margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; }
-            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-            .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.8; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
-            th { background: #4f46e5; color: #fff; padding: 10px; border: 1px solid #4f46e5; }
-            .total-box { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 15px; text-align: left; font-size: 15px; font-weight: 800; color: #059669; margin-bottom: 30px; }
-            .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: center; margin-top: 40px; font-size: 13px; }
-            .sig-line { border-top: 1px dashed #64748b; margin-top: 45px; }
+            @page {
+              size: A4 landscape;
+              margin: 6mm 8mm;
+            }
+            * { box-sizing: border-box; }
+            body {
+              font-family: 'Cairo', sans-serif;
+              margin: 0;
+              padding: 20px;
+              background: #f1f5f9;
+              color: #111827;
+              direction: rtl;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .no-print {
+              max-width: 1120px;
+              margin: 0 auto 16px auto;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              background: #ffffff;
+              padding: 12px 20px;
+              border-radius: 10px;
+              border: 1px solid #cbd5e1;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            }
+            .btn-print {
+              background: #4F46E5;
+              color: #ffffff;
+              border: none;
+              padding: 9px 24px;
+              border-radius: 8px;
+              font-weight: 800;
+              font-size: 14px;
+              cursor: pointer;
+              font-family: inherit;
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .metrix-native-pdf-page {
+              background: #FFFFFF;
+              max-width: 1120px;
+              margin: 0 auto;
+              min-height: 750px;
+              padding: 36px 40px 28px 40px;
+              border-radius: 12px;
+              border: 1px solid #CBD5E1;
+              box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.12);
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              direction: rtl;
+            }
+            .native-pdf-header {
+              position: relative;
+              padding-bottom: 14px;
+              border-bottom: 3px solid #4F46E5;
+              margin-bottom: 14px;
+            }
+            .native-pdf-header-grid {
+              display: grid;
+              grid-template-columns: 1fr auto 1fr;
+              align-items: start;
+              gap: 16px;
+            }
+            .native-pdf-right {
+              text-align: right;
+              display: flex;
+              flex-direction: column;
+              gap: 3px;
+            }
+            .native-pdf-main-title {
+              font-size: 17px;
+              font-weight: 900;
+              color: #111827;
+              line-height: 1.3;
+            }
+            .native-pdf-proj-line {
+              font-size: 12px;
+              font-weight: 700;
+              color: #111827;
+              line-height: 1.4;
+            }
+            .native-pdf-center {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              min-width: 200px;
+            }
+            .native-pdf-logo-circle {
+              width: 68px;
+              height: 68px;
+              border-radius: 50%;
+              background: #4F46E5;
+              color: #FFFFFF;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 4px 10px rgba(79, 70, 229, 0.28);
+              border: 2.5px solid #EEF2FF;
+              margin-bottom: 8px;
+              font-weight: 900;
+            }
+            .native-pdf-logo-circle .logo-dollar {
+              font-size: 24px;
+              font-weight: 900;
+              line-height: 1;
+              font-family: Arial, sans-serif;
+            }
+            .native-pdf-logo-circle .logo-sub {
+              font-size: 9px;
+              letter-spacing: 1px;
+              font-weight: 800;
+              margin-top: 2px;
+              font-family: Arial, sans-serif;
+            }
+            .native-pdf-category-title {
+              font-size: 18px;
+              font-weight: 900;
+              color: #4F46E5;
+              text-align: center;
+              margin-top: 2px;
+            }
+            .native-pdf-left {
+              text-align: left;
+              direction: rtl;
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+              gap: 4px;
+            }
+            .native-pdf-left-box {
+              text-align: left;
+              min-width: 190px;
+            }
+            .native-pdf-left-title {
+              font-size: 15px;
+              font-weight: 900;
+              color: #111827;
+              margin-bottom: 2px;
+            }
+            .native-pdf-left-muted {
+              font-size: 11.5px;
+              font-weight: 700;
+              color: #64748B;
+            }
+            .native-pdf-left-total {
+              font-size: 13px;
+              font-weight: 900;
+              color: #4F46E5;
+            }
+            table.native-job-table {
+              width: 100%;
+              border-collapse: collapse;
+              table-layout: fixed;
+              margin-top: 10px;
+              margin-bottom: auto;
+              direction: rtl;
+            }
+            table.native-job-table th {
+              background-color: #4F46E5 !important;
+              color: #FFFFFF !important;
+              font-size: 12px;
+              font-weight: 800;
+              text-align: center;
+              vertical-align: middle;
+              padding: 9px 6px;
+              height: 42px;
+              border: 1.2px solid #D1D5DB;
+              line-height: 1.25;
+            }
+            table.native-job-table td {
+              font-size: 12px;
+              font-weight: 600;
+              color: #111827;
+              text-align: center;
+              vertical-align: middle;
+              padding: 8px 6px;
+              height: 36px;
+              border: 1.2px solid #D1D5DB;
+            }
+            table.native-job-table tbody tr:nth-child(odd) td {
+              background-color: #FFFFFF;
+            }
+            table.native-job-table tbody tr:nth-child(even) td {
+              background-color: #F8FAFC;
+            }
+            table.native-job-table tr.native-total-row td {
+              background-color: #EEF2FF !important;
+              font-size: 13px;
+              font-weight: 800;
+              color: #1E3A8A;
+              border-top: 2.2px solid #4F46E5;
+              border-bottom: 2.2px solid #4F46E5;
+              height: 42px;
+            }
+            .native-pdf-footer {
+              margin-top: 22px;
+              padding-top: 10px;
+              border-top: 1.2px solid #D1D5DB;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 11.5px;
+              font-weight: 700;
+              color: #64748B;
+            }
+            .native-pdf-footer-center { flex: 1; text-align: center; }
+            .native-pdf-footer-page { min-width: 80px; text-align: right; }
+            .native-pdf-footer-spacer { min-width: 80px; }
+            .app-quo-signatures {
+              display: flex;
+              justify-content: space-between;
+              margin-top: 30px;
+              padding: 0 40px;
+            }
+            .app-quo-sig-box {
+              text-align: center;
+              font-size: 12px;
+              color: #4B5563;
+              width: 200px;
+            }
+            .app-quo-sig-line {
+              border-top: 1.5px dashed #9CA3AF;
+              margin-top: 40px;
+              padding-top: 6px;
+              font-weight: 800;
+              color: #111827;
+            }
             @media print {
-              .no-print { display: none; }
-              body { padding: 0; }
+              body { padding: 0; background: #ffffff; }
+              .no-print { display: none !important; }
+              .metrix-native-pdf-page {
+                border: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 6mm 8mm !important;
+                min-height: 188mm !important;
+                width: 100% !important;
+              }
+              table.native-job-table th {
+                background-color: #4F46E5 !important;
+                color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              table.native-job-table tr.native-total-row td {
+                background-color: #EEF2FF !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .native-pdf-logo-circle {
+                background-color: #4F46E5 !important;
+                color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
             }
           </style>
         </head>
         <body>
-          <div class="no-print" style="margin-bottom:20px; text-align:left;">
-            <button onclick="window.print()" style="background:#4f46e5; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:700; cursor:pointer; font-family:inherit;">
+          <div class="no-print">
+            <div style="font-weight:800; font-size:15px; color:#1e3a8a;">
+              <i class="fa-solid fa-file-pdf" style="color:#ef4444; margin-left:6px;"></i> معاينة طباعة عرض أسعار الأمتار (A4 Landscape)
+            </div>
+            <button onclick="window.print()" class="btn-print">
               <i class="fa-solid fa-print"></i> بدء الطباعة الآن
             </button>
           </div>
 
-          <div class="header-box">
+          <div class="metrix-native-pdf-page">
             <div>
-              <h1 style="margin:0; font-size:22px; color:#4f46e5;">${q.title || 'عرض سعر'}</h1>
-              <p style="margin:4px 0 0 0; color:#64748b; font-size:12px;">تاريخ العرض: ${q.date || '—'}</p>
-            </div>
-            <div style="text-align:left;">
-              <span style="background:${q.isApproved ? '#dcfce7' : '#f1f5f9'}; color:${q.isApproved ? '#059669' : '#475569'}; padding:4px 12px; border-radius:20px; font-weight:800; font-size:12px;">
-                ${q.isApproved ? 'معتمد رسمياً ✓' : 'عرض سعر تقديري'}
-              </span>
-            </div>
-          </div>
+              <div class="native-pdf-header">
+                <div class="native-pdf-header-grid">
+                  <div class="native-pdf-right">
+                    <div class="native-pdf-main-title">ميتركس المعماري للحسابات الذكية</div>
+                    <div class="native-pdf-proj-line"><b>مقدم العرض:</b> ${q.contractorName || 'مؤسسة مقاولات عامة'}${q.contractorAddress ? ' - ' + q.contractorAddress : ''}${q.contractorPhone ? ' (جوال: ' + q.contractorPhone + ')' : ''}</div>
+                    <div class="native-pdf-proj-line"><b>العميل:</b> ${q.clientName || 'عميلنا العزيز'}${q.clientPhone ? ' (' + q.clientPhone + ')' : ''}</div>
+                    ${linkedProj ? `<div class="native-pdf-proj-line"><b>المشروع المرتبط:</b> ${linkedProj.name}</div>` : ''}
+                  </div>
+                  <div class="native-pdf-center">
+                    <div class="native-pdf-logo-circle">
+                      <span class="logo-dollar">$</span>
+                      <span class="logo-sub">METRIX</span>
+                    </div>
+                    <div class="native-pdf-category-title">${q.title || 'عرض أسعار الأمتار'}</div>
+                  </div>
+                  <div class="native-pdf-left">
+                    <div class="native-pdf-left-box">
+                      <div class="native-pdf-left-title">${q.isApproved ? 'عرض معتمد رسمياً' : 'عرض سعر تقديري'}</div>
+                      <div class="native-pdf-left-muted">التاريخ: <span dir="ltr">${toEnglishDigits(dateStr)}</span></div>
+                      <div class="native-pdf-left-total">الإجمالي: ${totalText}</div>
+                      <div class="native-pdf-left-muted">الأمتار: ${totalMeters.toFixed(2)} م²</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-          <div class="info-grid">
-            <div class="info-card">
-              <h4 style="margin:0 0 6px 0; color:#4f46e5; font-size:14px;"><i class="fa-solid fa-building"></i> بيانات المقاول / مقدم العرض</h4>
-              <div><b>المؤسسة:</b> ${q.contractorName || 'مؤسسة مقاولات عامة'}</div>
-              <div><b>العنوان:</b> ${q.contractorAddress || 'المملكة العربية السعودية'}</div>
-              <div><b>الهاتف:</b> ${q.contractorPhone || '—'}</div>
-            </div>
-            <div class="info-card">
-              <h4 style="margin:0 0 6px 0; color:#4f46e5; font-size:14px;"><i class="fa-solid fa-user"></i> بيانات العميل المستفيد</h4>
-              <div><b>العميل:</b> ${q.clientName || 'عميلنا العزيز'}</div>
-              <div><b>الجوال:</b> ${q.clientPhone || '—'}</div>
-            </div>
-          </div>
+              <table class="native-job-table">
+                <colgroup>
+                  <col style="width: 7%;">
+                  <col style="width: 35%;">
+                  <col style="width: 18%;">
+                  <col style="width: 18%;">
+                  <col style="width: 22%;">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th style="text-align:right; padding-right:12px;">اسم البند / نوع العمل والمسطحات</th>
+                    <th>مجموع الأمتار (م²)</th>
+                    <th>سعر المتر (ر.س)</th>
+                    <th>الإجمالي التقديري (ر.س)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml || '<tr><td colspan="5" style="text-align:center; padding:18px; color:#94a3b8;">لا توجد بنود مضافة في هذا العرض</td></tr>'}
+                  <tr class="native-total-row">
+                    <td colspan="2" style="text-align:center; font-weight:900; font-size:14px; color:#4F46E5;">
+                      المجموع الكلي التقديري لعرض السعر
+                    </td>
+                    <td style="font-family:Arial, sans-serif; font-size:13px; font-weight:900;">${totalMeters.toFixed(2)} م²</td>
+                    <td>—</td>
+                    <td style="font-family:Arial, sans-serif; font-size:14px; font-weight:900; color:#059669;">${Math.round(totalAmount).toLocaleString('en-US')} ر.س</td>
+                  </tr>
+                </tbody>
+              </table>
 
-          <table>
-            <thead>
-              <tr>
-                <th style="width:40px;">#</th>
-                <th>اسم البند والخدمة</th>
-                <th style="width:120px;">كمية الأمتار</th>
-                <th style="width:120px;">سعر المتر</th>
-                <th style="width:130px;">الإجمالي</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
-          </table>
-
-          <div class="total-box">
-            إجمالي قيمة العرض: ${Math.round(totalAmount).toLocaleString('en-US')} ر.س
-          </div>
-
-          <div class="sig-grid">
-            <div>
-              <b>توقيع وختم مقدم العرض</b>
-              <div class="sig-line"></div>
+              <div class="app-quo-signatures">
+                <div class="app-quo-sig-box">
+                  <div class="app-quo-sig-line">توقيع وختم مقدم العرض</div>
+                </div>
+                <div class="app-quo-sig-box">
+                  <div class="app-quo-sig-line">توقيع واعتماد العميل</div>
+                </div>
+              </div>
             </div>
-            <div>
-              <b>توقيع واعتماد العميل</b>
-              <div class="sig-line"></div>
+
+            <div class="native-pdf-footer">
+              <div class="native-pdf-footer-page">صفحة 1</div>
+              <div class="native-pdf-footer-center">عرض أسعار رسمي مُنشأ بواسطة منصة Metrix المعمارية الذكية</div>
+              <div class="native-pdf-footer-spacer"></div>
             </div>
           </div>
         </body>

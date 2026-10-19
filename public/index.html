@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -935,7 +936,7 @@
       <p class="auth-subtitle">امسح رمز الاستجابة السريعة (QR) من تطبيق الهاتف عبر خيار <b>[ربط المتصفح]</b> لفتح لوحة التحكم الشاملة.</p>
 
       <div class="qr-frame">
-        <div id="qrcode"></div>
+        <div id="qrcode" style="min-width:210px; min-height:210px; display:flex; align-items:center; justify-content:center;"></div>
         <div id="qrOverlay" class="qr-expired-curtain">
           <i class="fa-solid fa-clock-rotate-left" style="font-size: 2.2rem; color: var(--rose);"></i>
           <p style="color: var(--rose); font-weight: 800; font-size: 0.95rem;">انتهت صلاحية الرمز المؤقت</p>
@@ -2034,13 +2035,28 @@
 
       const qrContainer = document.getElementById('qrcode');
       qrContainer.innerHTML = '';
-      new QRCode(qrContainer, {
-        text: JSON.stringify({ type: 'METRIX_AUTH', sessionId: currentSessionId }),
-        width: 210,
-        height: 210,
-        colorDark: "#0f172a",
-        colorLight: "#ffffff"
-      });
+
+      const qrText = JSON.stringify({ type: 'METRIX_AUTH', sessionId: currentSessionId });
+
+      try {
+        if (typeof QRCode !== 'undefined') {
+          new QRCode(qrContainer, {
+            text: qrText,
+            width: 210,
+            height: 210,
+            colorDark: "#0f172a",
+            colorLight: "#ffffff"
+          });
+        } else {
+          // بديل مباشر ومضمون في حال تأخر تحميل مكتبة cdn
+          const encodedText = encodeURIComponent(qrText);
+          qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=210x210&data=${encodedText}" width="210" height="210" alt="Metrix QR" style="display:block; border-radius:0.75rem;" />`;
+        }
+      } catch (err) {
+        console.error('QRCode Error:', err);
+        const encodedText = encodeURIComponent(qrText);
+        qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=210x210&data=${encodedText}" width="210" height="210" alt="Metrix QR" style="display:block; border-radius:0.75rem;" />`;
+      }
 
       document.getElementById('qrOverlay').style.display = 'none';
       startTimer();

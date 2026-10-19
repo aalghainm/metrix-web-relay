@@ -1797,6 +1797,69 @@
       </div>
     </div>
   </div>
+
+  <!-- نافذة تفاصيل المشروع المتطابقة 100% مع شاشة الجوال (ProjectDetailsScreen) -->
+  <div id="projectDetailsModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 760px; border-radius: 1.25rem; overflow:hidden;">
+      <!-- الهيدر الكحلي الفاخر مثل الجوال (topGradient: MetrixNavyDark -> primary) -->
+      <div style="background: linear-gradient(180deg, #1e3a8a 0%, var(--primary) 100%); color: #fff; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between;">
+        <button onclick="closeModal('projectDetailsModal')" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        <div style="text-align:center; flex:1; padding: 0 10px;">
+          <h3 id="pDetailHeaderTitle" style="margin:0; font-size:1.15rem; font-weight:800; color:#fff;">تفاصيل المشروع</h3>
+          <div id="pDetailHeaderClient" style="font-size:0.78rem; opacity:0.85; margin-top:2px;">-</div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button onclick="quickExportModalPdf()" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.95rem;" title="تصدير PDF">
+            <i class="fa-solid fa-file-pdf"></i>
+          </button>
+          <button onclick="closeModal('projectDetailsModal')" style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.18); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+            &times;
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-dialog-body" style="max-height: 80vh; overflow-y: auto; padding: 1.15rem; background: #f8fafc;">
+        <input type="hidden" id="pDetailActiveId" />
+
+        <!-- بطاقة إجمالي الميزانية والنسبة الدائرية العائمة (تطابق الجوال 100%) -->
+        <div style="background:#fff; border-radius:1.15rem; padding:1.15rem 1.35rem; border:1px solid #e2e8f0; box-shadow:0 4px 15px rgba(0,0,0,0.04); display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <div>
+            <div style="font-size:0.82rem; font-weight:700; color:#64748b;">إجمالي الميزانية التقديرية للمشروع</div>
+            <div id="pDetailBudgetVal" style="font-size:1.85rem; font-weight:900; color:#0f172a; margin:4px 0; font-family:monospace;">0</div>
+            <div style="font-size:0.78rem; font-weight:800; color:#059669;">ريال سعودي</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="width:68px; height:68px; border-radius:50%; background:#ecfdf5; border:3px solid #10b981; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+              <span id="pDetailPercentText" style="font-size:0.95rem; font-weight:900; color:#065f46;">0%</span>
+              <span style="font-size:0.65rem; color:#047857; font-weight:700;">مكتمل</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- شريط الأقسام وزر إضافة بند -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <div style="display:flex; align-items:center; gap:0.4rem; font-weight:900; font-size:1rem; color:var(--primary);">
+            <i class="fa-solid fa-bookmark"></i>
+            <span>أقسام أعمال المشروع</span>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button onclick="openNewItemForCurrentProject()" class="btn btn-primary" style="padding:0.35rem 0.75rem; font-size:0.78rem;">
+              <i class="fa-solid fa-plus"></i> إضافة بند حصر
+            </button>
+            <button onclick="quickOpenPaymentsForCurrentProject()" class="btn btn-amber" style="padding:0.35rem 0.75rem; font-size:0.78rem;">
+              <i class="fa-solid fa-file-invoice-dollar"></i> الدفعات
+            </button>
+          </div>
+        </div>
+
+        <!-- قائمة كروت الأقسام المستقلة (CategoryItemRow) -->
+        <div id="pDetailSectionsContainer" style="display:flex; flex-direction:column; gap:0.65rem;">
+          <!-- تُبنى برمجياً بالكامل لتطابق تصميم CategoryItemRow في الجوال -->
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- نافذة اعتماد السعر بالرقم السري واختيار المشروع -->
@@ -2363,11 +2426,15 @@
 
         const card = document.createElement('div');
         card.className = 'project-item-card';
+        card.style.cursor = 'pointer';
         card.innerHTML =
-          '<div>' +
+          '<div onclick="openProjectDetailsModal(' + p.id + ')">' +
             '<div class="proj-card-header">' +
               '<div class="proj-title-area">' +
-                '<h3>' + (p.name || 'مشروع بدون اسم') + '</h3>' +
+                '<h3 style="display:flex; align-items:center; justify-content:space-between;">' +
+                  '<span>' + (p.name || 'مشروع بدون اسم') + '</span>' +
+                  '<i class="fa-solid fa-chevron-left" style="font-size:0.85rem; color:var(--primary); opacity:0.6;"></i>' +
+                '</h3>' +
                 '<div class="proj-client-row">' +
                   '<i class="fa-solid fa-user-circle"></i> ' + (p.clientName || 'عميل عام') +
                   (p.mobileNumber ? (' <span style="color:#cbd5e1;">|</span> <i class="fa-solid fa-phone"></i> <span dir="ltr">' + toEnglishDigits(p.mobileNumber) + '</span>') : '') +
@@ -2390,11 +2457,12 @@
               '</div>' +
             '</div>' +
           '</div>' +
-          '<div class="proj-card-footer">' +
+          '<div class="proj-card-footer" onclick="event.stopPropagation();">' +
             '<div class="proj-action-group" style="flex-wrap:wrap;">' +
+              '<button onclick="openProjectDetailsModal(' + p.id + ')" class="btn btn-primary" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-layer-group"></i> تفاصيل الأقسام</button>' +
               '<button onclick="filterByProjectAndOpenItems(' + p.id + ')" class="btn btn-sky" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-ruler"></i> البنود (' + items.length + ')</button>' +
               '<button onclick="filterByProjectAndOpenPayments(' + p.id + ')" class="btn btn-amber" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-file-invoice"></i> الدفعات</button>' +
-              '<button onclick="openProjectReportPreview(' + p.id + ')" class="btn btn-primary" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-file-pdf"></i> PDF</button>' +
+              '<button onclick="openProjectReportPreview(' + p.id + ')" class="btn btn-outline" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-file-pdf"></i> PDF</button>' +
               '<button onclick="openEditProjectModal(' + p.id + ')" class="btn btn-outline" style="padding:0.35rem 0.65rem; font-size:0.78rem;"><i class="fa-solid fa-pen"></i> تعديل</button>' +
             '</div>' +
             '<button onclick="requestDeleteProject(' + p.id + ')" class="icon-action-btn btn-action-delete" title="حذف المشروع نهائياً"><i class="fa-solid fa-trash-can"></i></button>' +
@@ -2418,6 +2486,159 @@
       document.getElementById('kpiTotalPaid').textContent = totalPaid.toLocaleString() + ' ر.س';
     }
 
+    // ==========================================
+    // شاشة تفاصيل المشروع وبنود الأقسام المستقلة (مطابقة لتطبيق الجوال 100%)
+    // ==========================================
+    const PROJECT_SECTIONS_META = [
+      { code: 'PLASTER_IN', title: 'تلييس داخلي', desc: 'حساب مسطحات اللياسة الداخلية والجدران والأسقف', icon: 'fa-house', color: '#4f46e5', bg: '#eef2ff' },
+      { code: 'PLASTER_OUT', title: 'تلييس خارجي', desc: 'حساب مسطحات الواجهات واللياسة الخارجية', icon: 'fa-tree-city', color: '#d97706', bg: '#fef3c7' },
+      { code: 'PAINT_IN', title: 'دهانات داخلية', desc: 'حساب مسطحات الدهان والمعجون الداخلي', icon: 'fa-paint-roller', color: '#4f46e5', bg: '#eef2ff' },
+      { code: 'PAINT_OUT', title: 'دهانات خارجية', desc: 'حساب دهانات البروفايل والواجهات الخارجية', icon: 'fa-brush', color: '#d97706', bg: '#fef3c7' },
+      { code: 'TILES', title: 'أعمال البلاط والسيراميك', desc: 'حساب مسطحات الأرضيات والوزرات وجدران الحمامات', icon: 'fa-border-all', color: '#10b981', bg: '#ecfdf5' },
+      { code: 'DOORS', title: 'أبواب وتفاصيلها', desc: 'حصر فتحات الأبواب وخصومات الفراغات وتكاليفها', icon: 'fa-door-open', color: '#8b5cf6', bg: '#f5f3ff' },
+      { code: 'WINDOWS', title: 'نوافذ وتفاصيلها', desc: 'حصر فتحات النوافذ والألمنيوم وتكاليفها', icon: 'fa-table-cells-large', color: '#06b6d4', bg: '#ecfeff' }
+    ];
+
+    function openProjectDetailsModal(projectId) {
+      const p = globalProjectsData.find(item => Number(item.id) === Number(projectId));
+      if (!p) return;
+
+      document.getElementById('pDetailActiveId').value = p.id;
+      document.getElementById('pDetailHeaderTitle').textContent = p.name || 'تفاصيل المشروع';
+      document.getElementById('pDetailHeaderClient').textContent = 'العميل: ' + (p.clientName || 'عميل عام') + (p.mobileNumber ? ' (' + p.mobileNumber + ')' : '');
+
+      const items = p.items || [];
+      const totalAmt = items.reduce((sum, it) => sum + (Number(it.totalAmount) || 0), 0);
+      document.getElementById('pDetailBudgetVal').textContent = Math.round(totalAmt).toLocaleString('en-US');
+
+      // حساب نسبة الأقسام المنجزة
+      const sectionsWithItems = new Set(items.map(it => normalizeJobCode(it.jobType)));
+      const completedCount = PROJECT_SECTIONS_META.filter(s => sectionsWithItems.has(s.code)).length;
+      const progressFraction = Math.min(100, Math.round((completedCount / PROJECT_SECTIONS_META.length) * 100));
+      document.getElementById('pDetailPercentText').textContent = progressFraction + '%';
+
+      // رسم كروت الأقسام المستقلة لتطابق CategoryItemRow في شاشة الجوال
+      const container = document.getElementById('pDetailSectionsContainer');
+      container.innerHTML = '';
+
+      PROJECT_SECTIONS_META.forEach(sec => {
+        const secItems = items.filter(it => normalizeJobCode(it.jobType) === sec.code);
+        const secMeters = secItems.reduce((sum, it) => sum + (Number(it.totalMeters || it.quantity || 0)), 0);
+        const secCost = secItems.reduce((sum, it) => sum + (Number(it.totalAmount || 0)), 0);
+        const hasItems = secItems.length > 0;
+
+        let statusBadgeHtml = '';
+        if (secCost > 0) {
+          statusBadgeHtml = `
+            <div style="background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; padding:0.3rem 0.65rem; border-radius:0.6rem; font-weight:800; font-size:0.8rem; text-align:center;">
+              ${Math.round(secCost).toLocaleString('en-US')} ريال
+            </div>
+            <div style="width:24px; height:24px; border-radius:50%; background:#ecfdf5; color:#10b981; display:flex; align-items:center; justify-content:center; font-size:0.75rem;">
+              <i class="fa-solid fa-check"></i>
+            </div>
+          `;
+        } else if (hasItems) {
+          statusBadgeHtml = `
+            <div style="background:#f1f5f9; color:#475569; padding:0.3rem 0.65rem; border-radius:0.6rem; font-weight:800; font-size:0.8rem; text-align:center;">
+              ${secMeters.toFixed(1)} م²
+            </div>
+            <div style="width:24px; height:24px; border-radius:50%; background:#f1f5f9; color:#64748b; display:flex; align-items:center; justify-content:center; font-size:0.75rem;">
+              <i class="fa-solid fa-chevron-left"></i>
+            </div>
+          `;
+        } else {
+          statusBadgeHtml = `
+            <div style="background:#f8fafc; border:1px dashed #cbd5e1; color:#94a3b8; padding:0.3rem 0.65rem; border-radius:0.6rem; font-weight:700; font-size:0.76rem; text-align:center;">
+              + بدء الحساب
+            </div>
+            <div style="width:24px; height:24px; border-radius:50%; background:#f8fafc; color:#cbd5e1; display:flex; align-items:center; justify-content:center; font-size:0.75rem;">
+              <i class="fa-solid fa-plus"></i>
+            </div>
+          `;
+        }
+
+        // تفاصيل بنود هذا القسم إن وجدت كقائمة منسدلة أنيقة
+        let secItemsSublistHtml = '';
+        if (hasItems) {
+          secItemsSublistHtml = `
+            <div style="margin-top:0.65rem; padding-top:0.65rem; border-top:1px dashed #e2e8f0; display:flex; flex-direction:column; gap:0.4rem;">
+              <div style="font-size:0.75rem; font-weight:800; color:#64748b; display:flex; justify-content:space-between;">
+                <span>بنود هذا القسم (${secItems.length} بند مسجل):</span>
+                <span style="color:var(--primary);">${secMeters.toFixed(2)} م²</span>
+              </div>
+              ${secItems.map(it => {
+                const itM = Number(it.totalMeters || it.quantity || 0);
+                const itAmt = Number(it.totalAmount || 0);
+                return `
+                  <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #f1f5f9; padding:0.35rem 0.65rem; border-radius:0.5rem; font-size:0.8rem;">
+                    <span style="font-weight:700; color:#334155;"><i class="fa-solid fa-circle" style="font-size:5px; color:${sec.color}; vertical-align:middle; margin-left:4px;"></i>${it.title || it.itemName || '-'}</span>
+                    <div style="display:flex; gap:0.5rem; align-items:center; font-family:monospace;">
+                      <span style="color:#64748b; font-weight:700;">${itM.toFixed(1)} م²</span>
+                      <span style="color:#059669; font-weight:800;">${Math.round(itAmt).toLocaleString('en-US')} ر.س</span>
+                      <button onclick="event.stopPropagation(); closeModal('projectDetailsModal'); openEditItemModal(${it.itemId})" style="background:none; border:none; color:var(--sky); cursor:pointer; padding:2px;" title="تعديل"><i class="fa-solid fa-pen"></i></button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        }
+
+        const secCard = document.createElement('div');
+        secCard.style.cssText = 'background:#fff; border:1px solid #e2e8f0; border-radius:0.95rem; padding:0.85rem 1rem; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition:all 0.15s ease; cursor:pointer;';
+        secCard.onmouseenter = () => secCard.style.borderColor = sec.color;
+        secCard.onmouseleave = () => secCard.style.borderColor = '#e2e8f0';
+        secCard.onclick = () => {
+          closeModal('projectDetailsModal');
+          document.getElementById('itemsProjectFilter').value = String(p.id);
+          document.getElementById('itemsJobTypeFilter').value = sec.code;
+          switchTab('tabItems');
+          renderItemsTable();
+        };
+
+        secCard.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <div style="width:44px; height:44px; border-radius:10px; background:${sec.bg}; color:${sec.color}; display:flex; align-items:center; justify-content:center; font-size:1.15rem; flex-shrink:0;">
+                <i class="fa-solid ${sec.icon}"></i>
+              </div>
+              <div>
+                <div style="font-weight:800; font-size:0.92rem; color:#1e293b;">${sec.title}</div>
+                <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">${sec.desc}</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              ${statusBadgeHtml}
+            </div>
+          </div>
+          ${secItemsSublistHtml}
+        `;
+        container.appendChild(secCard);
+      });
+
+      document.getElementById('projectDetailsModal').style.display = 'flex';
+    }
+
+    function openNewItemForCurrentProject() {
+      const pId = document.getElementById('pDetailActiveId').value;
+      closeModal('projectDetailsModal');
+      document.getElementById('modalItemProjectSelect').value = pId;
+      document.getElementById('newItemModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('newItemTitle').focus(), 150);
+    }
+
+    function quickOpenPaymentsForCurrentProject() {
+      const pId = document.getElementById('pDetailActiveId').value;
+      closeModal('projectDetailsModal');
+      filterByProjectAndOpenPayments(pId);
+    }
+
+    function quickExportModalPdf() {
+      const pId = document.getElementById('pDetailActiveId').value;
+      closeModal('projectDetailsModal');
+      openProjectReportPreview(pId);
+    }
+
     function openProjectReportPreview(projectId) {
       const repSel = document.getElementById('reportProjectSelect');
       if (repSel) repSel.value = String(projectId);
@@ -2426,6 +2647,7 @@
 
     function filterByProjectAndOpenItems(projectId) {
       document.getElementById('itemsProjectFilter').value = projectId;
+      document.getElementById('itemsJobTypeFilter').value = 'ALL';
       switchTab('tabItems');
       renderItemsTable();
     }

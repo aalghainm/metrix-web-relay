@@ -1928,6 +1928,10 @@
 
     // الاتصال بالخادم السحابي
     function initSocket() {
+      if (typeof io === 'undefined') {
+        console.warn('Socket.IO client not loaded');
+        return;
+      }
       socket = io();
 
       socket.on('connect', () => {
@@ -3103,7 +3107,7 @@
       }
       const pId = document.getElementById('reportProjectSelect').value;
       const proj = globalProjectsData.find(p => String(p.id) === String(pId)) || globalProjectsData[0];
-      const projName = (proj && proj.name ? proj.name : 'Metrix_Report').replace(/\\s+/g, '_');
+      const projName = (proj && proj.name ? proj.name : 'Metrix_Report').replace(/\s+/g, '_');
       const dateStr = new Date().toISOString().split('T')[0];
 
       if (typeof html2pdf === 'undefined') {
@@ -3174,7 +3178,7 @@
           '<td style="font-weight:800; font-size:0.95rem;">' + jobItem.label + '</td>' +
           '<td style="font-weight:900; color:var(--primary); font-size:1.1rem; font-family:monospace;">' + curPrice.toLocaleString() + ' ر.س</td>' +
           '<td><input type="number" step="0.5" id="' + inputId + '" value="' + curPrice + '" class="custom-input" style="width:140px; padding:0.4rem 0.75rem;" /></td>' +
-          '<td style="text-align:center;"><button onclick="saveUnitPrice(\\'' + jobItem.code + '\\', \\'' + inputId + '\\')" class="btn btn-primary" style="padding:0.35rem 0.95rem;"><i class="fa-solid fa-floppy-disk"></i> حفظ في الهاتف</button></td>';
+          '<td style="text-align:center;"><button onclick="saveUnitPrice(\'' + jobItem.code + '\', \'' + inputId + '\')" class="btn btn-primary" style="padding:0.35rem 0.95rem;"><i class="fa-solid fa-floppy-disk"></i> حفظ في الهاتف</button></td>';
         tbody.appendChild(tr);
       });
     }

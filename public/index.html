@@ -1679,85 +1679,130 @@
     </div>
   </div>
 
-  <!-- نافذة إنشاء / تعديل عرض سعر -->
+  <!-- نافذة إنشاء / تعديل عرض سعر (مطابقة لتصميم وشاشة تطبيق الجوال 100%) -->
   <div id="quotationModal" class="modal-overlay">
-    <div class="modal-dialog" style="max-width: 650px;">
-      <div class="modal-dialog-header">
-        <div class="modal-dialog-title" id="quotationModalTitle"><i class="fa-solid fa-file-signature" style="color:var(--primary);"></i> إنشاء عرض سعر جديد</div>
+    <div class="modal-dialog" style="max-width: 680px; border-radius: 1.25rem;">
+      <div class="modal-dialog-header" style="border-bottom: 1px solid var(--border); padding: 1rem 1.25rem;">
+        <div class="modal-dialog-title" id="quotationModalTitle" style="font-weight: 800; font-size: 1.15rem; color: var(--primary);">
+          <i class="fa-solid fa-file-signature"></i> عرض أسعار الأمتار
+        </div>
         <button onclick="closeModal('quotationModal')" class="btn-close-modal">&times;</button>
       </div>
-      <div class="modal-dialog-body" style="max-height:75vh; overflow-y:auto;">
+
+      <div class="modal-dialog-body" style="max-height:78vh; overflow-y:auto; padding: 1.25rem; background: #f8fafc;">
         <input type="hidden" id="qEditId" value="" />
-        <div class="grid-2col">
-          <div class="form-field">
-            <label><i class="fa-solid fa-heading"></i> مسمى / عنوان عرض السعر *</label>
-            <input type="text" id="qTitle" placeholder="مثال: عرض سعر تشطيب فيلا حي النرجس" />
+
+        <!-- 1. كرت المشروع والعميل المرتبط -->
+        <div style="background:#fff; border: 1px solid var(--border); border-radius: 1rem; padding: 1.15rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.85rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem; font-weight:800; font-size:0.95rem; color:var(--text);">
+              <i class="fa-solid fa-folder-open" style="color:var(--primary);"></i>
+              <span>المشروع والعميل المرتبط</span>
+            </div>
+            <button type="button" onclick="resetQuotationFields()" class="btn-text" style="color:var(--rose); font-size:0.78rem; font-weight:700; background:none; border:none; cursor:pointer;">
+              <i class="fa-solid fa-arrows-rotate"></i> البدء بعرض جديد (تصفية الحقول)
+            </button>
           </div>
-          <div class="form-field">
-            <label><i class="fa-solid fa-folder-tree" style="color:var(--primary);"></i> ربط بمشروع لجلب الأمتار تلقائياً</label>
-            <select id="qLinkedProjectSelect" onchange="onQuotationProjectSelected(this.value)">
+
+          <div class="form-field" style="margin-bottom:0.75rem;">
+            <label style="font-size:0.8rem; font-weight:700; color:var(--text-muted); margin-bottom:4px; display:block;">اختر المشروع لجلب مجموع أمتار الأقسام تلقائياً</label>
+            <select id="qLinkedProjectSelect" onchange="onQuotationProjectSelected(this.value)" class="custom-input" style="width:100%; padding:0.55rem 0.85rem; font-weight:700;">
               <option value="0">-- بدون ربط بمشروع (تسعير حر) --</option>
             </select>
           </div>
-        </div>
-        <div class="grid-2col">
-          <div class="form-field">
-            <label><i class="fa-solid fa-user"></i> اسم العميل</label>
-            <input type="text" id="qClientName" placeholder="الاسم الكريم" />
-          </div>
-          <div class="form-field">
-            <label><i class="fa-solid fa-phone"></i> رقم جوال العميل</label>
-            <input type="tel" id="qClientPhone" placeholder="05xxxxxxxx" />
-          </div>
-        </div>
-        <div class="grid-2col">
-          <div class="form-field">
-            <label><i class="fa-solid fa-building"></i> اسم المقاول / المؤسسة</label>
-            <input type="text" id="qContractorName" placeholder="اسم مؤسستك أو مقاولتك" />
-          </div>
-          <div class="form-field">
-            <label><i class="fa-solid fa-phone-volume"></i> هاتف المقاول</label>
-            <input type="tel" id="qContractorPhone" placeholder="05xxxxxxxx" />
-          </div>
-        </div>
 
-        <div style="margin: 1.25rem 0 0.5rem 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-          <h4 style="font-size:0.95rem; font-weight:800; color:var(--text);"><i class="fa-solid fa-list-check" style="color:var(--primary);"></i> بنود التسعير</h4>
-          <div style="display:flex; gap:0.4rem;">
-            <button type="button" onclick="importAllItemsFromLinkedProject()" id="btnImportFromProj" class="btn btn-sky" style="padding:0.3rem 0.65rem; font-size:0.78rem; display:none;">
-              <i class="fa-solid fa-cloud-arrow-down"></i> جلب كل بنود المشروع
-            </button>
-            <button type="button" onclick="addQuotationItemRow()" class="btn btn-outline" style="padding:0.3rem 0.75rem; font-size:0.8rem;">
-              <i class="fa-solid fa-plus"></i> إضافة بند
+          <!-- صندوق حالة جلب كميات بنود الأقسام من المشروع (مثل الجوال) -->
+          <div id="qLinkedProjectSummaryBox" style="display:none; background:#eff6ff; border: 1px solid #bfdbfe; border-radius: 0.75rem; padding: 0.85rem; margin-top:0.6rem;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <div style="font-weight:800; font-size:0.92rem; color:#1e3a8a;" id="qLinkedProjTitleText">المشروع المرتبط: -</div>
+                <div style="font-size:0.8rem; color:#475569; margin-top:2px;" id="qLinkedProjClientText">العميل: -</div>
+              </div>
+              <button type="button" onclick="disconnectLinkedProject()" style="background:none; border:none; color:var(--rose); cursor:pointer; font-size:1.1rem; padding:2px 6px;">&times;</button>
+            </div>
+            <div style="margin-top:0.6rem; font-size:0.78rem; font-weight:700; color:#059669; line-height:1.5;" id="qLinkedProjBadgesText">
+              <!-- الأقسام المتوفرة تُرسم برمجياً -->
+            </div>
+            <button type="button" onclick="importAllSectionsTotalsFromProject()" style="margin-top:0.6rem; background:none; border:none; color:var(--primary); font-size:0.8rem; font-weight:800; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:4px;">
+              <i class="fa-regular fa-paste"></i> استرداد كافة البنود للجدول دفعة واحدة
             </button>
           </div>
         </div>
 
-        <div style="background:var(--bg); border:1px solid var(--border); border-radius:0.75rem; padding:0.75rem;">
-          <table class="metrix-table" style="font-size:0.85rem;">
-            <thead>
-              <tr>
-                <th>اسم البند</th>
-                <th style="width:110px;">المساحة (م²)</th>
-                <th style="width:110px;">سعر المتر (ر.س)</th>
-                <th style="width:90px;">الإجمالي</th>
-                <th style="width:40px;"></th>
-              </tr>
-            </thead>
-            <tbody id="qItemsTableBody"></tbody>
-          </table>
+        <!-- 2. كرت بيانات مقدم العرض (المقاول / المؤسسة) -->
+        <div style="background:#fff; border: 1px solid var(--border); border-radius: 1rem; padding: 1.15rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+          <div style="display:flex; align-items:center; gap:0.5rem; font-weight:800; font-size:0.95rem; color:var(--text); margin-bottom: 0.85rem;">
+            <i class="fa-solid fa-building" style="color:var(--primary);"></i>
+            <span>بيانات مقدم العرض (المقاول / المؤسسة)</span>
+          </div>
+          <div class="form-field" style="margin-bottom:0.6rem;">
+            <label style="font-size:0.78rem; color:var(--text-muted);"><i class="fa-solid fa-user"></i> اسم المقاول / المؤسسة</label>
+            <input type="text" id="qContractorName" placeholder="محمد" class="custom-input" style="width:100%; padding:0.5rem 0.75rem;" />
+          </div>
+          <div class="grid-2col" style="gap:0.75rem;">
+            <div class="form-field">
+              <label style="font-size:0.78rem; color:var(--text-muted);"><i class="fa-solid fa-location-dot"></i> العنوان / الموقع</label>
+              <input type="text" id="qContractorAddress" placeholder="الباحة" class="custom-input" style="width:100%; padding:0.5rem 0.75rem;" />
+            </div>
+            <div class="form-field">
+              <label style="font-size:0.78rem; color:var(--text-muted);"><i class="fa-solid fa-phone"></i> رقم الجوال</label>
+              <input type="tel" id="qContractorPhone" placeholder="05xxxxxxxx" class="custom-input" style="width:100%; padding:0.5rem 0.75rem;" />
+            </div>
+          </div>
+          <div class="grid-2col" style="gap:0.75rem; margin-top:0.6rem;">
+            <div class="form-field">
+              <label style="font-size:0.78rem; color:var(--text-muted);"><i class="fa-solid fa-user-tag"></i> اسم العميل</label>
+              <input type="text" id="qClientName" placeholder="الاسم الكريم" class="custom-input" style="width:100%; padding:0.5rem 0.75rem;" />
+            </div>
+            <div class="form-field">
+              <label style="font-size:0.78rem; color:var(--text-muted);"><i class="fa-solid fa-heading"></i> مسمى عرض السعر *</label>
+              <input type="text" id="qTitle" placeholder="عرض أسعار الأمتار" class="custom-input" style="width:100%; padding:0.5rem 0.75rem;" />
+            </div>
+          </div>
         </div>
 
-        <div style="margin-top:1rem; padding:0.75rem 1rem; background:var(--emerald-light); border-radius:0.75rem; display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-weight:700; color:#065f46; font-size:0.9rem;">إجمالي العرض التقديري:</span>
-          <span id="qTotalSum" style="font-weight:900; color:var(--emerald); font-size:1.25rem;">0.00 ر.س</span>
+        <!-- 3. تفاصيل بنود الأعمال والمسطحات (بطاقات بنود مقسمة مثل الجوال) -->
+        <div style="margin-bottom: 1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.75rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem; font-weight:800; font-size:0.95rem; color:var(--text);">
+              <i class="fa-solid fa-file-lines" style="color:#d97706;"></i>
+              <span>تفاصيل بنود الأعمال والمسطحات</span>
+            </div>
+          </div>
+
+          <div id="qItemsCardsContainer" style="display:flex; flex-direction:column; gap:0.75rem;">
+            <!-- بطاقات البنود التفصيلية تُرسم برمجياً لتطابق الجوال -->
+          </div>
+
+          <button type="button" onclick="addQuotationSectionItem()" class="btn btn-outline" style="width:100%; padding:0.65rem; margin-top:0.75rem; border-radius:0.75rem; font-weight:800; background:#f1f5f9; border: 1px dashed var(--border); color:var(--primary);">
+            <i class="fa-solid fa-plus"></i> إضافة بند جديد
+          </button>
+        </div>
+
+        <!-- 4. كرت ملخص إجمالي عرض السعر -->
+        <div style="background:#fff; border: 1px solid var(--border); border-radius: 1rem; padding: 1.15rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+          <div style="font-weight:800; font-size:0.95rem; color:var(--text); margin-bottom:0.75rem;">ملخص إجمالي عرض السعر</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0;">
+            <span style="color:var(--text-muted); font-size:0.85rem;">إجمالي الأمتار المحسوبة:</span>
+            <span id="qSummaryTotalMeters" style="font-weight:800; font-size:1.05rem; color:var(--text); font-family:monospace;">0.00 م²</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; border-top:1px dashed var(--border); margin-top:0.4rem;">
+            <span style="color:var(--text-muted); font-size:0.85rem;">إجمالي تكلفة الأعمال:</span>
+            <span id="qSummaryTotalCost" style="font-weight:900; font-size:1.35rem; color:var(--emerald); font-family:monospace;">0.00 ريال</span>
+          </div>
         </div>
       </div>
-      <div class="modal-dialog-footer">
-        <button onclick="closeModal('quotationModal')" class="btn btn-outline">إلغاء</button>
-        <button onclick="saveQuotationFromWeb()" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> حفظ عرض السعر</button>
+
+      <div class="modal-dialog-footer" style="padding:1rem 1.25rem; display:flex; justify-content:flex-end; gap:0.6rem; border-top:1px solid var(--border); background:#fff;">
+        <button onclick="saveAndPrintQuotationWeb()" class="btn btn-sky" style="padding:0.6rem 1.25rem; font-weight:700;">
+          <i class="fa-solid fa-print"></i> تصدير وطباعة
+        </button>
+        <button onclick="saveQuotationFromWeb()" class="btn btn-primary" style="padding:0.6rem 1.75rem; font-weight:800;">
+          <i class="fa-solid fa-floppy-disk"></i> حفظ
+        </button>
       </div>
     </div>
+  </div>
   </div>
 
   <!-- نافذة اعتماد السعر بالرقم السري واختيار المشروع -->
@@ -3276,6 +3321,8 @@
       container.innerHTML = html;
     }
 
+    let activeQuotationProjectTotals = {};
+
     function populateQuotationProjectsSelect(selectedId = 0) {
       const sel = document.getElementById('qLinkedProjectSelect');
       if (!sel) return;
@@ -3289,40 +3336,11 @@
       });
     }
 
-    function onQuotationProjectSelected(projectId) {
-      const pId = parseInt(projectId) || 0;
-      const btnImport = document.getElementById('btnImportFromProj');
-      const proj = globalProjectsData.find(p => Number(p.id) === Number(pId));
-      if (btnImport) {
-        btnImport.style.display = (proj && proj.items && proj.items.length > 0) ? 'inline-block' : 'none';
-      }
+    function computeProjectSectionTotals(projectId) {
+      const totals = {};
+      const proj = globalProjectsData.find(p => Number(p.id) === Number(projectId));
+      if (!proj || !proj.items) return totals;
 
-      if (proj) {
-        if (!document.getElementById('qClientName').value.trim() && proj.clientName) {
-          document.getElementById('qClientName').value = proj.clientName;
-        }
-        if (!document.getElementById('qClientPhone').value.trim() && proj.mobileNumber) {
-          document.getElementById('qClientPhone').value = proj.mobileNumber;
-        }
-        if (document.getElementById('qTitle').value === 'عرض سعر جديد') {
-          document.getElementById('qTitle').value = 'عرض سعر - ' + proj.name;
-        }
-      }
-
-      // تحديث قوائم اختيار البنود داخل أسطر الجدول لتعرض بنود المشروع المختار
-      updateAllQuotationRowSelectors(pId);
-    }
-
-    function importAllItemsFromLinkedProject() {
-      const pId = parseInt(document.getElementById('qLinkedProjectSelect').value) || 0;
-      const proj = globalProjectsData.find(p => Number(p.id) === Number(pId));
-      if (!proj || !proj.items || proj.items.length === 0) {
-        alert('لا توجد بنود حصر في هذا المشروع!');
-        return;
-      }
-
-      // تجميع أمتار بنود المشروع حسب نوع العمل
-      const summaryByJob = {};
       proj.items.forEach(it => {
         const key = it.jobType || 'PLASTER_IN';
         const label = getJobLabel(key);
@@ -3331,167 +3349,330 @@
         if (price === 0 && Number(it.totalAmount) > 0 && meters > 0) {
           price = Number(it.totalAmount) / meters;
         }
-        if (!summaryByJob[label]) {
-          summaryByJob[label] = { label: label, jobType: key, meters: 0, price: price };
+
+        if (!totals[label]) {
+          totals[label] = { label: label, jobCode: key, meters: 0, price: price };
         }
-        summaryByJob[label].meters += meters;
-        if (price > 0 && summaryByJob[label].price === 0) {
-          summaryByJob[label].price = price;
+        totals[label].meters += meters;
+        if (price > 0 && totals[label].price === 0) {
+          totals[label].price = price;
         }
+      });
+      return totals;
+    }
+
+    function onQuotationProjectSelected(projectId) {
+      const pId = parseInt(projectId) || 0;
+      const proj = globalProjectsData.find(p => Number(p.id) === Number(pId));
+      const summaryBox = document.getElementById('qLinkedProjectSummaryBox');
+
+      if (!proj || pId === 0) {
+        activeQuotationProjectTotals = {};
+        if (summaryBox) summaryBox.style.display = 'none';
+        return;
+      }
+
+      activeQuotationProjectTotals = computeProjectSectionTotals(pId);
+
+      // تعبئة البيانات تلقائياً إن كانت فارغة
+      if (!document.getElementById('qClientName').value.trim() && proj.clientName) {
+        document.getElementById('qClientName').value = proj.clientName;
+      }
+      if (document.getElementById('qTitle').value === 'عرض سعر جديد' || !document.getElementById('qTitle').value.trim()) {
+        document.getElementById('qTitle').value = 'عرض أسعار الأمتار - ' + proj.name;
+      }
+
+      // إظهار كرت الملخص الأزرق المطابق لشاشة الجوال
+      if (summaryBox) {
+        summaryBox.style.display = 'block';
+        const titleEl = document.getElementById('qLinkedProjTitleText');
+        const clientEl = document.getElementById('qLinkedProjClientText');
+        const badgesEl = document.getElementById('qLinkedProjBadgesText');
+
+        if (titleEl) titleEl.textContent = 'المشروع المرتبط: ' + (proj.name || '-');
+        if (clientEl) clientEl.textContent = 'العميل: ' + (proj.clientName || 'بدون عميل') + (proj.mobileNumber ? ' (' + proj.mobileNumber + ')' : '');
+
+        const sectionNames = Object.keys(activeQuotationProjectTotals);
+        if (badgesEl) {
+          if (sectionNames.length > 0) {
+            badgesEl.innerHTML = 'تم جلب كميات البنود: ' + sectionNames.map(s => `<span style="display:inline-block; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px; margin:2px 3px; font-weight:800;">${s} (${activeQuotationProjectTotals[s].meters.toFixed(2)} م²)</span>`).join(' ');
+          } else {
+            badgesEl.innerHTML = '<span style="color:#64748b;">(لا توجد بنود حصر في هذا المشروع حتى الآن)</span>';
+          }
+        }
+      }
+    }
+
+    function disconnectLinkedProject() {
+      const sel = document.getElementById('qLinkedProjectSelect');
+      if (sel) sel.value = '0';
+      onQuotationProjectSelected(0);
+      showToast('تم إلغاء ربط المشروع');
+    }
+
+    function resetQuotationFields() {
+      if (confirm('هل تريد مسح جميع الحقول وبدء عرض جديد؟')) {
+        document.getElementById('qEditId').value = '';
+        document.getElementById('qTitle').value = 'عرض أسعار الأمتار';
+        document.getElementById('qClientName').value = '';
+        document.getElementById('qLinkedProjectSelect').value = '0';
+        onQuotationProjectSelected(0);
+        document.getElementById('qItemsCardsContainer').innerHTML = '';
+        addQuotationSectionItem('تلييس داخلي', 0, 0);
+        calculateQuotationCardsTotal();
+        showToast('تمت تصفية الحقول وبدء عرض جديد');
+      }
+    }
+
+    function importAllSectionsTotalsFromProject() {
+      const pId = parseInt(document.getElementById('qLinkedProjectSelect').value) || 0;
+      const proj = globalProjectsData.find(p => Number(p.id) === Number(pId));
+      if (!proj) {
+        alert('يرجى اختيار مشروع مرتبط أولاً!');
+        return;
+      }
+
+      const totals = computeProjectSectionTotals(pId);
+      const sectionKeys = Object.keys(totals);
+      if (sectionKeys.length === 0) {
+        alert('لا توجد بنود حصر أو أمتار مسجلة في هذا المشروع!');
+        return;
+      }
+
+      const container = document.getElementById('qItemsCardsContainer');
+      container.innerHTML = '';
+
+      sectionKeys.forEach(secKey => {
+        const sec = totals[secKey];
+        // جلب سعر المتر من دليل الأسعار إن وجد
+        let price = sec.price || 0;
+        if (price === 0) {
+          const pr = globalPricesData.find(p => normalizeJobCode(p.jobType) === normalizeJobCode(sec.jobCode) || p.jobType === secKey);
+          if (pr && pr.pricePerUnit > 0) price = pr.pricePerUnit;
+        }
+        addQuotationSectionItem(sec.label, sec.meters.toFixed(2), price > 0 ? price.toFixed(2) : '0');
       });
 
-      const tbody = document.getElementById('qItemsTableBody');
-      tbody.innerHTML = '';
-      Object.values(summaryByJob).forEach(item => {
-        addQuotationItemRow(item.label, item.meters.toFixed(2), item.price.toFixed(2));
-      });
-      calculateQuotationModalTotal();
-      showToast('تم جلب بنود وأمتار مشروع [' + proj.name + '] بنجاح');
+      calculateQuotationCardsTotal();
+      showToast('تم استرداد كافة أقسام وأمتار مشروع [' + proj.name + '] بنجاح');
     }
 
     function openNewQuotationModal() {
-      document.getElementById('quotationModalTitle').innerHTML = '<i class="fa-solid fa-file-signature" style="color:var(--primary);"></i> إنشاء عرض سعر جديد';
+      document.getElementById('quotationModalTitle').innerHTML = '<i class="fa-solid fa-file-signature" style="color:var(--primary);"></i> عرض أسعار الأمتار';
       document.getElementById('qEditId').value = '';
-      document.getElementById('qTitle').value = 'عرض سعر جديد';
+      document.getElementById('qTitle').value = 'عرض أسعار الأمتار';
       document.getElementById('qClientName').value = '';
-      document.getElementById('qClientPhone').value = '';
-      document.getElementById('qContractorName').value = '';
-      document.getElementById('qContractorPhone').value = '';
+      
+      // تعبئة بيانات المقاول الافتراضية من المؤسسات إن وجدت
+      if (globalInstitutionsData && globalInstitutionsData.length > 0) {
+        const inst = globalInstitutionsData[0];
+        document.getElementById('qContractorName').value = inst.name || '';
+        document.getElementById('qContractorAddress').value = inst.address || '';
+        document.getElementById('qContractorPhone').value = inst.phone || '';
+      }
+
       populateQuotationProjectsSelect(0);
       onQuotationProjectSelected(0);
 
-      document.getElementById('qItemsTableBody').innerHTML = '';
-      addQuotationItemRow('تلييس داخلي', '100', '25');
-      calculateQuotationModalTotal();
+      document.getElementById('qItemsCardsContainer').innerHTML = '';
+      addQuotationSectionItem('تلييس داخلي', '0', '0');
+      calculateQuotationCardsTotal();
       document.getElementById('quotationModal').style.display = 'flex';
-      document.getElementById('qTitle').focus();
     }
 
     function openEditQuotationModal(qId) {
       const q = globalQuotationsData.find(item => item.id === qId);
       if (!q) return;
 
-      document.getElementById('quotationModalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square" style="color:var(--primary);"></i> تعديل عرض السعر';
+      document.getElementById('quotationModalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square" style="color:var(--primary);"></i> تعديل عرض أسعار الأمتار';
       document.getElementById('qEditId').value = q.id;
-      document.getElementById('qTitle').value = q.title || '';
+      document.getElementById('qTitle').value = q.title || 'عرض أسعار الأمتار';
       document.getElementById('qClientName').value = q.clientName || '';
-      document.getElementById('qClientPhone').value = q.clientPhone || '';
       document.getElementById('qContractorName').value = q.contractorName || '';
-      document.getElementById('qContractorPhone').value = q.contractorPhone || '';
+      document.getElementById('qContractorAddress').value = q.contractorAddress || '';
+      document.getElementById('qContractorPhone').value = q.contractorPhone || q.clientPhone || '';
 
       const linkedId = q.linkedProjectId || 0;
       populateQuotationProjectsSelect(linkedId);
       onQuotationProjectSelected(linkedId);
 
-      const tbody = document.getElementById('qItemsTableBody');
-      tbody.innerHTML = '';
+      const container = document.getElementById('qItemsCardsContainer');
+      container.innerHTML = '';
       const items = q.items || [];
       if (items.length > 0) {
         items.forEach(it => {
-          addQuotationItemRow(it.name || '', it.metersText || '0', it.pricePerMeterText || '0', it.id);
+          addQuotationSectionItem(it.name || '', it.metersText || '0', it.pricePerMeterText || '0', it.id);
         });
       } else {
-        addQuotationItemRow('', '0', '0');
+        addQuotationSectionItem('', '0', '0');
       }
 
-      calculateQuotationModalTotal();
+      calculateQuotationCardsTotal();
       document.getElementById('quotationModal').style.display = 'flex';
     }
 
-    function addQuotationItemRow(name = '', meters = '0', price = '0', id = '') {
-      const tbody = document.getElementById('qItemsTableBody');
-      const rowId = id || ('it_' + Math.random().toString(36).substring(2, 9));
-      const tr = document.createElement('tr');
-      tr.dataset.itemId = rowId;
+    const QUICK_SECTIONS_CHIPS = [
+      'تلييس داخلي',
+      'تلييس خارجي',
+      'دهانات داخلية',
+      'دهانات خارجية',
+      'بلاط',
+      'أبواب',
+      'نوافذ'
+    ];
 
-      const pId = parseInt(document.getElementById('qLinkedProjectSelect')?.value) || 0;
-      const proj = globalProjectsData.find(p => Number(p.id) === Number(pId));
+    function addQuotationSectionItem(name = '', meters = '0', price = '0', id = '') {
+      const container = document.getElementById('qItemsCardsContainer');
+      const itemId = id || ('it_' + Math.random().toString(36).substring(2, 9));
+      const card = document.createElement('div');
+      card.className = 'q-card-item';
+      card.dataset.itemId = itemId;
+      card.style.cssText = 'background:#fff; border:1px solid var(--border); border-radius:1rem; padding:1.15rem; box-shadow:0 1px 3px rgba(0,0,0,0.03); position:relative;';
 
-      let quickSelectHtml = '';
-      if (proj && proj.items && proj.items.length > 0) {
-        quickSelectHtml = `<select class="q-item-quick-select" onchange="onQuotationItemQuickSelect(this)" style="width:100%; margin-top:4px; padding:0.25rem 0.4rem; font-size:0.75rem; border:1px dashed var(--border); border-radius:0.35rem; background:var(--surface); color:var(--primary);">
-          <option value="">⚡ اختر من بنود المشروع لجلب أمتاره</option>`;
-        proj.items.forEach(it => {
-          const itName = it.title || it.itemName || getJobLabel(it.jobType);
-          const itM = Number(it.totalMeters || it.quantity || 0);
-          let itP = Number(it.pricePerMeter || 0);
-          if (itP === 0 && Number(it.totalAmount) > 0 && itM > 0) itP = Number(it.totalAmount) / itM;
-          quickSelectHtml += `<option value="${itName}" data-meters="${itM.toFixed(2)}" data-price="${itP.toFixed(2)}">${itName} (${itM.toFixed(1)} م²) - ${getJobLabel(it.jobType)}</option>`;
-        });
-        quickSelectHtml += `</select>`;
+      const chipsHtml = QUICK_SECTIONS_CHIPS.map(chipName => {
+        return `<button type="button" class="q-chip-btn" onclick="applySectionChipToCard(this, '${chipName}')" style="background:#f1f5f9; border:1px solid #cbd5e1; color:#334155; border-radius:1rem; padding:0.25rem 0.65rem; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.15s ease;">${chipName}</button>`;
+      }).join(' ');
+
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <div style="display:flex; align-items:center; gap:0.4rem; font-weight:800; font-size:0.92rem; color:var(--text);">
+            <span class="q-card-index" style="background:var(--primary); color:#fff; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem;">1</span>
+            <span>تفاصيل بند العمل</span>
+          </div>
+          <button type="button" onclick="removeQuotationCardItem(this)" style="background:none; border:none; color:var(--rose); cursor:pointer; font-size:0.95rem; padding:4px 6px;" title="حذف هذا البند">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+
+        <div class="form-field" style="margin-bottom:0.6rem;">
+          <label style="font-size:0.78rem; color:var(--text-muted);"><i class="fa-solid fa-tag"></i> اسم البند / نوع العمل</label>
+          <input type="text" class="q-card-name custom-input" value="${name}" placeholder="تلييس خارجي، دهانات..." style="width:100%; padding:0.5rem 0.75rem; font-weight:700;" />
+        </div>
+
+        <!-- أزرار الاقتراحات السريعة (تطابق الجوال وتجلب أمتار القسم فورياً من المشروع) -->
+        <div style="margin-bottom:0.75rem;">
+          <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px; font-weight:700;">اقتراحات الأقسام لجلب أمتارها من المشروع فوراً:</div>
+          <div style="display:flex; flex-wrap:wrap; gap:0.35rem;">
+            ${chipsHtml}
+          </div>
+        </div>
+
+        <div class="grid-2col" style="gap:0.75rem;">
+          <div class="form-field">
+            <label style="font-size:0.78rem; color:var(--text-muted);"><i class="fa-solid fa-ruler-combined"></i> عدد الأمتار</label>
+            <input type="number" step="0.01" class="q-card-meters custom-input" value="${meters}" oninput="calculateQuotationCardsTotal()" style="width:100%; padding:0.5rem 0.75rem; text-align:center; font-weight:800; font-family:monospace;" />
+          </div>
+          <div class="form-field">
+            <label style="font-size:0.78rem; color:var(--text-muted);"><i class="fa-solid fa-coins"></i> سعر المتر (ر.س)</label>
+            <input type="number" step="0.01" class="q-card-price custom-input" value="${price}" oninput="calculateQuotationCardsTotal()" style="width:100%; padding:0.5rem 0.75rem; text-align:center; font-weight:800; font-family:monospace;" />
+          </div>
+        </div>
+
+        <div style="margin-top:0.65rem; padding-top:0.6rem; border-top:1px dashed var(--border); display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.8rem; color:var(--text-muted);">إجمالي البند:</span>
+          <span class="q-card-subtotal" style="font-weight:900; font-size:1rem; color:var(--emerald); font-family:monospace;">0.00 ر.س</span>
+        </div>
+      `;
+
+      container.appendChild(card);
+      updateQuotationCardsIndexes();
+      calculateQuotationCardsTotal();
+    }
+
+    function removeQuotationCardItem(btn) {
+      const card = btn.closest('.q-card-item');
+      if (card) {
+        card.remove();
+        updateQuotationCardsIndexes();
+        calculateQuotationCardsTotal();
+      }
+    }
+
+    function updateQuotationCardsIndexes() {
+      const cards = document.querySelectorAll('#qItemsCardsContainer .q-card-item');
+      cards.forEach((card, idx) => {
+        const badge = card.querySelector('.q-card-index');
+        if (badge) badge.textContent = (idx + 1);
+      });
+    }
+
+    function applySectionChipToCard(chipBtn, sectionName) {
+      const card = chipBtn.closest('.q-card-item');
+      if (!card) return;
+
+      const nameInput = card.querySelector('.q-card-name');
+      const metersInput = card.querySelector('.q-card-meters');
+      const priceInput = card.querySelector('.q-card-price');
+
+      if (nameInput) nameInput.value = sectionName;
+
+      // فحص إن كان هناك أمتار متوفرة لهذا القسم في المشروع المرتبط
+      let foundMeters = null;
+      if (activeQuotationProjectTotals && activeQuotationProjectTotals[sectionName]) {
+        foundMeters = activeQuotationProjectTotals[sectionName].meters;
+      } else if (activeQuotationProjectTotals) {
+        // بحث بالرمز المطابق
+        const targetNorm = normalizeJobCode(sectionName);
+        for (const [k, v] of Object.entries(activeQuotationProjectTotals)) {
+          if (normalizeJobCode(k) === targetNorm || normalizeJobCode(v.jobCode) === targetNorm) {
+            foundMeters = v.meters;
+            break;
+          }
+        }
       }
 
-      tr.innerHTML = `
-        <td>
-          <input type="text" class="q-item-name" value="${name}" placeholder="اسم البند (مثال: لياسة داخلية)" style="width:100%; padding:0.35rem 0.5rem; border:1px solid var(--border); border-radius:0.4rem; font-size:0.85rem;" />
-          <div class="q-item-quick-container">${quickSelectHtml}</div>
-        </td>
-        <td><input type="number" step="0.01" class="q-item-meters" value="${meters}" oninput="calculateQuotationModalTotal()" style="width:100%; padding:0.35rem 0.5rem; border:1px solid var(--border); border-radius:0.4rem; font-size:0.85rem; text-align:center;" /></td>
-        <td><input type="number" step="0.01" class="q-item-price" value="${price}" oninput="calculateQuotationModalTotal()" style="width:100%; padding:0.35rem 0.5rem; border:1px solid var(--border); border-radius:0.4rem; font-size:0.85rem; text-align:center;" /></td>
-        <td class="q-item-subtotal" style="font-weight:700; color:var(--emerald); text-align:center;">0.00</td>
-        <td style="text-align:center;"><button type="button" onclick="this.closest('tr').remove(); calculateQuotationModalTotal();" style="background:none; border:none; color:var(--rose); cursor:pointer; font-size:0.9rem;"><i class="fa-solid fa-trash-can"></i></button></td>
-      `;
-      tbody.appendChild(tr);
-      calculateQuotationModalTotal();
-    }
+      if (foundMeters !== null && metersInput) {
+        metersInput.value = foundMeters.toFixed(2);
+        showToast('تم جلب مجموع أمتار قسم [' + sectionName + '] (' + foundMeters.toFixed(2) + ' م²) من المشروع');
+      }
 
-    function onQuotationItemQuickSelect(selectEl) {
-      const opt = selectEl.options[selectEl.selectedIndex];
-      if (!opt || !opt.value) return;
-      const tr = selectEl.closest('tr');
-      if (!tr) return;
-
-      const nameInput = tr.querySelector('.q-item-name');
-      const metersInput = tr.querySelector('.q-item-meters');
-      const priceInput = tr.querySelector('.q-item-price');
-
-      if (nameInput) nameInput.value = opt.value;
-      if (metersInput && opt.dataset.meters) metersInput.value = opt.dataset.meters;
-      if (priceInput && opt.dataset.price && parseFloat(opt.dataset.price) > 0) priceInput.value = opt.dataset.price;
-
-      calculateQuotationModalTotal();
-      showToast('تم جلب أمتار البند [' + opt.value + ']');
-    }
-
-    function updateAllQuotationRowSelectors(projectId) {
-      const proj = globalProjectsData.find(p => Number(p.id) === Number(projectId));
-      document.querySelectorAll('#qItemsTableBody tr').forEach(tr => {
-        const container = tr.querySelector('.q-item-quick-container');
-        if (!container) return;
-        if (proj && proj.items && proj.items.length > 0) {
-          let html = `<select class="q-item-quick-select" onchange="onQuotationItemQuickSelect(this)" style="width:100%; margin-top:4px; padding:0.25rem 0.4rem; font-size:0.75rem; border:1px dashed var(--border); border-radius:0.35rem; background:var(--surface); color:var(--primary);">
-            <option value="">⚡ اختر من بنود المشروع لجلب أمتاره</option>`;
-          proj.items.forEach(it => {
-            const itName = it.title || it.itemName || getJobLabel(it.jobType);
-            const itM = Number(it.totalMeters || it.quantity || 0);
-            let itP = Number(it.pricePerMeter || 0);
-            if (itP === 0 && Number(it.totalAmount) > 0 && itM > 0) itP = Number(it.totalAmount) / itM;
-            html += `<option value="${itName}" data-meters="${itM.toFixed(2)}" data-price="${itP.toFixed(2)}">${itName} (${itM.toFixed(1)} م²) - ${getJobLabel(it.jobType)}</option>`;
-          });
-          html += `</select>`;
-          container.innerHTML = html;
-        } else {
-          container.innerHTML = '';
+      // جلب السعر الافتراضي من دليل الأسعار إن لم يكن معيناً
+      if (priceInput && (!priceInput.value || parseFloat(priceInput.value) === 0)) {
+        const pr = globalPricesData.find(p => p.jobType === sectionName || normalizeJobCode(p.jobType) === normalizeJobCode(sectionName));
+        if (pr && pr.pricePerUnit > 0) {
+          priceInput.value = pr.pricePerUnit;
         }
+      }
+
+      // تمييز الزر المختار
+      const allChips = card.querySelectorAll('.q-chip-btn');
+      allChips.forEach(c => {
+        c.style.background = '#f1f5f9';
+        c.style.borderColor = '#cbd5e1';
+        c.style.color = '#334155';
       });
+      chipBtn.style.background = '#dbeafe';
+      chipBtn.style.borderColor = '#3b82f6';
+      chipBtn.style.color = '#1d4ed8';
+
+      calculateQuotationCardsTotal();
     }
 
-    function calculateQuotationModalTotal() {
-      const rows = document.querySelectorAll('#qItemsTableBody tr');
-      let total = 0;
-      rows.forEach(tr => {
-        const m = parseFloat(tr.querySelector('.q-item-meters')?.value) || 0;
-        const p = parseFloat(tr.querySelector('.q-item-price')?.value) || 0;
+    function calculateQuotationCardsTotal() {
+      const cards = document.querySelectorAll('#qItemsCardsContainer .q-card-item');
+      let grandTotalMeters = 0;
+      let grandTotalCost = 0;
+
+      cards.forEach(card => {
+        const m = parseFloat(card.querySelector('.q-card-meters')?.value) || 0;
+        const p = parseFloat(card.querySelector('.q-card-price')?.value) || 0;
         const sub = m * p;
-        total += sub;
-        const subCell = tr.querySelector('.q-item-subtotal');
-        if (subCell) subCell.textContent = sub.toFixed(2);
+
+        grandTotalMeters += m;
+        grandTotalCost += sub;
+
+        const subEl = card.querySelector('.q-card-subtotal');
+        if (subEl) subEl.textContent = sub.toFixed(2) + ' ر.س';
       });
-      const sumEl = document.getElementById('qTotalSum');
-      if (sumEl) sumEl.textContent = total.toFixed(2) + ' ر.س';
+
+      const totalMetersEl = document.getElementById('qSummaryTotalMeters');
+      const totalCostEl = document.getElementById('qSummaryTotalCost');
+
+      if (totalMetersEl) totalMetersEl.textContent = grandTotalMeters.toFixed(2) + ' م²';
+      if (totalCostEl) totalCostEl.textContent = grandTotalCost.toFixed(2) + ' ريال';
     }
 
-    function saveQuotationFromWeb() {
+    function saveQuotationFromWeb(shouldPrintAfter = false) {
       const qId = document.getElementById('qEditId').value.trim() || ('quo_' + Date.now());
       const title = document.getElementById('qTitle').value.trim();
       if (!title) {
@@ -3499,15 +3680,15 @@
         return;
       }
 
-      const rows = document.querySelectorAll('#qItemsTableBody tr');
+      const cards = document.querySelectorAll('#qItemsCardsContainer .q-card-item');
       const items = [];
-      rows.forEach(tr => {
-        const name = tr.querySelector('.q-item-name')?.value.trim() || '';
-        const meters = tr.querySelector('.q-item-meters')?.value.trim() || '0';
-        const price = tr.querySelector('.q-item-price')?.value.trim() || '0';
+      cards.forEach(card => {
+        const name = card.querySelector('.q-card-name')?.value.trim() || '';
+        const meters = card.querySelector('.q-card-meters')?.value.trim() || '0';
+        const price = card.querySelector('.q-card-price')?.value.trim() || '0';
         if (name) {
           items.push({
-            id: tr.dataset.itemId || ('it_' + Math.random().toString(36).substring(2, 9)),
+            id: card.dataset.itemId || ('it_' + Math.random().toString(36).substring(2, 9)),
             name: name,
             metersText: meters,
             pricePerMeterText: price
@@ -3515,14 +3696,21 @@
         }
       });
 
+      if (items.length === 0) {
+        alert('يرجى إضافة بند واحد على الأقل في عرض السعر!');
+        return;
+      }
+
+      const existing = globalQuotationsData.find(q => q.id === qId);
       const linkedProjVal = parseInt(document.getElementById('qLinkedProjectSelect')?.value) || 0;
+
       const newQuo = {
         id: qId,
         title: title,
         clientName: document.getElementById('qClientName').value.trim(),
-        clientPhone: document.getElementById('qClientPhone').value.trim(),
+        clientPhone: document.getElementById('qContractorPhone').value.trim(),
         contractorName: document.getElementById('qContractorName').value.trim(),
-        contractorAddress: existing ? (existing.contractorAddress || '') : '',
+        contractorAddress: document.getElementById('qContractorAddress').value.trim(),
         contractorPhone: document.getElementById('qContractorPhone').value.trim(),
         date: existing ? (existing.date || formatDateEn(new Date())) : formatDateEn(new Date()),
         items: items,
@@ -3550,6 +3738,14 @@
       } else {
         showToast('تم حفظ عرض السعر محلياً (تأكد من اتصال الهاتف)', false);
       }
+
+      if (shouldPrintAfter) {
+        setTimeout(() => printQuotationWeb(qId), 300);
+      }
+    }
+
+    function saveAndPrintQuotationWeb() {
+      saveQuotationFromWeb(true);
     }
 
     function promptDeleteQuotation(qId) {

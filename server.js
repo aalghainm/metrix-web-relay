@@ -1017,6 +1017,9 @@ const htmlContent = `<!DOCTYPE html>
           <button onclick="switchTab('tabPrices')" id="btnTabPrices" class="tab-pill">
             <i class="fa-solid fa-sliders"></i> دليل الأسعار
           </button>
+          <button onclick="switchTab('tabQuotations')" id="btnTabQuotations" class="tab-pill">
+            <i class="fa-solid fa-file-signature"></i> عروض الأسعار
+          </button>
         </nav>
 
         <!-- أدوات التحكم والطباعة والخروج -->
@@ -1311,6 +1314,33 @@ const htmlContent = `<!DOCTYPE html>
                 </thead>
                 <tbody id="pricesTableBody"></tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 7. تبويب عروض الأسعار (QUOTATIONS TAB) -->
+      <!-- ========================================== -->
+      <section id="tabQuotations" class="tab-pane">
+        <div class="table-container-card">
+          <div class="table-card-top">
+            <div class="table-card-title">
+              <i class="fa-solid fa-file-signature" style="color:var(--primary);"></i>
+              <span>عروض الأسعار المحفوظة والمعتمدة</span>
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+              <button onclick="openNewQuotationModal()" class="btn btn-primary" style="padding:0.45rem 1rem; font-size:0.85rem;">
+                <i class="fa-solid fa-plus"></i> إنشاء عرض سعر جديد
+              </button>
+            </div>
+          </div>
+          <div style="padding:1.5rem;">
+            <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.25rem; line-height:1.6;">
+              يمكنك هنا إدارة عروض أسعار التشطيبات، طباعتها بتنسيق رسمي، واعتماد الأسعار لتطبيقها مباشرة على بنود المشروع وقوالب الأسعار بالرقم السري.
+            </p>
+            <div id="quotationsCardsContainer" class="grid-projects" style="grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap:1.25rem;">
+              <!-- بطاقات عروض الأسعار تُرسم برمجياً -->
             </div>
           </div>
         </div>
@@ -1688,6 +1718,105 @@ const htmlContent = `<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- نافذة إنشاء / تعديل عرض سعر -->
+  <div id="quotationModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 650px;">
+      <div class="modal-dialog-header">
+        <div class="modal-dialog-title" id="quotationModalTitle"><i class="fa-solid fa-file-signature" style="color:var(--primary);"></i> إنشاء عرض سعر جديد</div>
+        <button onclick="closeModal('quotationModal')" class="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-dialog-body" style="max-height:75vh; overflow-y:auto;">
+        <input type="hidden" id="qEditId" value="" />
+        <div class="form-field">
+          <label><i class="fa-solid fa-heading"></i> مسمى / عنوان عرض السعر *</label>
+          <input type="text" id="qTitle" placeholder="مثال: عرض سعر تشطيب فيلا حي النرجس" />
+        </div>
+        <div class="grid-2col">
+          <div class="form-field">
+            <label><i class="fa-solid fa-user"></i> اسم العميل</label>
+            <input type="text" id="qClientName" placeholder="الاسم الكريم" />
+          </div>
+          <div class="form-field">
+            <label><i class="fa-solid fa-phone"></i> رقم جوال العميل</label>
+            <input type="tel" id="qClientPhone" placeholder="05xxxxxxxx" />
+          </div>
+        </div>
+        <div class="grid-2col">
+          <div class="form-field">
+            <label><i class="fa-solid fa-building"></i> اسم المقاول / المؤسسة</label>
+            <input type="text" id="qContractorName" placeholder="اسم مؤسستك أو مقاولتك" />
+          </div>
+          <div class="form-field">
+            <label><i class="fa-solid fa-phone-volume"></i> هاتف المقاول</label>
+            <input type="tel" id="qContractorPhone" placeholder="05xxxxxxxx" />
+          </div>
+        </div>
+
+        <div style="margin: 1.25rem 0 0.5rem 0; display:flex; justify-content:space-between; align-items:center;">
+          <h4 style="font-size:0.95rem; font-weight:800; color:var(--text);"><i class="fa-solid fa-list-check" style="color:var(--primary);"></i> بنود التسعير</h4>
+          <button type="button" onclick="addQuotationItemRow()" class="btn btn-outline" style="padding:0.3rem 0.75rem; font-size:0.8rem;">
+            <i class="fa-solid fa-plus"></i> إضافة بند
+          </button>
+        </div>
+
+        <div style="background:var(--bg); border:1px solid var(--border); border-radius:0.75rem; padding:0.75rem;">
+          <table class="metrix-table" style="font-size:0.85rem;">
+            <thead>
+              <tr>
+                <th>اسم البند</th>
+                <th style="width:110px;">المساحة (م²)</th>
+                <th style="width:110px;">سعر المتر (ر.س)</th>
+                <th style="width:90px;">الإجمالي</th>
+                <th style="width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody id="qItemsTableBody"></tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:1rem; padding:0.75rem 1rem; background:var(--emerald-light); border-radius:0.75rem; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-weight:700; color:#065f46; font-size:0.9rem;">إجمالي العرض التقديري:</span>
+          <span id="qTotalSum" style="font-weight:900; color:var(--emerald); font-size:1.25rem;">0.00 ر.س</span>
+        </div>
+      </div>
+      <div class="modal-dialog-footer">
+        <button onclick="closeModal('quotationModal')" class="btn btn-outline">إلغاء</button>
+        <button onclick="saveQuotationFromWeb()" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> حفظ عرض السعر</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة اعتماد السعر بالرقم السري واختيار المشروع -->
+  <div id="approveQuotationModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="modal-dialog-header" style="background:#ecfdf5;">
+        <div class="modal-dialog-title" style="color:var(--emerald);"><i class="fa-solid fa-circle-check"></i> اعتماد السعر وتطبيقه على المشروع</div>
+        <button onclick="closeModal('approveQuotationModal')" class="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-dialog-body">
+        <input type="hidden" id="approveQuoteId" value="" />
+        <p style="font-size: 0.88rem; color: #475569; line-height: 1.6; margin-bottom:1rem;" id="approvePromptText">
+          سيتم تحديث أسعار بنود المشروع المحدد وقوالب الأسعار الافتراضية بأسعار هذا العرض فورياً.
+        </p>
+
+        <div class="form-field">
+          <label><i class="fa-solid fa-city"></i> اختر المشروع المستهدف لتطبيق الأسعار عليه *</label>
+          <select id="approveTargetProjectSelect" style="width:100%; padding:0.6rem; border-radius:0.5rem; border:1px solid var(--border); font-family:inherit; font-size:0.9rem;"></select>
+        </div>
+
+        <div class="form-field" style="margin-top: 1rem;">
+          <label style="color: #065f46;"><i class="fa-solid fa-key"></i> أدخل الرقم السري (PIN) المرتبط بالتطبيق لتأكيد الاعتماد *</label>
+          <input type="password" inputmode="numeric" id="approvePasscodeInput" oninput="hideApprovePasscodeError()" onkeydown="if(event.key==='Enter') executeConfirmedApproveQuotation()" style="font-size: 1.35rem; text-align: center; letter-spacing: 6px; font-family: Arial, sans-serif;" placeholder="••••" />
+          <div id="approvePasscodeErrorMsg" style="display:none; background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:0.55rem 0.75rem; border-radius:0.5rem; font-size:0.82rem; font-weight:700; margin-top:0.45rem; text-align:center;"></div>
+        </div>
+      </div>
+      <div class="modal-dialog-footer" style="background:#ecfdf5;">
+        <button onclick="closeModal('approveQuotationModal')" class="btn btn-outline">إلغاء</button>
+        <button onclick="executeConfirmedApproveQuotation()" class="btn btn-emerald"><i class="fa-solid fa-circle-check"></i> اعتماد وتطبيق الأسعار</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // توحيد جميع الأرقام في الموقع بالكامل إلى الأرقام الإنجليزية (0-9)
     function toEnglishDigits(val) {
@@ -1730,6 +1859,8 @@ const htmlContent = `<!DOCTYPE html>
     let countdownInterval;
     let globalProjectsData = [];
     let globalPricesData = [];
+    let globalQuotationsData = [];
+    let globalInstitutionsData = [];
     let globalHasPasscode = true;
     let globalDeletionPasscode = '';
     let lastPreDeleteBackup = null;
@@ -1787,6 +1918,8 @@ const htmlContent = `<!DOCTYPE html>
         localStorage.setItem('metrix_cached_data', JSON.stringify({
           projects: globalProjectsData,
           prices: globalPricesData,
+          quotations: globalQuotationsData,
+          institutions: globalInstitutionsData,
           hasPasscode: globalHasPasscode,
           deletionPasscode: globalDeletionPasscode
         }));
@@ -1797,6 +1930,7 @@ const htmlContent = `<!DOCTYPE html>
       renderPaymentsTable();
       renderActiveReport();
       renderPricesTable();
+      renderQuotationsList();
       renderAnalyticsCharts();
     }
 
@@ -1863,6 +1997,8 @@ const htmlContent = `<!DOCTYPE html>
 
         globalProjectsData = incomingProjects;
         globalPricesData = data.prices || [];
+        globalQuotationsData = data.quotations || [];
+        globalInstitutionsData = data.institutions || [];
         if (typeof data.hasPasscode === 'boolean') {
           globalHasPasscode = data.hasPasscode;
         }
@@ -1875,6 +2011,8 @@ const htmlContent = `<!DOCTYPE html>
           localStorage.setItem('metrix_cached_data', JSON.stringify({
             projects: globalProjectsData,
             prices: globalPricesData,
+            quotations: globalQuotationsData,
+            institutions: globalInstitutionsData,
             hasPasscode: globalHasPasscode,
             deletionPasscode: globalDeletionPasscode
           }));
@@ -1954,6 +2092,10 @@ const htmlContent = `<!DOCTYPE html>
         renderActiveReport();
       }
       if (tabId === 'tabPrices') document.getElementById('btnTabPrices').classList.add('active');
+      if (tabId === 'tabQuotations') {
+        document.getElementById('btnTabQuotations').classList.add('active');
+        renderQuotationsList();
+      }
 
       if (pushHistory && window.history && window.history.pushState) {
         const currentState = window.history.state;
@@ -3009,6 +3151,519 @@ const htmlContent = `<!DOCTYPE html>
     }
 
     // ==========================================
+    // إدارة وعرض عروض الأسعار (QUOTATIONS MANAGEMENT)
+    // ==========================================
+    function renderQuotationsList() {
+      const container = document.getElementById('quotationsCardsContainer');
+      if (!container) return;
+
+      if (!globalQuotationsData || globalQuotationsData.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1/-1; text-align:center; padding:3rem 1rem; background:var(--surface); border:1px dashed var(--border); border-radius:var(--radius);">
+            <div style="font-size:2.5rem; color:var(--text-muted); margin-bottom:0.75rem;"><i class="fa-solid fa-file-signature"></i></div>
+            <h4 style="font-weight:800; color:var(--text); margin-bottom:0.5rem;">لا توجد عروض أسعار محفوظة حتى الآن</h4>
+            <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.25rem;">يمكنك إنشاء عرض سعر جديد بنقرة زر وتصديره ومزامنته مع الهاتف.</p>
+            <button onclick="openNewQuotationModal()" class="btn btn-primary"><i class="fa-solid fa-plus"></i> إنشاء عرض سعر جديد</button>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      globalQuotationsData.forEach(q => {
+        const items = q.items || [];
+        const totalSum = items.reduce((sum, it) => {
+          const m = parseFloat(it.metersText) || 0;
+          const p = parseFloat(it.pricePerMeterText) || 0;
+          return sum + (m * p);
+        }, 0);
+
+        let itemsPreviewHtml = '';
+        items.forEach(it => {
+          const m = parseFloat(it.metersText) || 0;
+          const p = parseFloat(it.pricePerMeterText) || 0;
+          itemsPreviewHtml += `
+            <div style="background:var(--bg); border:1px solid var(--border); border-radius:0.5rem; padding:0.5rem 0.75rem; margin-bottom:0.5rem;">
+              <div style="font-weight:700; font-size:0.85rem; color:var(--text); margin-bottom:0.35rem;">
+                <i class="fa-solid fa-circle" style="font-size:6px; color:var(--primary); vertical-align:middle;"></i> ${it.name || 'بند غير مسمى'}
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:0.78rem;">
+                <span style="background:var(--primary-light); color:var(--primary); padding:2px 8px; border-radius:4px; font-weight:700;">المساحة: ${m.toFixed(2)} م²</span>
+                <span style="background:var(--emerald-light); color:var(--emerald); padding:2px 8px; border-radius:4px; font-weight:700;">السعر: ${p.toFixed(2)} ر.س</span>
+              </div>
+            </div>
+          `;
+        });
+
+        html += `
+          <div class="project-card" style="display:flex; flex-direction:column; justify-content:space-between; border-top: 4px solid ${q.isApproved ? 'var(--emerald)' : 'var(--primary)'};">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+                <div>
+                  <h3 style="font-size:1.05rem; font-weight:900; color:var(--text); margin-bottom:0.25rem;">${q.title || 'عرض سعر'}</h3>
+                  <span style="font-size:0.78rem; color:var(--text-muted);"><i class="fa-solid fa-calendar-days"></i> ${q.date || '—'}</span>
+                </div>
+                ${q.isApproved ? `
+                  <span style="background:var(--emerald-light); color:var(--emerald); border:1px solid #a7f3d0; padding:3px 10px; border-radius:9999px; font-size:0.75rem; font-weight:800; display:inline-flex; align-items:center; gap:4px;">
+                    <i class="fa-solid fa-circle-check"></i> معتمد
+                  </span>
+                ` : `
+                  <span style="background:var(--bg); color:var(--text-muted); border:1px solid var(--border); padding:3px 10px; border-radius:9999px; font-size:0.75rem; font-weight:700;">
+                    مسودة
+                  </span>
+                `}
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.75rem; font-size:0.8rem;">
+                <div style="background:var(--bg); padding:0.4rem 0.6rem; border-radius:0.4rem;">
+                  <span style="color:var(--text-muted); display:block; font-size:0.72rem;">العميل:</span>
+                  <span style="font-weight:700;">${q.clientName || '—'}</span>
+                </div>
+                <div style="background:var(--bg); padding:0.4rem 0.6rem; border-radius:0.4rem;">
+                  <span style="color:var(--text-muted); display:block; font-size:0.72rem;">المقاول:</span>
+                  <span style="font-weight:700;">${q.contractorName || '—'}</span>
+                </div>
+              </div>
+
+              <div style="max-height:160px; overflow-y:auto; margin-bottom:0.75rem; padding-left:2px;">
+                ${itemsPreviewHtml || '<div style="font-size:0.8rem; color:var(--text-muted); text-align:center;">لا توجد بنود مضافة</div>'}
+              </div>
+            </div>
+
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0; border-top:1px solid var(--border); margin-bottom:0.75rem;">
+                <span style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">إجمالي العرض:</span>
+                <span style="font-size:1.15rem; font-weight:900; color:var(--emerald);">${Math.round(totalSum).toLocaleString('en-US')} ر.س</span>
+              </div>
+
+              <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:0.4rem;">
+                <button onclick="openApproveQuotationModal('${q.id}')" class="btn" style="background:${q.isApproved ? 'var(--emerald)' : 'var(--emerald-light)'}; color:${q.isApproved ? '#fff' : 'var(--emerald)'}; border:1px solid #a7f3d0; padding:0.4rem 0.2rem; font-size:0.75rem;" title="اعتماد وتطبيق السعر على المشروع">
+                  <i class="fa-solid fa-circle-check"></i> اعتماد
+                </button>
+                <button onclick="printQuotationWeb('${q.id}')" class="btn btn-outline" style="padding:0.4rem 0.2rem; font-size:0.75rem;" title="طباعة عرض السعر">
+                  <i class="fa-solid fa-print"></i> طباعة
+                </button>
+                <button onclick="openEditQuotationModal('${q.id}')" class="btn btn-outline" style="padding:0.4rem 0.2rem; font-size:0.75rem;" title="تعديل العرض">
+                  <i class="fa-solid fa-pen-to-square"></i> تعديل
+                </button>
+                <button onclick="promptDeleteQuotation('${q.id}')" class="btn btn-danger-light" style="padding:0.4rem 0.2rem; font-size:0.75rem;" title="حذف العرض">
+                  <i class="fa-solid fa-trash-can"></i> حذف
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function openNewQuotationModal() {
+      document.getElementById('quotationModalTitle').innerHTML = '<i class="fa-solid fa-file-signature" style="color:var(--primary);"></i> إنشاء عرض سعر جديد';
+      document.getElementById('qEditId').value = '';
+      document.getElementById('qTitle').value = 'عرض سعر جديد';
+      document.getElementById('qClientName').value = '';
+      document.getElementById('qClientPhone').value = '';
+      document.getElementById('qContractorName').value = '';
+      document.getElementById('qContractorPhone').value = '';
+      document.getElementById('qItemsTableBody').innerHTML = '';
+      addQuotationItemRow('تلييس داخلي', '100', '25');
+      calculateQuotationModalTotal();
+      document.getElementById('quotationModal').style.display = 'flex';
+      document.getElementById('qTitle').focus();
+    }
+
+    function openEditQuotationModal(qId) {
+      const q = globalQuotationsData.find(item => item.id === qId);
+      if (!q) return;
+
+      document.getElementById('quotationModalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square" style="color:var(--primary);"></i> تعديل عرض السعر';
+      document.getElementById('qEditId').value = q.id;
+      document.getElementById('qTitle').value = q.title || '';
+      document.getElementById('qClientName').value = q.clientName || '';
+      document.getElementById('qClientPhone').value = q.clientPhone || '';
+      document.getElementById('qContractorName').value = q.contractorName || '';
+      document.getElementById('qContractorPhone').value = q.contractorPhone || '';
+
+      const tbody = document.getElementById('qItemsTableBody');
+      tbody.innerHTML = '';
+      const items = q.items || [];
+      if (items.length > 0) {
+        items.forEach(it => {
+          addQuotationItemRow(it.name || '', it.metersText || '0', it.pricePerMeterText || '0', it.id);
+        });
+      } else {
+        addQuotationItemRow('', '0', '0');
+      }
+
+      calculateQuotationModalTotal();
+      document.getElementById('quotationModal').style.display = 'flex';
+    }
+
+    function addQuotationItemRow(name = '', meters = '0', price = '0', id = '') {
+      const tbody = document.getElementById('qItemsTableBody');
+      const rowId = id || ('it_' + Math.random().toString(36).substring(2, 9));
+      const tr = document.createElement('tr');
+      tr.dataset.itemId = rowId;
+      tr.innerHTML = `
+        <td><input type="text" class="q-item-name" value="${name}" placeholder="اسم البند (مثال: دهان داخلي)" style="width:100%; padding:0.35rem 0.5rem; border:1px solid var(--border); border-radius:0.4rem; font-size:0.85rem;" /></td>
+        <td><input type="number" step="0.01" class="q-item-meters" value="${meters}" oninput="calculateQuotationModalTotal()" style="width:100%; padding:0.35rem 0.5rem; border:1px solid var(--border); border-radius:0.4rem; font-size:0.85rem; text-align:center;" /></td>
+        <td><input type="number" step="0.01" class="q-item-price" value="${price}" oninput="calculateQuotationModalTotal()" style="width:100%; padding:0.35rem 0.5rem; border:1px solid var(--border); border-radius:0.4rem; font-size:0.85rem; text-align:center;" /></td>
+        <td class="q-item-subtotal" style="font-weight:700; color:var(--emerald); text-align:center;">0.00</td>
+        <td style="text-align:center;"><button type="button" onclick="this.closest('tr').remove(); calculateQuotationModalTotal();" style="background:none; border:none; color:var(--rose); cursor:pointer; font-size:0.9rem;"><i class="fa-solid fa-trash-can"></i></button></td>
+      `;
+      tbody.appendChild(tr);
+      calculateQuotationModalTotal();
+    }
+
+    function calculateQuotationModalTotal() {
+      const rows = document.querySelectorAll('#qItemsTableBody tr');
+      let total = 0;
+      rows.forEach(tr => {
+        const m = parseFloat(tr.querySelector('.q-item-meters')?.value) || 0;
+        const p = parseFloat(tr.querySelector('.q-item-price')?.value) || 0;
+        const sub = m * p;
+        total += sub;
+        const subCell = tr.querySelector('.q-item-subtotal');
+        if (subCell) subCell.textContent = sub.toFixed(2);
+      });
+      const sumEl = document.getElementById('qTotalSum');
+      if (sumEl) sumEl.textContent = total.toFixed(2) + ' ر.س';
+    }
+
+    function saveQuotationFromWeb() {
+      const qId = document.getElementById('qEditId').value.trim() || ('quo_' + Date.now());
+      const title = document.getElementById('qTitle').value.trim();
+      if (!title) {
+        alert('يرجى إدخال مسمى عرض السعر!');
+        return;
+      }
+
+      const rows = document.querySelectorAll('#qItemsTableBody tr');
+      const items = [];
+      rows.forEach(tr => {
+        const name = tr.querySelector('.q-item-name')?.value.trim() || '';
+        const meters = tr.querySelector('.q-item-meters')?.value.trim() || '0';
+        const price = tr.querySelector('.q-item-price')?.value.trim() || '0';
+        if (name) {
+          items.push({
+            id: tr.dataset.itemId || ('it_' + Math.random().toString(36).substring(2, 9)),
+            name: name,
+            metersText: meters,
+            pricePerMeterText: price
+          });
+        }
+      });
+
+      const existing = globalQuotationsData.find(item => item.id === qId);
+      const newQuo = {
+        id: qId,
+        title: title,
+        clientName: document.getElementById('qClientName').value.trim(),
+        clientPhone: document.getElementById('qClientPhone').value.trim(),
+        contractorName: document.getElementById('qContractorName').value.trim(),
+        contractorAddress: existing ? (existing.contractorAddress || '') : '',
+        contractorPhone: document.getElementById('qContractorPhone').value.trim(),
+        date: existing ? (existing.date || formatDateEn(new Date())) : formatDateEn(new Date()),
+        items: items,
+        linkedProjectId: existing ? (existing.linkedProjectId || 0) : 0,
+        isApproved: existing ? (existing.isApproved || false) : false
+      };
+
+      const idx = globalQuotationsData.indexOf(existing);
+      if (idx >= 0) {
+        globalQuotationsData[idx] = newQuo;
+      } else {
+        globalQuotationsData.unshift(newQuo);
+      }
+
+      reRenderAll();
+      closeModal('quotationModal');
+
+      if (socket && socket.connected) {
+        socket.emit('relay_to_phone', {
+          sessionId: currentSessionId,
+          action: 'save_quotation_from_web',
+          data: newQuo
+        });
+        showToast('تم حفظ عرض السعر ومزامنته مع الهاتف بنجاح');
+      } else {
+        showToast('تم حفظ عرض السعر محلياً (تأكد من اتصال الهاتف)', false);
+      }
+    }
+
+    function promptDeleteQuotation(qId) {
+      const q = globalQuotationsData.find(item => item.id === qId);
+      if (!q) return;
+      pendingDeleteType = 'quotation';
+      pendingDeleteId = qId;
+      document.getElementById('deleteConfirmPromptText').textContent = 'هل أنت متأكد من رغبتك في حذف عرض السعر [' + (q.title || '') + '] نهائياً؟';
+      const inp = document.getElementById('deletePasscodeInput');
+      if (inp) inp.value = '';
+      hideDeletePasscodeError();
+      if (globalHasPasscode === false) {
+        showDeletePasscodeError('⚠️ لم يتم تفعيل الرقم السري في التطبيق! يرجى تعيين رقم سري للحماية أولاً.');
+      }
+      document.getElementById('deleteConfirmModal').style.display = 'flex';
+      setTimeout(() => { if (inp) inp.focus(); }, 150);
+    }
+
+    // اعتماد السعر بالرقم السري واختيار المشروع المستهدف
+    function openApproveQuotationModal(qId) {
+      const q = globalQuotationsData.find(item => item.id === qId);
+      if (!q) return;
+
+      document.getElementById('approveQuoteId').value = q.id;
+      const promptEl = document.getElementById('approvePromptText');
+      promptEl.innerHTML = `سيتم تطبيق أسعار عرض [<b>${q.title || 'عرض السعر'}</b>] على المشروع المختار وتحديث قوالب الأسعار الافتراضية.`;
+
+      const sel = document.getElementById('approveTargetProjectSelect');
+      sel.innerHTML = '';
+      if (!globalProjectsData || globalProjectsData.length === 0) {
+        sel.innerHTML = '<option value="0">لا توجد مشاريع مضافة (تحديث قوالب الأسعار فقط)</option>';
+      } else {
+        globalProjectsData.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.name} (${p.clientName || 'بدون عميل'})`;
+          if (q.linkedProjectId && Number(p.id) === Number(q.linkedProjectId)) {
+            opt.selected = true;
+          } else if (!q.linkedProjectId && q.clientName && p.clientName && p.clientName.trim().toLowerCase() === q.clientName.trim().toLowerCase()) {
+            opt.selected = true;
+          }
+          sel.appendChild(opt);
+        });
+      }
+
+      const passInp = document.getElementById('approvePasscodeInput');
+      passInp.value = '';
+      hideApprovePasscodeError();
+
+      if (globalHasPasscode === false) {
+        showApprovePasscodeError('⚠️ يلزم تفعيل الرقم السري في إعدادات التطبيق بالهاتف أولاً لاعتماد وتطبيق الأسعار.');
+      }
+
+      document.getElementById('approveQuotationModal').style.display = 'flex';
+      setTimeout(() => passInp.focus(), 150);
+    }
+
+    function showApprovePasscodeError(msg) {
+      const errBox = document.getElementById('approvePasscodeErrorMsg');
+      if (errBox) {
+        errBox.textContent = msg;
+        errBox.style.display = 'block';
+      }
+    }
+
+    function hideApprovePasscodeError() {
+      const errBox = document.getElementById('approvePasscodeErrorMsg');
+      if (errBox) errBox.style.display = 'none';
+    }
+
+    function executeConfirmedApproveQuotation() {
+      const qId = document.getElementById('approveQuoteId').value;
+      const targetProjId = parseInt(document.getElementById('approveTargetProjectSelect').value) || 0;
+      const rawPass = document.getElementById('approvePasscodeInput').value.trim();
+      const pass = toEnglishDigits(rawPass);
+
+      if (globalHasPasscode === false) {
+        showApprovePasscodeError('⚠️ يلزم تفعيل الرقم السري في إعدادات التطبيق بالهاتف أولاً لاعتماد الأسعار.');
+        return;
+      }
+
+      if (!pass) {
+        showApprovePasscodeError('⚠️ يلزم إدخال الرقم السري لتأكيد عملية الاعتماد!');
+        return;
+      }
+
+      if (globalDeletionPasscode && pass !== toEnglishDigits(String(globalDeletionPasscode).trim())) {
+        showApprovePasscodeError('❌ الرقم السري غير صحيح! يرجى إدخال الرقم السري الصحيح.');
+        document.getElementById('approvePasscodeInput').select();
+        return;
+      }
+
+      const q = globalQuotationsData.find(item => item.id === qId);
+      if (q) {
+        q.isApproved = true;
+        q.linkedProjectId = targetProjId;
+
+        // تطبيق الأسعار على بنود المشروع وقوالب الأسعار محلياً في الويب فورياً
+        const priceMap = {};
+        (q.items || []).forEach(it => {
+          const norm = normalizeJobCode(it.name || '');
+          const p = parseFloat(it.pricePerMeterText) || 0;
+          if (norm && p > 0) priceMap[norm] = p;
+        });
+
+        if (targetProjId > 0) {
+          const proj = globalProjectsData.find(p => Number(p.id) === Number(targetProjId));
+          if (proj && proj.items) {
+            proj.items.forEach(it => {
+              const norm = normalizeJobCode(it.jobType || '');
+              if (priceMap[norm]) {
+                it.pricePerMeter = priceMap[norm];
+                it.totalAmount = (parseFloat(it.totalMeters) || 0) * it.pricePerMeter;
+              }
+            });
+          }
+        }
+
+        Object.keys(priceMap).forEach(code => {
+          const pr = globalPricesData.find(p => normalizeJobCode(p.jobType) === code);
+          if (pr) pr.pricePerUnit = priceMap[code];
+          else globalPricesData.push({ jobType: code, pricePerUnit: priceMap[code] });
+        });
+
+        reRenderAll();
+      }
+
+      if (socket && socket.connected) {
+        socket.emit('relay_to_phone', {
+          sessionId: currentSessionId,
+          action: 'approve_quotation_from_web',
+          data: {
+            quotationId: qId,
+            projectId: targetProjId,
+            passcode: pass
+          }
+        });
+        showToast('تم اعتماد السعر بنجاح وتطبيقه على المشروع وقوالب الأسعار');
+      } else {
+        showToast('تم الاعتماد وسيتم تطبيقه على الهاتف فور اتصاله', false);
+      }
+
+      closeModal('approveQuotationModal');
+    }
+
+    function printQuotationWeb(qId) {
+      const q = globalQuotationsData.find(item => item.id === qId);
+      if (!q) return;
+
+      const items = q.items || [];
+      let totalMeters = 0;
+      let totalAmount = 0;
+      let rowsHtml = '';
+
+      items.forEach((it, idx) => {
+        const m = parseFloat(it.metersText) || 0;
+        const p = parseFloat(it.pricePerMeterText) || 0;
+        const tot = m * p;
+        totalMeters += m;
+        totalAmount += tot;
+        rowsHtml += `
+          <tr>
+            <td style="text-align:center; padding:8px; border:1px solid #cbd5e1;">${idx + 1}</td>
+            <td style="padding:8px; font-weight:700; border:1px solid #cbd5e1;">${it.name || '—'}</td>
+            <td style="text-align:center; padding:8px; border:1px solid #cbd5e1;">${m.toFixed(2)} م²</td>
+            <td style="text-align:center; padding:8px; border:1px solid #cbd5e1;">${p.toFixed(2)} ر.س</td>
+            <td style="text-align:center; padding:8px; font-weight:800; color:#059669; border:1px solid #cbd5e1;">${tot.toFixed(2)} ر.س</td>
+          </tr>
+        `;
+      });
+
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert('يرجى السماح بالنوافذ المنبثقة للطباعة');
+        return;
+      }
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+          <meta charset="UTF-8">
+          <title>${q.title || 'عرض سعر'}</title>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+            body { font-family: 'Cairo', sans-serif; padding: 25px; color: #0f172a; margin: 0; }
+            .header-box { border-bottom: 2px solid #4f46e5; padding-bottom: 15px; margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+            .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.8; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+            th { background: #4f46e5; color: #fff; padding: 10px; border: 1px solid #4f46e5; }
+            .total-box { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 15px; text-align: left; font-size: 15px; font-weight: 800; color: #059669; margin-bottom: 30px; }
+            .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: center; margin-top: 40px; font-size: 13px; }
+            .sig-line { border-top: 1px dashed #64748b; margin-top: 45px; }
+            @media print {
+              .no-print { display: none; }
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="no-print" style="margin-bottom:20px; text-align:left;">
+            <button onclick="window.print()" style="background:#4f46e5; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:700; cursor:pointer; font-family:inherit;">
+              <i class="fa-solid fa-print"></i> بدء الطباعة الآن
+            </button>
+          </div>
+
+          <div class="header-box">
+            <div>
+              <h1 style="margin:0; font-size:22px; color:#4f46e5;">${q.title || 'عرض سعر'}</h1>
+              <p style="margin:4px 0 0 0; color:#64748b; font-size:12px;">تاريخ العرض: ${q.date || '—'}</p>
+            </div>
+            <div style="text-align:left;">
+              <span style="background:${q.isApproved ? '#dcfce7' : '#f1f5f9'}; color:${q.isApproved ? '#059669' : '#475569'}; padding:4px 12px; border-radius:20px; font-weight:800; font-size:12px;">
+                ${q.isApproved ? 'معتمد رسمياً ✓' : 'عرض سعر تقديري'}
+              </span>
+            </div>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-card">
+              <h4 style="margin:0 0 6px 0; color:#4f46e5; font-size:14px;"><i class="fa-solid fa-building"></i> بيانات المقاول / مقدم العرض</h4>
+              <div><b>المؤسسة:</b> ${q.contractorName || 'مؤسسة مقاولات عامة'}</div>
+              <div><b>العنوان:</b> ${q.contractorAddress || 'المملكة العربية السعودية'}</div>
+              <div><b>الهاتف:</b> ${q.contractorPhone || '—'}</div>
+            </div>
+            <div class="info-card">
+              <h4 style="margin:0 0 6px 0; color:#4f46e5; font-size:14px;"><i class="fa-solid fa-user"></i> بيانات العميل المستفيد</h4>
+              <div><b>العميل:</b> ${q.clientName || 'عميلنا العزيز'}</div>
+              <div><b>الجوال:</b> ${q.clientPhone || '—'}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40px;">#</th>
+                <th>اسم البند والخدمة</th>
+                <th style="width:120px;">كمية الأمتار</th>
+                <th style="width:120px;">سعر المتر</th>
+                <th style="width:130px;">الإجمالي</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <div class="total-box">
+            إجمالي قيمة العرض: ${Math.round(totalAmount).toLocaleString('en-US')} ر.س
+          </div>
+
+          <div class="sig-grid">
+            <div>
+              <b>توقيع وختم مقدم العرض</b>
+              <div class="sig-line"></div>
+            </div>
+            <div>
+              <b>توقيع واعتماد العميل</b>
+              <div class="sig-line"></div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 500);
+    }
+
+    // ==========================================
     // إدارة النوافذ المنبثقة والإضافة والتعديل
     // ==========================================
     function openNewProjectModal() {
@@ -3614,6 +4269,10 @@ const htmlContent = `<!DOCTYPE html>
           p.payments = (p.payments || []).filter(pm => pm.id !== delId);
         });
       }
+      if (delType === 'quotation') {
+        action = 'delete_quotation_from_web';
+        globalQuotationsData = globalQuotationsData.filter(q => q.id !== delId);
+      }
       reRenderAll();
 
       if (socket && socket.connected) {
@@ -3712,6 +4371,8 @@ const htmlContent = `<!DOCTYPE html>
 
           globalProjectsData = parsed.projects || [];
           globalPricesData = parsed.prices || [];
+          globalQuotationsData = parsed.quotations || [];
+          globalInstitutionsData = parsed.institutions || [];
           if (typeof parsed.hasPasscode === 'boolean') {
             globalHasPasscode = parsed.hasPasscode;
           }
@@ -3725,6 +4386,7 @@ const htmlContent = `<!DOCTYPE html>
           renderPaymentsTable();
           renderActiveReport();
           renderPricesTable();
+          renderQuotationsList();
           renderAnalyticsCharts();
 
           if (socket && socket.connected) {

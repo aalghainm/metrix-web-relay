@@ -108,15 +108,25 @@ io.on('connection', (socket) => {
     if (s.clientInfo) {
       socket.emit('client_device_info', Object.assign({ sessionId }, s.clientInfo));
     }
+    
+    // حفظ البيانات وبثها فوراً وبشكل مؤكد للمتصفح
+    s.payload = payload;
+    io.to(sessionId).emit('authenticated', payload);
+
     if (s.pendingCommands.length > 0) {
       const cmds = s.pendingCommands.splice(0, s.pendingCommands.length);
       cmds.forEach(cmd => {
         socket.emit(cmd.action, cmd.data);
       });
-      return;
     }
-    s.payload = payload;
-    io.to(sessionId).emit('authenticated', payload);
+  });
+
+  socket.on('check_auth_status', (sessionId) => {
+    if (!sessionId) return;
+    const s = sessionStore.get(sessionId);
+    if (s && s.payload) {
+      socket.emit('authenticated', s.payload);
+    }
   });
 
   socket.on('relay_to_phone', ({ sessionId, action, data }) => {

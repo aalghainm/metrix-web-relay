@@ -84,6 +84,11 @@ io.on('connection', (socket) => {
       const ua = (socket.handshake && socket.handshake.headers) ? socket.handshake.headers['user-agent'] : '';
       const detected = parseUserAgentInfo(ua);
       s.clientInfo = (typeof arg === 'object' && arg && arg.clientInfo) ? Object.assign({}, detected, arg.clientInfo) : detected;
+      
+      // إذا كان الهاتف قد أرسل البيانات مسبقاً قبل انضمام صفحة الويب، نرسلها للمتصفح فوراً
+      if (s.payload) {
+        socket.emit('authenticated', s.payload);
+      }
     }
   });
 

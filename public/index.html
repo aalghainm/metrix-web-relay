@@ -2345,7 +2345,13 @@
         alert('❌ تنبيه أمان: ' + msg);
       });
 
-      socket.on('session_terminated', () => logout());
+      socket.on('session_terminated', (data) => {
+        // إذا كان أمر إنهاء الجلسة يخص هذه الجلسة الحالية أو عاماً، نقوم بتسجيل الخروج فوراً
+        const targetSession = data && data.sessionId ? data.sessionId : null;
+        if (!targetSession || targetSession === currentSessionId) {
+          logout();
+        }
+      });
     }
 
     // التعرف على نوع المتصفح ونظام التشغيل لعرضه في شاشة الأجهزة المرتبطة في تطبيق ميتركس

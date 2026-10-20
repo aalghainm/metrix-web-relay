@@ -2500,6 +2500,12 @@
       countdownInterval = setInterval(() => {
         timeLeft--;
         timerText.textContent = timeLeft + ' ثانية';
+
+        // استعلام استباقي من الخادم كل ثانية للتأكد من التقاط حدث المصادقة فوراً إذا كان تم إرسال البيانات من الهاتف
+        if (socket && socket.connected && currentSessionId) {
+          socket.emit('check_auth_status', currentSessionId);
+        }
+
         if (timeLeft <= 0) {
           clearInterval(countdownInterval);
           document.getElementById('qrOverlay').style.display = 'flex';

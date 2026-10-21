@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>بوابة النظام الذكية - ربط التطبيق</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+    
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --secondary: #0f172a;
+      --surface: #ffffff;
+      --bg: #0b0f19;
+      --border: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* شاشة تسجيل الدخول ومسح الرمز */
+    #authScreen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+      background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0b0f19 80%);
+    }
+
+    .auth-card {
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 1.75rem;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+      width: 100%;
+      max-width: 480px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .app-icon {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%);
+      color: #fff;
+      font-size: 2rem;
+      border-radius: 1.25rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
+    }
+
+    .auth-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 1.75rem;
+    }
+
+    .qr-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 250px;
+      height: 250px;
+      padding: 1rem;
+      background: #ffffff;
+      border-radius: 1.25rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      margin-bottom: 1.5rem;
+    }
+
+    #qrCanvas img {
+      margin: 0 auto;
+      border-radius: 0.5rem;
+    }
+
+    .qr-loading {
+      color: #0f172a;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      background: rgba(37, 99, 235, 0.15);
+      border: 1px solid rgba(37, 99, 235, 0.3);
+      color: #60a5fa;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #3b82f6;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    .instructions {
+      text-align: right;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 1rem;
+      padding: 1rem 1.25rem;
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .instructions li {
+      list-style-type: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .instructions li i {
+      color: #38bdf8;
+      font-size: 0.9rem;
+    }
+
+    /* الحاوية الرئيسية بعد نجاح الربط - إخفاء الرابط الحقيقي */
+    #portalContainer {
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background: #ffffff;
+      z-index: 9999;
+    }
+
+    #portalFrame {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .top-control-bar {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 10000;
+      display: flex;
+      gap: 8px;
+    }
+
+    .control-btn {
+      background: rgba(15, 23, 42, 0.85);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s;
+    }
+
+    .control-btn:hover {
+      background: #ef4444;
+      border-color: #ef4444;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.6; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.6; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. شاشة مسح الـ QR -->
+  <div id="authScreen">
+    <div class="auth-card">
+      <div class="app-icon">
+        <i class="fa-solid fa-globe"></i>
+      </div>
+      <h1 class="auth-title">ربط المتصفح</h1>
+      <p class="auth-subtitle">سجّل دخولك للنظام عبر المتصفح بأمان من خلال مسح الرمز من التطبيق</p>
+      
+      <div class="status-badge">
+        <span class="pulse-dot"></span>
+        <span id="socketStatusText">جاري تهيئة الاتصال الآمن...</span>
+      </div>
+
+      <div class="qr-container">
+        <div id="qrCanvas">
+          <div class="qr-loading">
+            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+            <span>توليد رمز الدخول...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="instructions">
+        <li><i class="fa-solid fa-mobile-screen"></i> افتح تطبيق الهاتف وانتقل إلى "الإعدادات"</li>
+        <li><i class="fa-solid fa-qrcode"></i> اختر "ربط المتصفح (Web QR)"</li>
+        <li><i class="fa-solid fa-camera"></i> وجّه الكاميرا نحو هذا الرمز لفتح النظام فوراً</li>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. حاوية النظام بعد الربط (الرابط الحقيقي مخفي في الـ Iframe وشريط المتصفح يبقى ثابت) -->
+  <div id="portalContainer">
+    <div class="top-control-bar">
+      <button class="control-btn" onclick="logoutSession()">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        إنهاء الجلسة
+      </button>
+      <button class="control-btn" onclick="toggleFullScreen()">
+        <i class="fa-solid fa-expand"></i>
+        ملء الشاشة
+      </button>
+    </div>
+    <iframe id="portalFrame" src="about:blank" allow="geolocation; microphone; camera; midi; encrypted-media; clipboard-read; clipboard-write;"></iframe>
+  </div>
+
+  <script>
+    // خادم الـ Relay للربط اللحظي
+    const RELAY_SERVER_URL = "https://metrix-web-relay.onrender.com";
+    
+    let socket = null;
+    let sessionId = null;
+    let qrGenerated = false;
+
+    // توليد معرف جلسة فريد عشوائي
+    function generateSessionId() {
+      return 'web_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
+    }
+
+    function initSocket() {
+      sessionId = generateSessionId();
+      const statusText = document.getElementById("socketStatusText");
+      
+      socket = io(RELAY_SERVER_URL, {
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 2000,
+        timeout: 10000
+      });
+
+      socket.on("connect", () => {
+        statusText.innerText = "جاهز للمسح، انتظر التطبيق...";
+        
+        // الانضمام لغرفة الجلسة
+        socket.emit("join_session", {
+          sessionId: sessionId,
+          role: "web",
+          browser: getBrowserInfo(),
+          os: getOSInfo()
+        });
+
+        generateQrCode();
+      });
+
+      socket.on("connect_error", () => {
+        statusText.innerText = "تعذر الاتصال بالخادم، جاري إعادة المحاولة...";
+      });
+
+      // استقبال تفويض تسجيل الدخول من التطبيق بعد مسح الرمز
+      socket.on("session_authorized", (data) => {
+        if (data && (data.sessionId === sessionId || !data.sessionId)) {
+          launchPortal(data.targetUrl);
+        }
+      });
+
+      // استقبال أمر إنهاء الجلسة من التطبيق
+      socket.on("session_terminated", (data) => {
+        if (data && data.sessionId === sessionId) {
+          location.reload();
+        }
+      });
+    }
+
+    function generateQrCode() {
+      if (qrGenerated) return;
+      const qrBox = document.getElementById("qrCanvas");
+      qrBox.innerHTML = "";
+
+      const qrPayload = JSON.stringify({
+        sessionId: sessionId,
+        browser: getBrowserInfo(),
+        os: getOSInfo(),
+        timestamp: Date.now()
+      });
+
+      new QRCode(qrBox, {
+        text: qrPayload,
+        width: 218,
+        height: 218,
+        colorDark: "#0f172a",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+
+      qrGenerated = true;
+    }
+
+    function launchPortal(url) {
+      document.getElementById("authScreen").style.display = "none";
+      const portal = document.getElementById("portalContainer");
+      const iframe = document.getElementById("portalFrame");
+      
+      portal.style.display = "block";
+      // فتح رابط النظام الفعلي داخل الـ iframe مع الحفاظ على رابط GitHub في شريط العناوين
+      iframe.src = url || "https://pmhsa.org/web_www1/login?return=true&";
+    }
+
+    function logoutSession() {
+      if (socket && sessionId) {
+        socket.emit("session_terminated", { sessionId: sessionId });
+      }
+      location.reload();
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    function getBrowserInfo() {
+      const userAgent = navigator.userAgent;
+      if (userAgent.indexOf("Firefox") > -1) return "Mozilla Firefox";
+      if (userAgent.indexOf("Edg") > -1) return "Microsoft Edge";
+      if (userAgent.indexOf("Chrome") > -1) return "Google Chrome";
+      if (userAgent.indexOf("Safari") > -1) return "Apple Safari";
+      return "متصفح الويب";
+    }
+
+    function getOSInfo() {
+      const p = navigator.platform || "";
+      if (p.indexOf("Win") > -1) return "Windows";
+      if (p.indexOf("Mac") > -1) return "macOS";
+      if (p.indexOf("Linux") > -1) return "Linux";
+      return "كمبيوتر";
+    }
+
+    window.addEventListener("DOMContentLoaded", initSocket);
+  </script>
+</body>
+</html>

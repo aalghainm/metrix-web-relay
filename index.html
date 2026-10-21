@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>بوابة النظام الذكية - ربط التطبيق</title>
+  <title>ربط المتصفح</title>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -14,30 +14,15 @@
     
     :root {
       --primary: #2563eb;
-      --primary-hover: #1d4ed8;
       --secondary: #0f172a;
-      --surface: #ffffff;
       --bg: #0b0f19;
-      --border: #1e293b;
       --text: #f8fafc;
       --text-muted: #94a3b8;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Cairo', sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; overflow: hidden; }
 
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow: hidden;
-    }
-
-    /* شاشة تسجيل الدخول ومسح الرمز */
     #authScreen {
       display: flex;
       align-items: center;
@@ -74,19 +59,8 @@
       box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
     }
 
-    .auth-title {
-      font-size: 1.75rem;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 0.5rem;
-    }
-
-    .auth-subtitle {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      line-height: 1.6;
-      margin-bottom: 1.75rem;
-    }
+    .auth-title { font-size: 1.75rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
+    .auth-subtitle { font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.75rem; }
 
     .qr-container {
       position: relative;
@@ -102,19 +76,9 @@
       margin-bottom: 1.5rem;
     }
 
-    #qrCanvas img {
+    #qrCanvas img, #qrCanvas canvas {
       margin: 0 auto;
       border-radius: 0.5rem;
-    }
-
-    .qr-loading {
-      color: #0f172a;
-      font-weight: 600;
-      font-size: 0.95rem;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: center;
     }
 
     .status-badge {
@@ -164,7 +128,6 @@
       font-size: 0.9rem;
     }
 
-    /* الحاوية الرئيسية بعد نجاح الربط - إخفاء الرابط الحقيقي */
     #portalContainer {
       display: none;
       width: 100vw;
@@ -226,7 +189,7 @@
 </head>
 <body>
 
-  <!-- 1. شاشة مسح الـ QR -->
+  <!-- شاشة مسح الـ QR -->
   <div id="authScreen">
     <div class="auth-card">
       <div class="app-icon">
@@ -237,16 +200,11 @@
       
       <div class="status-badge">
         <span class="pulse-dot"></span>
-        <span id="socketStatusText">جاري تهيئة الاتصال الآمن...</span>
+        <span id="socketStatusText">جاري الاتصال...</span>
       </div>
 
       <div class="qr-container">
-        <div id="qrCanvas">
-          <div class="qr-loading">
-            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
-            <span>توليد رمز الدخول...</span>
-          </div>
-        </div>
+        <div id="qrCanvas"></div>
       </div>
 
       <div class="instructions">
@@ -257,7 +215,7 @@
     </div>
   </div>
 
-  <!-- 2. حاوية النظام بعد الربط (الرابط الحقيقي مخفي في الـ Iframe وشريط المتصفح يبقى ثابت) -->
+  <!-- حاوية النظام بعد الربط (الرابط الحقيقي مخفي في الـ Iframe) -->
   <div id="portalContainer">
     <div class="top-control-bar">
       <button class="control-btn" onclick="logoutSession()">
@@ -273,99 +231,114 @@
   </div>
 
   <script>
-    // خادم الـ Relay للربط اللحظي
     const RELAY_SERVER_URL = "https://metrix-web-relay.onrender.com";
-    
     let socket = null;
-    let sessionId = null;
-    let qrGenerated = false;
+    let sessionId = 'web_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
 
-    // توليد معرف جلسة فريد عشوائي
-    function generateSessionId() {
-      return 'web_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
+    function getBrowserInfo() {
+      const ua = navigator.userAgent;
+      if (ua.includes('Edg/')) return 'Microsoft Edge';
+      if (ua.includes('Firefox/')) return 'Mozilla Firefox';
+      if (ua.includes('Chrome/')) return 'Google Chrome';
+      if (ua.includes('Safari/')) return 'Apple Safari';
+      return 'Google Chrome';
     }
 
-    function initSocket() {
-      sessionId = generateSessionId();
-      const statusText = document.getElementById("socketStatusText");
-      
-      socket = io(RELAY_SERVER_URL, {
-        reconnection: true,
-        reconnectionAttempts: 10,
-        reconnectionDelay: 2000,
-        timeout: 10000
-      });
-
-      socket.on("connect", () => {
-        statusText.innerText = "جاهز للمسح، انتظر التطبيق...";
-        
-        // الانضمام لغرفة الجلسة
-        socket.emit("join_session", {
-          sessionId: sessionId,
-          role: "web",
-          browser: getBrowserInfo(),
-          os: getOSInfo()
-        });
-
-        generateQrCode();
-      });
-
-      socket.on("connect_error", () => {
-        statusText.innerText = "تعذر الاتصال بالخادم، جاري إعادة المحاولة...";
-      });
-
-      // استقبال تفويض تسجيل الدخول من التطبيق بعد مسح الرمز
-      socket.on("session_authorized", (data) => {
-        if (data && (data.sessionId === sessionId || !data.sessionId)) {
-          launchPortal(data.targetUrl);
-        }
-      });
-
-      // استقبال أمر إنهاء الجلسة من التطبيق
-      socket.on("session_terminated", (data) => {
-        if (data && data.sessionId === sessionId) {
-          location.reload();
-        }
-      });
+    function getOSInfo() {
+      const p = navigator.platform || '';
+      if (p.includes('Win')) return 'Windows';
+      if (p.includes('Mac')) return 'macOS';
+      if (p.includes('Linux')) return 'Linux';
+      return 'Windows';
     }
 
-    function generateQrCode() {
-      if (qrGenerated) return;
+    function renderQr() {
       const qrBox = document.getElementById("qrCanvas");
       qrBox.innerHTML = "";
-
-      const qrPayload = JSON.stringify({
+      
+      const payload = JSON.stringify({
         sessionId: sessionId,
         browser: getBrowserInfo(),
-        os: getOSInfo(),
-        timestamp: Date.now()
+        os: getOSInfo()
       });
 
       new QRCode(qrBox, {
-        text: qrPayload,
+        text: payload,
         width: 218,
         height: 218,
         colorDark: "#0f172a",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.M
       });
+    }
 
-      qrGenerated = true;
+    function initSocket() {
+      const statusText = document.getElementById("socketStatusText");
+      renderQr();
+
+      socket = io(RELAY_SERVER_URL, {
+        transports: ['polling', 'websocket'],
+        reconnection: true,
+        reconnectionAttempts: 20,
+        reconnectionDelay: 1500,
+        timeout: 20000
+      });
+
+      const sendJoin = () => {
+        statusText.innerText = "جاهز للمسح، انتظر التطبيق...";
+        socket.emit("join_session", sessionId);
+        socket.emit("join_session", {
+          sessionId: sessionId,
+          role: "web",
+          clientInfo: {
+            browser: getBrowserInfo(),
+            os: getOSInfo(),
+            label: `${getBrowserInfo()} (${getOSInfo()})`
+          }
+        });
+      };
+
+      socket.on("connect", sendJoin);
+
+      socket.on("connect_error", () => {
+        statusText.innerText = "جاري إعادة الاتصال بالسيرفر...";
+      });
+
+      // استقبال إشارة الدخول بأي مسمى يرسله التطبيق أو السيرفر
+      socket.on("authenticated", (data) => {
+        const target = (data && data.targetUrl) ? data.targetUrl : "https://pmhsa.org/web_www1/login?return=true&";
+        launchPortal(target);
+      });
+
+      socket.on("session_authorized", (data) => {
+        const target = (data && data.targetUrl) ? data.targetUrl : "https://pmhsa.org/web_www1/login?return=true&";
+        launchPortal(target);
+      });
+
+      socket.on("session_terminated", () => {
+        location.reload();
+      });
+
+      // فحص دوري للتأكد
+      setInterval(() => {
+        if (socket && socket.connected) {
+          socket.emit("check_auth_status", sessionId);
+        }
+      }, 2000);
     }
 
     function launchPortal(url) {
       document.getElementById("authScreen").style.display = "none";
       const portal = document.getElementById("portalContainer");
       const iframe = document.getElementById("portalFrame");
-      
       portal.style.display = "block";
-      // فتح رابط النظام الفعلي داخل الـ iframe مع الحفاظ على رابط GitHub في شريط العناوين
-      iframe.src = url || "https://pmhsa.org/web_www1/login?return=true&";
+      iframe.src = url;
     }
 
     function logoutSession() {
       if (socket && sessionId) {
         socket.emit("session_terminated", { sessionId: sessionId });
+        socket.emit("terminate_session", sessionId);
       }
       location.reload();
     }
@@ -373,28 +346,9 @@
     function toggleFullScreen() {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(() => {});
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
+      } else if (document.exitFullscreen) {
+        document.exitFullscreen();
       }
-    }
-
-    function getBrowserInfo() {
-      const userAgent = navigator.userAgent;
-      if (userAgent.indexOf("Firefox") > -1) return "Mozilla Firefox";
-      if (userAgent.indexOf("Edg") > -1) return "Microsoft Edge";
-      if (userAgent.indexOf("Chrome") > -1) return "Google Chrome";
-      if (userAgent.indexOf("Safari") > -1) return "Apple Safari";
-      return "متصفح الويب";
-    }
-
-    function getOSInfo() {
-      const p = navigator.platform || "";
-      if (p.indexOf("Win") > -1) return "Windows";
-      if (p.indexOf("Mac") > -1) return "macOS";
-      if (p.indexOf("Linux") > -1) return "Linux";
-      return "كمبيوتر";
     }
 
     window.addEventListener("DOMContentLoaded", initSocket);

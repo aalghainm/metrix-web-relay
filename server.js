@@ -21,29 +21,36 @@ const sessionStore = new Map();
 
 function parseUserAgentInfo(uaString) {
   const ua = String(uaString || '');
-  let browser = 'متصفح ويب';
-  let browserCode = 'WEB';
+  let browser = '';
+  let browserCode = '';
+
   if (ua.includes('Edg/')) {
     browser = 'Microsoft Edge';
     browserCode = 'EDGE';
-  } else if (ua.includes('OPR/') || ua.includes('Opera/')) {
+  } else if (ua.includes('OPR/') || ua.includes('Opera/') || ua.includes('OPT/')) {
     browser = 'Opera';
     browserCode = 'OPERA';
   } else if (ua.includes('Brave')) {
     browser = 'Brave Browser';
     browserCode = 'BRAVE';
-  } else if (ua.includes('Chrome/') && !ua.includes('Edg/')) {
-    browser = 'Google Chrome';
+  } else if (ua.includes('Vivaldi/')) {
+    browser = 'Vivaldi';
     browserCode = 'CHROME';
-  } else if (ua.includes('Firefox/')) {
+  } else if (ua.includes('Firefox/') || ua.includes('FxiOS/')) {
     browser = 'Mozilla Firefox';
     browserCode = 'FIREFOX';
+  } else if (ua.includes('Chrome/') || ua.includes('CriOS/')) {
+    browser = 'Google Chrome';
+    browserCode = 'CHROME';
   } else if (ua.includes('Safari/') && !ua.includes('Chrome/')) {
     browser = 'Apple Safari';
     browserCode = 'SAFARI';
+  } else {
+    browser = 'Google Chrome';
+    browserCode = 'CHROME';
   }
 
-  let os = 'الكمبيوتر';
+  let os = 'Windows';
   if (ua.includes('Windows')) os = 'Windows';
   else if (ua.includes('Macintosh') || ua.includes('Mac OS')) os = 'macOS';
   else if (ua.includes('Linux') && !ua.includes('Android')) os = 'Linux';
